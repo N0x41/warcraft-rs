@@ -60,6 +60,17 @@ pub struct C4Quaternion {
     pub w: f32,
 }
 
+impl Default for C4Quaternion {
+    fn default() -> Self {
+        Self {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            w: 1.0,
+        }
+    }
+}
+
 impl M2Parse for C4Quaternion {
     fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self> {
         C4Quaternion::parse(reader)

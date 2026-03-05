@@ -40,6 +40,17 @@ impl M2Parse for f32 {
     }
 }
 
+impl M2Parse for u8 {
+    fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self> {
+        Ok(reader.read_u8()?)
+    }
+
+    fn write<W: Write>(&self, writer: &mut W) -> Result<()> {
+        writer.write_u8(*self)?;
+        Ok(())
+    }
+}
+
 impl M2Parse for u16 {
     fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self> {
         Ok(reader.read_u16_le()?)

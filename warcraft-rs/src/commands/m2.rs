@@ -744,20 +744,16 @@ fn handle_tree(path: PathBuf, max_depth: usize, show_size: bool, show_refs: bool
     // Texture animation data summary
     let texture_anim_count = model.raw_data.texture_animation_data.len();
     if texture_anim_count > 0 {
-        let mut translation_u_count = 0;
-        let mut translation_v_count = 0;
+        let mut translation_count = 0;
         let mut rotation_count = 0;
-        let mut scale_u_count = 0;
-        let mut scale_v_count = 0;
+        let mut scale_count = 0;
         let mut total_keyframes = 0;
 
         for anim in &model.raw_data.texture_animation_data {
             match anim.track_type {
-                wow_m2::model::TextureTrackType::TranslationU => translation_u_count += 1,
-                wow_m2::model::TextureTrackType::TranslationV => translation_v_count += 1,
+                wow_m2::model::TextureTrackType::Translation => translation_count += 1,
                 wow_m2::model::TextureTrackType::Rotation => rotation_count += 1,
-                wow_m2::model::TextureTrackType::ScaleU => scale_u_count += 1,
-                wow_m2::model::TextureTrackType::ScaleV => scale_v_count += 1,
+                wow_m2::model::TextureTrackType::Scale => scale_count += 1,
             }
             total_keyframes += anim.timestamps.len() / 4;
         }
@@ -766,11 +762,9 @@ fn handle_tree(path: PathBuf, max_depth: usize, show_size: bool, show_refs: bool
         let texture_node = TreeNode::new("Texture Animations".to_string(), NodeType::Data)
             .with_metadata("animations", &anim_count.to_string())
             .with_metadata("total_tracks", &texture_anim_count.to_string())
-            .with_metadata("translation_u_tracks", &translation_u_count.to_string())
-            .with_metadata("translation_v_tracks", &translation_v_count.to_string())
+            .with_metadata("translation_tracks", &translation_count.to_string())
             .with_metadata("rotation_tracks", &rotation_count.to_string())
-            .with_metadata("scale_u_tracks", &scale_u_count.to_string())
-            .with_metadata("scale_v_tracks", &scale_v_count.to_string())
+            .with_metadata("scale_tracks", &scale_count.to_string())
             .with_metadata("total_keyframes", &total_keyframes.to_string());
         anim_data_node = anim_data_node.add_child(texture_node);
     }

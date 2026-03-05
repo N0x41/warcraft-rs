@@ -55,7 +55,7 @@ pub use rendering_enhancements::{
 };
 pub use ribbon_emitter::M2RibbonEmitter;
 pub use texture::{M2Texture, M2TextureFlags, M2TextureType};
-pub use texture_animation::{M2TextureAnimation, M2TextureAnimationType};
+pub use texture_animation::M2TextureAnimation;
 pub use texture_transform::{C4Quaternion, M2TextureTransform, M2TextureTransformType};
 pub use transparency_animation::M2TransparencyAnimation;
 pub use vertex::M2Vertex;

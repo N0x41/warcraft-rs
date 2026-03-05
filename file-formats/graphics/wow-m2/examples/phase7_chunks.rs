@@ -40,12 +40,8 @@ fn demo_txac_chunk() -> Result<()> {
     // Count of texture animations
     data.extend_from_slice(&1u32.to_le_bytes());
 
-    // Base texture animation data
-    data.extend_from_slice(&1u16.to_le_bytes()); // Animation type (Scroll)
-    data.extend_from_slice(&0u16.to_le_bytes()); // Padding
-
-    // Add minimal animation block data (5 animation blocks for M2TextureAnimation)
-    for _ in 0..5 {
+    // Add minimal animation block data (3 animation blocks for M2TextureAnimation)
+    for _ in 0..3 {
         data.extend_from_slice(&0u16.to_le_bytes()); // Interpolation type
         data.extend_from_slice(&(-1i16).to_le_bytes()); // Global sequence
         data.extend_from_slice(&0u32.to_le_bytes()); // Timestamps count
@@ -81,7 +77,6 @@ fn demo_txac_chunk() -> Result<()> {
     );
     if let Some(anim) = txac.texture_animations.first() {
         println!("  First animation:");
-        println!("    Base type: {:?}", anim.base_animation.animation_type);
         println!(
             "    Flow direction: {:?}",
             anim.extended_properties.flow_direction
