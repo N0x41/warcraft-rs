@@ -10,6 +10,8 @@ use crate::version::M2Version;
 /// Represents a ribbon emitter in an M2 model
 #[derive(Debug, Clone)]
 pub struct M2RibbonEmitter {
+    /// Ribbon ID
+    pub id: u32,
     /// Bone ID that this emitter is attached to
     pub bone_index: u32,
     /// Position of the emitter relative to the bone
@@ -21,7 +23,7 @@ pub struct M2RibbonEmitter {
     /// Color animation data
     pub color_animation: M2AnimationBlock<M2Color>,
     /// Alpha animation data
-    pub alpha_animation: M2AnimationBlock<f32>,
+    pub alpha_animation: M2AnimationBlock<u16>,
     /// Height above animation data
     pub height_above_animation: M2AnimationBlock<f32>,
     /// Height below animation data
@@ -36,19 +38,20 @@ pub struct M2RibbonEmitter {
     pub texture_rows: u16,
     /// Number of texture columns
     pub texture_cols: u16,
+    /// Tex slot track
+    pub texture_slot: M2AnimationBlock<u16>,
+    /// Visibility track
+    pub visibility: M2AnimationBlock<u8>,
     /// Texture slice (added in MoP)
     pub texture_slice: Option<u16>,
     /// Variation of the ribbon (added in MoP)
     pub variation: Option<u16>,
-    /// Ribbon ID
-    pub id: u32,
-    /// Ribbon flags
-    pub flags: u32,
 }
 
 impl M2RibbonEmitter {
     /// Parse a ribbon emitter from a reader based on the M2 version
     pub fn parse<R: Read + Seek>(reader: &mut R, version: u32) -> Result<Self> {
+        let id = reader.read_u32_le()?;
         let bone_index = reader.read_u32_le()?;
         let position = C3Vector::parse(reader)?;
         let texture_indices = M2Array::parse(reader)?;
@@ -66,6 +69,9 @@ impl M2RibbonEmitter {
         let texture_rows = reader.read_u16_le()?;
         let texture_cols = reader.read_u16_le()?;
 
+        let texture_slot = M2AnimationBlock::parse(reader)?;
+        let visibility = M2AnimationBlock::parse(reader)?;
+
         // Version-specific fields
         // Version 272 is used by both Cataclysm and MoP, and includes texture_slice/variation
         let (texture_slice, variation) = if version >= 272 {
@@ -76,10 +82,11 @@ impl M2RibbonEmitter {
             (None, None)
         };
 
-        let id = reader.read_u32_le()?;
-        let flags = reader.read_u32_le()?;
+        //let id = reader.read_u32_le()?;
+        //let flags = reader.read_u32_le()?;
 
         Ok(Self {
+            id,
             bone_index,
             position,
             texture_indices,
@@ -93,15 +100,16 @@ impl M2RibbonEmitter {
             gravity,
             texture_rows,
             texture_cols,
+            texture_slot,
+            visibility,
             texture_slice,
             variation,
-            id,
-            flags,
         })
     }
 
     /// Write a ribbon emitter to a writer based on the M2 version
     pub fn write<W: Write>(&self, writer: &mut W, version: u32) -> Result<()> {
+        writer.write_u32_le(self.id)?;
         writer.write_u32_le(self.bone_index)?;
         self.position.write(writer)?;
         self.texture_indices.write(writer)?;
@@ -125,9 +133,6 @@ impl M2RibbonEmitter {
             writer.write_u16_le(self.texture_slice.unwrap_or(0))?;
             writer.write_u16_le(self.variation.unwrap_or(0))?;
         }
-
-        writer.write_u32_le(self.id)?;
-        writer.write_u32_le(self.flags)?;
 
         Ok(())
     }
@@ -201,6 +206,7 @@ mod tests {
     #[test]
     fn test_ribbon_emitter_parse_write_classic() {
         let ribbon = M2RibbonEmitter {
+            id: 0,
             bone_index: 1,
             position: C3Vector {
                 x: 1.0,
@@ -218,10 +224,10 @@ mod tests {
             gravity: 9.8,
             texture_rows: 1,
             texture_cols: 1,
+            texture_slot: M2AnimationBlock::new(M2AnimationTrack::default()),
+            visibility: M2AnimationBlock::new(M2AnimationTrack::default()),
             texture_slice: None,
             variation: None,
-            id: 0,
-            flags: 0,
         };
 
         // Test write
@@ -235,6 +241,7 @@ mod tests {
         let parsed =
             M2RibbonEmitter::parse(&mut cursor, M2Version::Vanilla.to_header_version()).unwrap();
 
+        assert_eq!(parsed.id, 0);
         assert_eq!(parsed.bone_index, 1);
         assert_eq!(parsed.position.x, 1.0);
         assert_eq!(parsed.position.y, 2.0);
@@ -250,13 +257,12 @@ mod tests {
         assert_eq!(parsed.texture_cols, 1);
         assert_eq!(parsed.texture_slice, None);
         assert_eq!(parsed.variation, None);
-        assert_eq!(parsed.id, 0);
-        assert_eq!(parsed.flags, 0);
     }
 
     #[test]
     fn test_ribbon_emitter_parse_write_mop() {
         let ribbon = M2RibbonEmitter {
+            id: 0,
             bone_index: 1,
             position: C3Vector {
                 x: 1.0,
@@ -274,10 +280,10 @@ mod tests {
             gravity: 9.8,
             texture_rows: 1,
             texture_cols: 1,
+            texture_slot: M2AnimationBlock::new(M2AnimationTrack::default()),
+            visibility: M2AnimationBlock::new(M2AnimationTrack::default()),
             texture_slice: Some(0),
             variation: Some(0),
-            id: 0,
-            flags: 0,
         };
 
         // Test write
@@ -291,6 +297,7 @@ mod tests {
         let parsed =
             M2RibbonEmitter::parse(&mut cursor, M2Version::MoP.to_header_version()).unwrap();
 
+        assert_eq!(parsed.id, 0);
         assert_eq!(parsed.bone_index, 1);
         assert_eq!(parsed.position.x, 1.0);
         assert_eq!(parsed.position.y, 2.0);
@@ -306,14 +313,13 @@ mod tests {
         assert_eq!(parsed.texture_cols, 1);
         assert_eq!(parsed.texture_slice, Some(0));
         assert_eq!(parsed.variation, Some(0));
-        assert_eq!(parsed.id, 0);
-        assert_eq!(parsed.flags, 0);
     }
 
     #[test]
     fn test_ribbon_emitter_convert() {
         // Create a Classic ribbon emitter
         let classic_ribbon = M2RibbonEmitter {
+            id: 0,
             bone_index: 1,
             position: C3Vector {
                 x: 1.0,
@@ -331,10 +337,10 @@ mod tests {
             gravity: 9.8,
             texture_rows: 1,
             texture_cols: 1,
+            texture_slot: M2AnimationBlock::new(M2AnimationTrack::default()),
+            visibility: M2AnimationBlock::new(M2AnimationTrack::default()),
             texture_slice: None,
             variation: None,
-            id: 0,
-            flags: 0,
         };
 
         // Convert to MoP
