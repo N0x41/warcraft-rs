@@ -921,17 +921,6 @@ fn relocate_particle_animation_offsets(
             }
         }
     }
-
-    relocate_or_zero_animation_block(&mut emitter.emission_speed_animation, offset_map);
-    relocate_or_zero_animation_block(&mut emitter.emission_rate_animation, offset_map);
-    relocate_or_zero_animation_block(&mut emitter.emission_area_animation, offset_map);
-    relocate_or_zero_animation_block(&mut emitter.xy_scale_animation, offset_map);
-    relocate_or_zero_animation_block(&mut emitter.z_scale_animation, offset_map);
-    relocate_or_zero_animation_block(&mut emitter.color_animation, offset_map);
-    relocate_or_zero_animation_block(&mut emitter.transparency_animation, offset_map);
-    relocate_or_zero_animation_block(&mut emitter.size_animation, offset_map);
-    relocate_or_zero_animation_block(&mut emitter.intensity_animation, offset_map);
-    relocate_or_zero_animation_block(&mut emitter.z_source_animation, offset_map);
 }
 
 /// Updates M2AnimationBlock offsets in a ribbon emitter using the relocation map
@@ -1375,107 +1364,7 @@ fn collect_particle_animation_data<R: Read + Seek>(
 ) -> Result<Vec<ParticleAnimationRaw>> {
     let mut animation_data = Vec::new();
 
-    for (emitter_idx, emitter) in emitters.iter().enumerate() {
-        // Collect emission speed track (f32 = 4 bytes)
-        if let Some(data) = collect_particle_track_data(
-            reader,
-            &emitter.emission_speed_animation,
-            emitter_idx,
-            ParticleTrackType::EmissionSpeed,
-        )? {
-            animation_data.push(data);
-        }
-
-        // Collect emission rate track (f32 = 4 bytes)
-        if let Some(data) = collect_particle_track_data(
-            reader,
-            &emitter.emission_rate_animation,
-            emitter_idx,
-            ParticleTrackType::EmissionRate,
-        )? {
-            animation_data.push(data);
-        }
-
-        // Collect emission area track (f32 = 4 bytes)
-        if let Some(data) = collect_particle_track_data(
-            reader,
-            &emitter.emission_area_animation,
-            emitter_idx,
-            ParticleTrackType::EmissionArea,
-        )? {
-            animation_data.push(data);
-        }
-
-        // Collect XY scale track (C2Vector = 8 bytes)
-        if let Some(data) = collect_particle_track_data(
-            reader,
-            &emitter.xy_scale_animation,
-            emitter_idx,
-            ParticleTrackType::XYScale,
-        )? {
-            animation_data.push(data);
-        }
-
-        // Collect Z scale track (f32 = 4 bytes)
-        if let Some(data) = collect_particle_track_data(
-            reader,
-            &emitter.z_scale_animation,
-            emitter_idx,
-            ParticleTrackType::ZScale,
-        )? {
-            animation_data.push(data);
-        }
-
-        // Collect color track (M2Color = 12 bytes)
-        if let Some(data) = collect_particle_track_data(
-            reader,
-            &emitter.color_animation,
-            emitter_idx,
-            ParticleTrackType::Color,
-        )? {
-            animation_data.push(data);
-        }
-
-        // Collect transparency track (f32 = 4 bytes)
-        if let Some(data) = collect_particle_track_data(
-            reader,
-            &emitter.transparency_animation,
-            emitter_idx,
-            ParticleTrackType::Transparency,
-        )? {
-            animation_data.push(data);
-        }
-
-        // Collect size track (f32 = 4 bytes)
-        if let Some(data) = collect_particle_track_data(
-            reader,
-            &emitter.size_animation,
-            emitter_idx,
-            ParticleTrackType::Size,
-        )? {
-            animation_data.push(data);
-        }
-
-        // Collect intensity track (f32 = 4 bytes)
-        if let Some(data) = collect_particle_track_data(
-            reader,
-            &emitter.intensity_animation,
-            emitter_idx,
-            ParticleTrackType::Intensity,
-        )? {
-            animation_data.push(data);
-        }
-
-        // Collect Z source track (f32 = 4 bytes)
-        if let Some(data) = collect_particle_track_data(
-            reader,
-            &emitter.z_source_animation,
-            emitter_idx,
-            ParticleTrackType::ZSource,
-        )? {
-            animation_data.push(data);
-        }
-    }
+    for (emitter_idx, emitter) in emitters.iter().enumerate() {}
 
     Ok(animation_data)
 }
@@ -4288,19 +4177,7 @@ impl M2Model {
                 // No animation data collected - write emitters with zeroed animation tracks
                 // This happens when we're creating new emitters or the source had no animations
                 for emitter in &self.particle_emitters {
-                    let mut static_emitter = emitter.clone();
-                    // Zero out all animation blocks by setting them to default
-                    static_emitter.emission_speed_animation = M2AnimationBlock::default();
-                    static_emitter.emission_rate_animation = M2AnimationBlock::default();
-                    static_emitter.emission_area_animation = M2AnimationBlock::default();
-                    static_emitter.xy_scale_animation = M2AnimationBlock::default();
-                    static_emitter.z_scale_animation = M2AnimationBlock::default();
-                    static_emitter.color_animation = M2AnimationBlock::default();
-                    static_emitter.transparency_animation = M2AnimationBlock::default();
-                    static_emitter.size_animation = M2AnimationBlock::default();
-                    static_emitter.intensity_animation = M2AnimationBlock::default();
-                    static_emitter.z_source_animation = M2AnimationBlock::default();
-
+                    let static_emitter = emitter.clone();
                     let mut emitter_data = Vec::new();
                     static_emitter.write(&mut emitter_data, header.version)?;
                     data_section.extend_from_slice(&emitter_data);

@@ -129,8 +129,8 @@ impl ParticleEmitter {
         };
 
         // Calculate max particles based on lifespan and emission rate
-        let max_lifespan = m2_emitter.lifetime.max(m2_emitter.max_lifetime);
-        let max_rate = m2_emitter.emission_rate.max(m2_emitter.max_emission_rate);
+        let max_lifespan = 0.0;
+        let max_rate = 0.0;
         let max_particles = ((max_lifespan * max_rate * 1.5) as usize).max(16);
 
         // Calculate texture scale from tile dimensions
@@ -156,7 +156,7 @@ impl ParticleEmitter {
             ],
             drag: 0.0, // Drag would come from parsed data
             particles_to_emit: 0.0,
-            lifespan_variance: m2_emitter.max_lifetime - m2_emitter.min_lifetime,
+            lifespan_variance: 0.0,
             max_particles,
             bone_index: m2_emitter.bone_index,
             texture_index: m2_emitter.texture_index,
@@ -164,15 +164,15 @@ impl ParticleEmitter {
             flags: m2_emitter.flags,
             params: EmitterParams {
                 enabled: true,
-                gravity: [0.0, 0.0, -m2_emitter.gravity],
-                emission_speed: m2_emitter.emission_velocity,
-                speed_variation: m2_emitter.speed_variation,
-                vertical_range: m2_emitter.vertical_range,
-                horizontal_range: m2_emitter.horizontal_range,
-                lifespan: m2_emitter.lifetime,
-                emission_rate: m2_emitter.emission_rate,
-                emission_area_length: m2_emitter.emission_area_length,
-                emission_area_width: m2_emitter.emission_area_width,
+                gravity: [0.0, 0.0, 0.0],
+                emission_speed: 0.0,
+                speed_variation: 0.0,
+                vertical_range: 0.0,
+                horizontal_range: 0.0,
+                lifespan: 0.0,
+                emission_rate: 0.0,
+                emission_area_length: 0.0,
+                emission_area_width: 0.0,
                 z_source: 0.0,
             },
             tex_scale_x,

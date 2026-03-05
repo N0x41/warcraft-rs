@@ -4,20 +4,12 @@
 //! Legion and later expansions, including extended particle systems, waterfall
 //! effects, edge fading, model alpha calculations, and lighting details.
 
-use crate::chunks::animation::{M2AnimationBlock, M2AnimationTrack};
 use crate::chunks::infrastructure::ChunkReader;
 use crate::chunks::particle_emitter::M2ParticleEmitter;
 use crate::chunks::texture_animation::M2TextureAnimation;
-use crate::common::M2Parse;
 use crate::error::Result;
 use crate::io_ext::{ReadExt, WriteExt};
 use std::io::{Read, Seek, Write};
-
-/// Helper function to create empty animation blocks for compatibility
-fn create_empty_animation_block<T: M2Parse>() -> M2AnimationBlock<T> {
-    let track = M2AnimationTrack::default();
-    M2AnimationBlock::new(track)
-}
 
 /// Extended particle data for EXPT chunks (version 1)
 #[derive(Debug, Clone)]
@@ -163,84 +155,18 @@ impl EnhancedEmitter {
             bone_index: 0,
             texture_index: 0,
             model_filename: crate::common::M2Array::new(0, 0),
-            parent_emitter: 0,
-            geometry_model_unknown: 0,
-            fallback_model_filename: None,
+            fallback_model_filename: crate::common::M2Array::new(0, 0),
             blending_type: 0,
             emitter_type: crate::chunks::particle_emitter::M2ParticleEmitterType::Point,
             particle_type: 0,
             head_or_tail: 0,
             texture_file_data_ids: None,
-            texture_tile_coordinates: crate::common::M2Array::new(0, 0),
             enable_encryption: None,
             multi_texture_param0: None,
             multi_texture_param1: None,
-            lifetime: 0.0,
-            emission_rate: 0.0,
-            emission_area_length: 0.0,
-            emission_area_width: 0.0,
-            emission_velocity: 0.0,
-            min_lifetime: 0.0,
-            max_lifetime: 0.0,
-            min_emission_rate: 0.0,
-            max_emission_rate: 0.0,
-            min_emission_area_length: 0.0,
-            max_emission_area_length: 0.0,
-            min_emission_area_width: 0.0,
-            max_emission_area_width: 0.0,
-            min_emission_velocity: 0.0,
-            max_emission_velocity: 0.0,
-            position_variation: 0.0,
-            min_position_variation: 0.0,
-            max_position_variation: 0.0,
-            initial_size: 0.0,
-            min_initial_size: 0.0,
-            max_initial_size: 0.0,
-            size_variation: 0.0,
-            min_size_variation: 0.0,
-            max_size_variation: 0.0,
-            horizontal_range: 0.0,
-            min_horizontal_range: 0.0,
-            max_horizontal_range: 0.0,
-            vertical_range: 0.0,
-            min_vertical_range: 0.0,
-            max_vertical_range: 0.0,
-            gravity: 0.0,
-            min_gravity: 0.0,
-            max_gravity: 0.0,
-            initial_velocity: 0.0,
-            min_initial_velocity: 0.0,
-            max_initial_velocity: 0.0,
-            speed_variation: 0.0,
-            min_speed_variation: 0.0,
-            max_speed_variation: 0.0,
-            rotation_speed: 0.0,
-            min_rotation_speed: 0.0,
-            max_rotation_speed: 0.0,
-            initial_rotation: 0.0,
-            min_initial_rotation: 0.0,
-            max_initial_rotation: 0.0,
-            mid_point_color: crate::chunks::color_animation::M2Color::transparent(),
-            color_animation_speed: 0.0,
-            color_median_time: 0.0,
-            lifespan_unused: 0.0,
-            emission_rate_unused: 0.0,
-            unknown_1: 0,
-            unknown_2: 0.0,
-            emission_speed_animation: create_empty_animation_block(),
-            emission_rate_animation: create_empty_animation_block(),
-            emission_area_animation: create_empty_animation_block(),
-            xy_scale_animation: create_empty_animation_block(),
-            z_scale_animation: create_empty_animation_block(),
-            color_animation: create_empty_animation_block(),
-            transparency_animation: create_empty_animation_block(),
-            size_animation: create_empty_animation_block(),
-            intensity_animation: create_empty_animation_block(),
-            z_source_animation: create_empty_animation_block(),
-            particle_initial_state: None,
-            particle_initial_state_variation: None,
-            particle_convergence_time: None,
-            physics_parameters: None,
+            texture_tile_rotation: 0,
+            texture_dimensions_rows: 0,
+            texture_dimensions_columns: 0,
         };
 
         Ok(Self {
