@@ -35,79 +35,46 @@ impl M2TextureAnimationType {
 }
 
 /// Texture animation structure
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct M2TextureAnimation {
-    /// Animation type
-    pub animation_type: M2TextureAnimationType,
-    /// Animation for U coordinate
-    pub translation_u: M2AnimationBlock<f32>,
-    /// Animation for V coordinate
-    pub translation_v: M2AnimationBlock<f32>,
-    /// Rotation animation
-    pub rotation: M2AnimationBlock<f32>,
-    /// Scale U animation
-    pub scale_u: M2AnimationBlock<f32>,
-    /// Scale V animation
-    pub scale_v: M2AnimationBlock<f32>,
+    /// Translation animation (3D Vector)
+    pub translation: M2AnimationBlock<C3Vector>, 
+    /// Rotation animation (Quaternion)
+    pub rotation: M2AnimationBlock<C4Quaternion>, 
+    /// Scale animation (3D Vector)
+    pub scale: M2AnimationBlock<C3Vector>,
 }
 
 impl M2TextureAnimation {
-    /// Parse a texture animation from a reader
+    /// Parse animation from raw binary data
     pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self> {
-        let type_raw = reader.read_u16_le()?;
-        let animation_type =
-            M2TextureAnimationType::from_u16(type_raw).unwrap_or(M2TextureAnimationType::None);
-
-        // Skip 2 bytes of padding
-        reader.read_u16_le()?;
-
-        let translation_u = M2AnimationBlock::parse(reader)?;
-        let translation_v = M2AnimationBlock::parse(reader)?;
+        // No more fake "animation_type" and "padding", directly read the 3 blocks!
+        let translation = M2AnimationBlock::parse(reader)?;
         let rotation = M2AnimationBlock::parse(reader)?;
-        let scale_u = M2AnimationBlock::parse(reader)?;
-        let scale_v = M2AnimationBlock::parse(reader)?;
+        let scale = M2AnimationBlock::parse(reader)?;
 
         Ok(Self {
-            animation_type,
-            translation_u,
-            translation_v,
+            translation,
             rotation,
-            scale_u,
-            scale_v,
+            scale,
         })
     }
 
-    /// Write a texture animation to a writer
+    /// Writes the animation to binary
     pub fn write<W: Write>(&self, writer: &mut W) -> Result<()> {
-        writer.write_u16_le(self.animation_type as u16)?;
-
-        // Write 2 bytes of padding
-        writer.write_u16_le(0)?;
-
-        self.translation_u.write(writer)?;
-        self.translation_v.write(writer)?;
+        self.translation.write(writer)?;
         self.rotation.write(writer)?;
-        self.scale_u.write(writer)?;
-        self.scale_v.write(writer)?;
-
+        self.scale.write(writer)?;
         Ok(())
+    }
+
+    pub fn new() -> Self {
+        Self::default()
     }
 
     /// Convert this texture animation to a different version (no version differences yet)
     pub fn convert(&self, _target_version: M2Version) -> Self {
         self.clone()
-    }
-
-    /// Create a new texture animation with default values
-    pub fn new(animation_type: M2TextureAnimationType) -> Self {
-        Self {
-            animation_type,
-            translation_u: M2AnimationBlock::new(M2AnimationTrack::default()),
-            translation_v: M2AnimationBlock::new(M2AnimationTrack::default()),
-            rotation: M2AnimationBlock::new(M2AnimationTrack::default()),
-            scale_u: M2AnimationBlock::new(M2AnimationTrack::default()),
-            scale_v: M2AnimationBlock::new(M2AnimationTrack::default()),
-        }
     }
 }
 

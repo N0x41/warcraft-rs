@@ -90,6 +90,15 @@ impl C4Quaternion {
 
         Ok(())
     }
+
+    fn default() -> Self {
+        Self {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            w: 1.0, // W to 1.0 = Identity quaternion (no rotation)
+        }
+    }
 }
 
 impl M2TextureTransform {

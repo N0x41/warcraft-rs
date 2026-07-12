@@ -220,17 +220,10 @@ impl RibbonTrackType {
 /// Type of animation track within a texture animation
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum TextureTrackType {
-    /// U coordinate translation animation
     #[default]
-    TranslationU,
-    /// V coordinate translation animation
-    TranslationV,
-    /// Rotation animation
+    Translation,
     Rotation,
-    /// U coordinate scale animation
-    ScaleU,
-    /// V coordinate scale animation
-    ScaleV,
+    Scale,
 }
 
 impl TextureTrackType {
@@ -1033,11 +1026,9 @@ fn relocate_texture_animation_offsets(
         }
     }
 
-    relocate_or_zero_animation_block(&mut animation.translation_u, offset_map);
-    relocate_or_zero_animation_block(&mut animation.translation_v, offset_map);
+    relocate_or_zero_animation_block(&mut animation.translation, offset_map);
     relocate_or_zero_animation_block(&mut animation.rotation, offset_map);
-    relocate_or_zero_animation_block(&mut animation.scale_u, offset_map);
-    relocate_or_zero_animation_block(&mut animation.scale_v, offset_map);
+    relocate_or_zero_animation_block(&mut animation.scale, offset_map);
 }
 
 /// Relocates color animation offsets in a color animation to new positions
