@@ -52,7 +52,7 @@ pub struct M2TextureTransform {
 }
 
 /// A quaternion for rotations and texture transforms
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct C4Quaternion {
     pub x: f32,
     pub y: f32,

@@ -8,7 +8,7 @@ use crate::version::M2Version;
 #[derive(Debug, Default, Clone)]
 pub struct M2TransparencyAnimation {
     /// Alpha animation
-    pub alpha: M2AnimationBlock<f32>,
+    pub alpha: M2AnimationBlock<u16>,
 }
 
 impl M2TransparencyAnimation {

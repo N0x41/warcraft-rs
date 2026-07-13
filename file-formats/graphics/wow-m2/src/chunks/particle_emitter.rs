@@ -267,6 +267,7 @@ impl M2ParticleEmitter {
         let model_filename = M2Array::parse(reader)?;
         let parent_emitter = reader.read_u16_le()?;
         let geometry_model_unknown = reader.read_u16_le()?;
+        
 
         // Version-specific fields
         let (
