@@ -205,37 +205,64 @@ impl AABB {
 /// A convex hull represented as a collection of planes
 #[derive(Debug, Clone, Default)]
 pub struct ConvexHull {
-    pub planes: Vec<Plane>,
+    /// Static storage for the first 6 or 8 planes (avoid RAM allocation every frame)
+    inline: [Plane; 8],
+    inline_len: u8,
+    /// Overflow storage in case the camera traverses many nested portals
+    overflow: Vec<Plane>,
 }
 
 impl ConvexHull {
-    /// Create an empty convex hull
     pub fn new() -> Self {
-        Self { planes: Vec::new() }
+        Self {
+            inline: [Plane::default(); 8],
+            inline_len: 0,
+            overflow: Vec::new(),
+        }
+    }
+
+    pub fn len(&self) -> usize { self.inline_len as usize + self.overflow.len() }
+    pub fn is_empty(&self) -> bool { self.len() == 0 }
+
+    pub fn push(&mut self, plane: Plane) {
+        let idx = self.inline_len as usize;
+        if idx < self.inline.len() {
+            self.inline[idx] = plane;
+            self.inline_len += 1;
+        } else {
+            self.overflow.push(plane);
+        }
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Plane> {
+        self.inline[..self.inline_len as usize].iter().chain(self.overflow.iter())
+    }
+
+    #[inline]
+    pub fn plane_count(&self) -> usize { self.len() }
+
+    pub fn truncate_to(&mut self, count: usize) {
+        let inline_cap = self.inline.len();
+        if count <= inline_cap {
+            self.inline_len = count as u8;
+            self.overflow.clear();
+        } else {
+            self.inline_len = inline_cap as u8;
+            self.overflow.truncate(count - inline_cap);
+        }
     }
 
     /// Check if an AABB is at least partially inside this convex hull
     pub fn contains_aabb(&self, aabb: &AABB) -> bool {
-        for plane in &self.planes {
-            // Find the corner closest to the plane
+        for plane in self.iter() {
+            // FIX (The P-Vertex Culling): Find the vertex with the MAXIMUM projection
+            // on the plane normal. If this optimal point is outside, the whole box is outside.
             let test_point = [
-                if plane.normal[0] >= 0.0 {
-                    aabb.min[0]
-                } else {
-                    aabb.max[0]
-                },
-                if plane.normal[1] >= 0.0 {
-                    aabb.min[1]
-                } else {
-                    aabb.max[1]
-                },
-                if plane.normal[2] >= 0.0 {
-                    aabb.min[2]
-                } else {
-                    aabb.max[2]
-                },
+                if plane.normal[0] >= 0.0 { aabb.max[0] } else { aabb.min[0] },
+                if plane.normal[1] >= 0.0 { aabb.max[1] } else { aabb.min[1] },
+                if plane.normal[2] >= 0.0 { aabb.max[2] } else { aabb.min[2] },
             ];
-            // If the closest corner is outside this plane, the AABB is outside
+            
             if plane.distance_to_point(&test_point) < 0.0 {
                 return false;
             }
@@ -329,12 +356,11 @@ impl Portal {
         self.aabb.contains_point(point)
     }
 
-    /// Clip a frustum by adding planes that pass through the eye and each edge
-    pub fn clip_frustum(&self, eye: &[f32; 3], frustum: &ConvexHull) -> ConvexHull {
-        let mut result = frustum.clone();
-
+    /// Clip a frustum by adding planes that pass through the eye and each portal edge.
+    /// Zero allocation: planes are pushed directly into the ConvexHull.
+    pub fn clip_frustum_in_place(&self, eye: &[f32; 3], hull: &mut ConvexHull) -> bool {
         if self.vertices.len() < 2 {
-            return result;
+            return false;
         }
 
         for i in 0..self.vertices.len() {
@@ -360,9 +386,16 @@ impl Portal {
                 plane.negate();
             }
 
-            result.planes.push(plane);
+            hull.push(plane);
         }
 
+        true
+    }
+
+    /// Kept for backward compatibility or safe cloning use-cases.
+    pub fn clip_frustum(&self, eye: &[f32; 3], frustum: &ConvexHull) -> ConvexHull {
+        let mut result = frustum.clone();
+        self.clip_frustum_in_place(eye, &mut result);
         result
     }
 
@@ -435,6 +468,16 @@ pub struct PortalCuller {
     group_info: Vec<GroupPortalInfo>,
 }
 
+impl VisibilityResult {
+    /// Pre-allocates capacity to avoid dynamic reallocations
+    pub fn with_capacity(n_groups: usize) -> Self {
+        Self {
+            visible_groups: Vec::with_capacity(n_groups),
+            exterior_frustums: Vec::with_capacity(n_groups),
+        }
+    }
+}
+
 impl PortalCuller {
     /// Create a new portal culler
     pub fn new(
@@ -456,25 +499,42 @@ impl PortalCuller {
         eye: &[f32; 3],
         frustum: &ConvexHull,
     ) -> VisibilityResult {
-        let mut result = VisibilityResult::new();
+        let mut result = VisibilityResult::with_capacity(self.group_info.len());
         let mut visited = vec![false; self.group_info.len()];
+        let mut working_frustum = frustum.clone();
 
-        self.traverse_portals(start_group, eye, frustum, &mut result, &mut visited);
+        self.traverse_portals_impl(
+            start_group,
+            eye,
+            &mut working_frustum,
+            &mut result,
+            &mut visited,
+            0, // Depth init
+        );
 
         result
     }
 
+    /// Limit of depth to avoid stack overflow
+    const MAX_DEPTH: u32 = 64;
+
     /// Recursive portal traversal
-    fn traverse_portals(
+    fn traverse_portals_impl(
         &self,
         group_id: u32,
         eye: &[f32; 3],
-        frustum: &ConvexHull,
+        frustum: &mut ConvexHull,
         result: &mut VisibilityResult,
         visited: &mut [bool],
+        depth: u32,
     ) {
         let group_idx = group_id as usize;
         if group_idx >= visited.len() || visited[group_idx] {
+            return;
+        }
+
+        // Depth guard: stop traversing into extremely deep portal graphs.
+        if depth > Self::MAX_DEPTH {
             return;
         }
 
@@ -484,6 +544,7 @@ impl PortalCuller {
 
         // Get portal info for this group
         let Some(info) = self.group_info.get(group_idx) else {
+            visited[group_idx] = false;
             return;
         };
 
@@ -502,15 +563,18 @@ impl PortalCuller {
 
             let other_group = portal_ref.group_index as u32;
 
-            // Skip if not facing us
+            // Skip if not facing us (LIGNE CRUCIALE RÉTABLIE)
             if !portal.is_facing_camera(eye, portal_ref.side) {
                 continue;
             }
 
             // Check if portal is visible or we're inside it
             if portal.in_frustum(frustum) || portal.aabb_contains_point(eye) {
-                // Clip frustum and recurse
-                let clipped_frustum = portal.clip_frustum(eye, frustum);
+                // Snapshot the frustum plane count for in-place clipping
+                let snapshot = frustum.plane_count();
+
+                // Clip frustum in-place (appending planes)
+                portal.clip_frustum_in_place(eye, frustum);
 
                 // Check for interior->exterior transition
                 let current_is_exterior = info.is_exterior;
@@ -522,22 +586,48 @@ impl PortalCuller {
                     .unwrap_or(false);
 
                 if !current_is_exterior && other_is_exterior {
-                    // Save exterior frustum for outdoor rendering
-                    result.exterior_frustums.push(clipped_frustum.clone());
+                    // Save a snapshot of the clipped frustum for outdoor rendering
+                    result.exterior_frustums.push(frustum.clone());
                 }
 
-                // Create a local visited set for this path
-                // This allows multiple paths to reach the same group through different portals
-                let mut local_visited = visited.to_vec();
-                self.traverse_portals(
+                self.traverse_portals_impl(
                     other_group,
                     eye,
-                    &clipped_frustum,
+                    frustum,
                     result,
-                    &mut local_visited,
+                    visited,
+                    depth + 1,
                 );
+
+                // Restore frustum to its pre-clip state (remove portal clip planes)
+                frustum.truncate_to(snapshot);
             }
         }
+
+        // Backtrack: unmark so sibling portal paths can also reach this group
+        visited[group_idx] = false;
+    }
+
+    /// Iterator to get portals for a group
+    pub fn portals_for_group(
+        &self,
+        group_id: u32,
+    ) -> impl Iterator<Item = (PortalRef, &Portal)> {
+        let info = self.group_info.get(group_id as usize);
+        let (start, end) = match info {
+            Some(info) => {
+                let s = info.portal_start as usize;
+                (s, s + info.portal_count as usize)
+            }
+            None => (0, 0),
+        };
+        self.portal_refs[start..end.min(self.portal_refs.len())]
+            .iter()
+            .filter_map(|pr| {
+                self.portals
+                    .get(pr.portal_index as usize)
+                    .map(|portal| (*pr, portal))
+            })
     }
 
     /// Get the number of portals

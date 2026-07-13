@@ -487,6 +487,20 @@ fn parse_nested_chunks<R: Read + Seek>(
                     group.vertex_colors.push(MocvEntry::read(reader)?);
                 }
             }
+            "MOLR" => {
+                // Read light references (MOLR chunk)
+                let count = chunk_size / 2; // Each reference is a u16 (2 bytes)
+                for _ in 0..count {
+                    group.light_refs.push(reader.read_le()?);
+                }
+            }
+            "MODR" => {
+                // Read doodad references (MODR chunk)
+                let count = chunk_size / 2; // Each reference is a u16 (2 bytes)
+                for _ in 0..count {
+                    group.doodad_refs.push(reader.read_le()?);
+                }
+            }
             "MOBN" => {
                 // Read BSP tree nodes
                 let count = chunk_size / 16; // Each node is 16 bytes

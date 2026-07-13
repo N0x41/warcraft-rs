@@ -379,6 +379,8 @@ pub struct MovbEntry {
 #[derive(Debug, Clone)]
 pub struct Modn {
     pub names: Vec<String>,
+    /// Dictionary to find a name instantly from its binary offset
+    pub name_by_offset: std::collections::HashMap<u32, String>,
 }
 
 /// MOMO - Alpha version container chunk (version 14 only)
@@ -496,18 +498,20 @@ pub struct MobsEntry {
 impl Modn {
     pub fn parse(data: &[u8]) -> Result<Self, Box<dyn std::error::Error>> {
         let mut names = Vec::new();
-        let mut start = 0;
+        let mut name_by_offset = std::collections::HashMap::new();
+        let mut start = 0usize;
 
         for i in 0..data.len() {
             if data[i] == 0 {
                 if i > start {
                     let name = String::from_utf8(data[start..i].to_vec())?;
+                    name_by_offset.insert(start as u32, name.clone());
                     names.push(name);
                 }
                 start = i + 1;
             }
         }
 
-        Ok(Self { names })
+        Ok(Self { names, name_by_offset })
     }
 }

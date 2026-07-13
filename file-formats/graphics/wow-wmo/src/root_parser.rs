@@ -23,6 +23,10 @@ pub struct WmoRoot {
     pub n_lights: u32,
     /// Number of doodad names (from MOHD)
     pub n_doodad_names: u32,
+    /// Name-to-offset map for doodads
+    pub doodad_name_by_offset: std::collections::HashMap<u32, String>,
+    /// Doodad definitions (MODD)
+    pub doodad_defs: Vec<ModdEntry>,
     /// Number of doodad definitions (from MOHD)
     pub n_doodad_defs: u32,
     /// Number of doodad sets (from MOHD)
@@ -133,6 +137,7 @@ pub fn parse_root_file<R: Read + Seek>(
         n_portals: 0,
         n_lights: 0,
         n_doodad_names: 0,
+        doodad_name_by_offset: HashMap::new(),
         n_doodad_defs: 0,
         n_doodad_sets: 0,
         ambient_color: [128, 128, 128, 255], // Default to mid-gray
@@ -284,6 +289,7 @@ pub fn parse_root_file<R: Read + Seek>(
                 reader.read_exact(&mut data)?;
                 let modn = Modn::parse(&data)?;
                 root.doodad_names = modn.names;
+                root.doodad_name_by_offset = modn.name_by_offset;
             }
             "MODD" => {
                 // Read doodad definitions
