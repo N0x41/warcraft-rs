@@ -3394,85 +3394,96 @@ impl M2Model {
         })?;
 
         // Parse particle emitters
+        // FIX : Fault tolerence. If it fails, return an empty list and save the 3D model!
         let particle_emitters = read_array(reader, &header.particle_emitters.convert(), |r| {
             M2ParticleEmitter::parse(r, header.version)
-        })?;
+        }).unwrap_or_else(|e| {
+            log::warn!("[M2] Error parsing particles: {}, ignoring.", e);
+            Vec::new()
+        });
 
         // Parse ribbon emitters
         let ribbon_emitters = read_array(reader, &header.ribbon_emitters.convert(), |r| {
             M2RibbonEmitter::parse(r, header.version)
-        })?;
+        }).unwrap_or_default();
 
         // Parse texture animations
         let texture_animations = read_array(reader, &header.texture_animations.convert(), |r| {
             M2TextureAnimation::parse(r)
-        })?;
+        }).unwrap_or_default();
 
         // Parse color animations
         let color_animations = read_array(reader, &header.color_animations.convert(), |r| {
             M2ColorAnimation::parse(r)
-        })?;
+        }).unwrap_or_default();
 
         // Parse transparency animations (stored in header.transparency_lookup field,
         // which despite its name contains M2TransparencyAnimation structures, not lookup indices)
         let transparency_animations =
             read_array(reader, &header.transparency_lookup.convert(), |r| {
                 M2TransparencyAnimation::parse(r)
-            })?;
+            }).unwrap_or_default();
 
         // Parse events (timeline triggers for sounds, effects, etc.)
         let events = read_array(reader, &header.events.convert(), |r| {
             M2Event::parse(r, header.version)
-        })?;
+        }).unwrap_or_default();
 
         // Parse attachments (attach points for weapons, effects, etc.)
         let attachments = read_array(reader, &header.attachments.convert(), |r| {
             M2Attachment::parse(r, header.version)
-        })?;
+        }).unwrap_or_default();
 
         // Parse cameras
         let cameras = read_array(reader, &header.cameras.convert(), |r| {
             M2Camera::parse(r, header.version)
-        })?;
+        }).unwrap_or_default();
 
         // Parse lights
         let lights = read_array(reader, &header.lights.convert(), |r| {
             M2Light::parse(r, header.version)
-        })?;
+        }).unwrap_or_default();
 
         // Collect raw animation keyframe data for bones before constructing raw_data
-        let bone_animation_data = collect_bone_animation_data(reader, &bones, header.version)?;
-
+        let bone_animation_data =
+            collect_bone_animation_data(reader, &bones, header.version).unwrap_or_default();
         // Collect raw animation keyframe data for particle emitters
-        let particle_animation_data = collect_particle_animation_data(reader, &particle_emitters)?;
-
+        let particle_animation_data =
+            collect_particle_animation_data(reader, &particle_emitters).unwrap_or_default();
         // Collect raw animation keyframe data for ribbon emitters
-        let ribbon_animation_data = collect_ribbon_animation_data(reader, &ribbon_emitters)?;
-
+        let ribbon_animation_data =
+            collect_ribbon_animation_data(reader, &ribbon_emitters).unwrap_or_default();
         // Collect raw animation keyframe data for texture animations
-        let texture_animation_data = collect_texture_animation_data(reader, &texture_animations)?;
+        let texture_animation_data =
+            collect_texture_animation_data(reader, &texture_animations).unwrap_or_default();
 
         // Collect raw animation keyframe data for color animations
-        let color_animation_data = collect_color_animation_data(reader, &color_animations)?;
+        let color_animation_data =
+            collect_color_animation_data(reader, &color_animations).unwrap_or_default();
 
         // Collect raw animation keyframe data for transparency animations
         let transparency_animation_data =
-            collect_transparency_animation_data(reader, &transparency_animations)?;
+            collect_transparency_animation_data(reader, &transparency_animations)
+                .unwrap_or_default();
 
         // Collect raw event track data
-        let event_data = collect_event_data(reader, &events)?;
+        let event_data =
+            collect_event_data(reader, &events).unwrap_or_default();
 
         // Collect raw animation keyframe data for attachments
-        let attachment_animation_data = collect_attachment_animation_data(reader, &attachments)?;
+        let attachment_animation_data =
+            collect_attachment_animation_data(reader, &attachments).unwrap_or_default();
 
         // Collect raw animation keyframe data for cameras
-        let camera_animation_data = collect_camera_animation_data(reader, &cameras)?;
+        let camera_animation_data =
+            collect_camera_animation_data(reader, &cameras).unwrap_or_default();
 
         // Collect raw animation keyframe data for lights
-        let light_animation_data = collect_light_animation_data(reader, &lights)?;
+        let light_animation_data =
+            collect_light_animation_data(reader, &lights).unwrap_or_default();
 
         // Collect embedded skin data for pre-WotLK models (version <= 263)
-        let embedded_skins = collect_embedded_skin_data(reader, &header)?;
+        let embedded_skins = collect_embedded_skin_data(reader, &header).unwrap_or_default();
 
         // Parse raw data for other sections
         // These are sections we won't fully parse yet but want to preserve
@@ -3492,28 +3503,28 @@ impl M2Model {
                 reader,
                 &header.transparency_lookup_table,
                 |r| Ok(r.read_u16_le()?),
-            )?,
+            ).unwrap_or_default(),
             texture_animation_lookup: read_array(reader, &header.texture_animation_lookup, |r| {
                 Ok(r.read_u16_le()?)
-            })?,
+            }).unwrap_or_default(),
             bone_lookup_table: read_array(reader, &header.bone_lookup_table, |r| {
                 Ok(r.read_u16_le()?)
-            })?,
+            }).unwrap_or_default(),
             texture_lookup_table: read_array(reader, &header.texture_lookup_table, |r| {
                 Ok(r.read_u16_le()?)
-            })?,
-            texture_units: read_array(reader, &header.texture_units, |r| Ok(r.read_u16_le()?))?,
+            }).unwrap_or_default(),
+            texture_units: read_array(reader, &header.texture_units, |r| Ok(r.read_u16_le()?)).unwrap_or_default(),
             camera_lookup_table: read_array(reader, &header.camera_lookup_table, |r| {
                 Ok(r.read_u16_le()?)
-            })?,
+            }).unwrap_or_default(),
             // Bounding data - read as raw bytes for preservation during conversion
-            bounding_triangles: read_raw_bytes(reader, &header.bounding_triangles, 2)?, // u16 indices
-            bounding_vertices: read_raw_bytes(reader, &header.bounding_vertices, 12)?,  // C3Vector
-            bounding_normals: read_raw_bytes(reader, &header.bounding_normals, 12)?,    // C3Vector
+            bounding_triangles: read_raw_bytes(reader, &header.bounding_triangles, 2).unwrap_or_default(), // u16 indices
+            bounding_vertices: read_raw_bytes(reader, &header.bounding_vertices, 12).unwrap_or_default(),  // C3Vector
+            bounding_normals: read_raw_bytes(reader, &header.bounding_normals, 12).unwrap_or_default(),    // C3Vector
             // Attachment lookup table
             attachment_lookup_table: read_array(reader, &header.attachment_lookup_table, |r| {
                 Ok(r.read_u16_le()?)
-            })?,
+            }).unwrap_or_default(),
             ..Default::default()
         };
 
