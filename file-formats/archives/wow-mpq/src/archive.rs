@@ -759,19 +759,20 @@ impl Archive {
             && hi_block_pos != 0
         {
             let hi_block_offset = self.archive_offset + hi_block_pos;
-            let hi_block_end = hi_block_offset + (self.header.block_table_size as u64 * 8);
-
+            // FIX : Each entries are u16 (2 bytes) not 8 !
+            let hi_block_end = hi_block_offset + (self.header.block_table_size as u64 * 2);
             let file_size = self.reader.get_ref().metadata()?.len();
-            if hi_block_end > file_size {
-                log::warn!(
-                    "Hi-block table extends beyond file (ends at 0x{hi_block_end:X}, file size 0x{file_size:X}). Skipping."
-                );
-            } else {
+            // FIX : Reverse the logic, parse if it's less than or equal
+            if hi_block_end <= file_size {
                 self.hi_block_table = Some(HiBlockTable::read(
                     &mut self.reader,
                     hi_block_offset,
                     self.header.block_table_size,
                 )?);
+            } else {
+                log::warn!(
+                    "Hi-block table extends beyond file (ends at 0x{hi_block_end:X}, file size 0x{file_size:X}). Skipping."
+                );
             }
         }
 
