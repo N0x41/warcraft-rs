@@ -205,37 +205,64 @@ impl AABB {
 /// A convex hull represented as a collection of planes
 #[derive(Debug, Clone, Default)]
 pub struct ConvexHull {
-    pub planes: Vec<Plane>,
+    /// Static storage for the first 6 or 8 planes (avoid RAM allocation every frame)
+    inline: [Plane; 8],
+    inline_len: u8,
+    /// Overflow storage in case the camera traverses many nested portals
+    overflow: Vec<Plane>,
 }
 
 impl ConvexHull {
-    /// Create an empty convex hull
     pub fn new() -> Self {
-        Self { planes: Vec::new() }
+        Self {
+            inline: [Plane::default(); 8],
+            inline_len: 0,
+            overflow: Vec::new(),
+        }
+    }
+
+    pub fn len(&self) -> usize { self.inline_len as usize + self.overflow.len() }
+    pub fn is_empty(&self) -> bool { self.len() == 0 }
+
+    pub fn push(&mut self, plane: Plane) {
+        let idx = self.inline_len as usize;
+        if idx < self.inline.len() {
+            self.inline[idx] = plane;
+            self.inline_len += 1;
+        } else {
+            self.overflow.push(plane);
+        }
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Plane> {
+        self.inline[..self.inline_len as usize].iter().chain(self.overflow.iter())
+    }
+
+    #[inline]
+    pub fn plane_count(&self) -> usize { self.len() }
+
+    pub fn truncate_to(&mut self, count: usize) {
+        let inline_cap = self.inline.len();
+        if count <= inline_cap {
+            self.inline_len = count as u8;
+            self.overflow.clear();
+        } else {
+            self.inline_len = inline_cap as u8;
+            self.overflow.truncate(count - inline_cap);
+        }
     }
 
     /// Check if an AABB is at least partially inside this convex hull
     pub fn contains_aabb(&self, aabb: &AABB) -> bool {
-        for plane in &self.planes {
-            // Find the corner closest to the plane
+        for plane in self.iter() {
+            // FIX (The P-Vertex Culling): Find the vertex with the MAXIMUM projection
+            // on the plane normal. If this optimal point is outside, the whole box is outside.
             let test_point = [
-                if plane.normal[0] >= 0.0 {
-                    aabb.min[0]
-                } else {
-                    aabb.max[0]
-                },
-                if plane.normal[1] >= 0.0 {
-                    aabb.min[1]
-                } else {
-                    aabb.max[1]
-                },
-                if plane.normal[2] >= 0.0 {
-                    aabb.min[2]
-                } else {
-                    aabb.max[2]
-                },
+                if plane.normal[0] >= 0.0 { aabb.max[0] } else { aabb.min[0] },
+                if plane.normal[1] >= 0.0 { aabb.max[1] } else { aabb.min[1] },
+                if plane.normal[2] >= 0.0 { aabb.max[2] } else { aabb.min[2] },
             ];
-            // If the closest corner is outside this plane, the AABB is outside
+            
             if plane.distance_to_point(&test_point) < 0.0 {
                 return false;
             }
