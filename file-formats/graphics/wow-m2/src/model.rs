@@ -1642,27 +1642,15 @@ fn collect_texture_animation_data<R: Read + Seek>(
     let mut animation_data = Vec::new();
 
     for (anim_idx, anim) in animations.iter().enumerate() {
-        // Collect translation_u track (f32 = 4 bytes)
         if let Some(data) = collect_texture_track_data(
             reader,
-            &anim.translation_u,
+            &anim.translation,
             anim_idx,
-            TextureTrackType::TranslationU,
+            TextureTrackType::Translation,
         )? {
             animation_data.push(data);
         }
 
-        // Collect translation_v track (f32 = 4 bytes)
-        if let Some(data) = collect_texture_track_data(
-            reader,
-            &anim.translation_v,
-            anim_idx,
-            TextureTrackType::TranslationV,
-        )? {
-            animation_data.push(data);
-        }
-
-        // Collect rotation track (f32 = 4 bytes)
         if let Some(data) = collect_texture_track_data(
             reader,
             &anim.rotation,
@@ -1672,16 +1660,8 @@ fn collect_texture_animation_data<R: Read + Seek>(
             animation_data.push(data);
         }
 
-        // Collect scale_u track (f32 = 4 bytes)
         if let Some(data) =
-            collect_texture_track_data(reader, &anim.scale_u, anim_idx, TextureTrackType::ScaleU)?
-        {
-            animation_data.push(data);
-        }
-
-        // Collect scale_v track (f32 = 4 bytes)
-        if let Some(data) =
-            collect_texture_track_data(reader, &anim.scale_v, anim_idx, TextureTrackType::ScaleV)?
+            collect_texture_track_data(reader, &anim.scale, anim_idx, TextureTrackType::Scale)?
         {
             animation_data.push(data);
         }
@@ -4511,11 +4491,9 @@ impl M2Model {
                 for anim in &self.texture_animations {
                     let mut static_anim = anim.clone();
                     // Zero out all animation blocks by setting them to default
-                    static_anim.translation_u = M2AnimationBlock::default();
-                    static_anim.translation_v = M2AnimationBlock::default();
+                    static_anim.translation = M2AnimationBlock::default();
                     static_anim.rotation = M2AnimationBlock::default();
-                    static_anim.scale_u = M2AnimationBlock::default();
-                    static_anim.scale_v = M2AnimationBlock::default();
+                    static_anim.scale = M2AnimationBlock::default();
 
                     let mut anim_data = Vec::new();
                     static_anim.write(&mut anim_data)?;

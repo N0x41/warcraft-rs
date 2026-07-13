@@ -52,7 +52,7 @@ pub struct M2TextureTransform {
 }
 
 /// A quaternion for rotations and texture transforms
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct C4Quaternion {
     pub x: f32,
     pub y: f32,
@@ -89,15 +89,6 @@ impl C4Quaternion {
         writer.write_f32_le(self.w)?;
 
         Ok(())
-    }
-
-    fn default() -> Self {
-        Self {
-            x: 0.0,
-            y: 0.0,
-            z: 0.0,
-            w: 1.0, // W to 1.0 = Identity quaternion (no rotation)
-        }
     }
 }
 

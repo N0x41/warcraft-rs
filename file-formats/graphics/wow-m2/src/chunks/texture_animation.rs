@@ -1,7 +1,8 @@
-use crate::io_ext::{ReadExt, WriteExt};
 use std::io::{Read, Seek, Write};
 
-use crate::chunks::animation::{M2AnimationBlock, M2AnimationTrack};
+use crate::chunks::animation::M2AnimationBlock;
+use crate::chunks::C4Quaternion;
+use crate::common::C3Vector;
 use crate::error::Result;
 use crate::version::M2Version;
 
@@ -87,72 +88,29 @@ mod tests {
     fn test_texture_animation_parse_write() {
         let mut data = Vec::new();
 
-        // Animation type (Scroll)
-        data.extend_from_slice(&1u16.to_le_bytes());
+        // Helper to write an empty M2AnimationBlock (20 bytes: 2+2+4+4+4+4)
+        let write_empty_block = |data: &mut Vec<u8>| {
+            data.extend_from_slice(&1u16.to_le_bytes()); // Interpolation type (Linear)
+            data.extend_from_slice(&(-1i16).to_le_bytes()); // Global sequence
+            data.extend_from_slice(&0u32.to_le_bytes()); // Timestamps count
+            data.extend_from_slice(&0u32.to_le_bytes()); // Timestamps offset
+            data.extend_from_slice(&0u32.to_le_bytes()); // Values count
+            data.extend_from_slice(&0u32.to_le_bytes()); // Values offset
+        };
 
-        // Padding
-        data.extend_from_slice(&0u16.to_le_bytes());
-
-        // Translation U animation track
-        data.extend_from_slice(&1u16.to_le_bytes()); // Interpolation type (Linear)
-        data.extend_from_slice(&(-1i16).to_le_bytes()); // Global sequence
-        data.extend_from_slice(&0u32.to_le_bytes()); // Interpolation ranges count
-        data.extend_from_slice(&0u32.to_le_bytes()); // Interpolation ranges offset
-        data.extend_from_slice(&0u32.to_le_bytes()); // Timestamps count
-        data.extend_from_slice(&0u32.to_le_bytes()); // Timestamps offset
-        data.extend_from_slice(&0u32.to_le_bytes()); // Values count
-        data.extend_from_slice(&0u32.to_le_bytes()); // Values offset
-
-        // Translation V animation track
-        data.extend_from_slice(&1u16.to_le_bytes()); // Interpolation type (Linear)
-        data.extend_from_slice(&(-1i16).to_le_bytes()); // Global sequence
-        data.extend_from_slice(&0u32.to_le_bytes()); // Interpolation ranges count
-        data.extend_from_slice(&0u32.to_le_bytes()); // Interpolation ranges offset
-        data.extend_from_slice(&0u32.to_le_bytes()); // Timestamps count
-        data.extend_from_slice(&0u32.to_le_bytes()); // Timestamps offset
-        data.extend_from_slice(&0u32.to_le_bytes()); // Values count
-        data.extend_from_slice(&0u32.to_le_bytes()); // Values offset
-
-        // Rotation animation track
-        data.extend_from_slice(&1u16.to_le_bytes()); // Interpolation type (Linear)
-        data.extend_from_slice(&(-1i16).to_le_bytes()); // Global sequence
-        data.extend_from_slice(&0u32.to_le_bytes()); // Interpolation ranges count
-        data.extend_from_slice(&0u32.to_le_bytes()); // Interpolation ranges offset
-        data.extend_from_slice(&0u32.to_le_bytes()); // Timestamps count
-        data.extend_from_slice(&0u32.to_le_bytes()); // Timestamps offset
-        data.extend_from_slice(&0u32.to_le_bytes()); // Values count
-        data.extend_from_slice(&0u32.to_le_bytes()); // Values offset
-
-        // Scale U animation track
-        data.extend_from_slice(&1u16.to_le_bytes()); // Interpolation type (Linear)
-        data.extend_from_slice(&(-1i16).to_le_bytes()); // Global sequence
-        data.extend_from_slice(&0u32.to_le_bytes()); // Interpolation ranges count
-        data.extend_from_slice(&0u32.to_le_bytes()); // Interpolation ranges offset
-        data.extend_from_slice(&0u32.to_le_bytes()); // Timestamps count
-        data.extend_from_slice(&0u32.to_le_bytes()); // Timestamps offset
-        data.extend_from_slice(&0u32.to_le_bytes()); // Values count
-        data.extend_from_slice(&0u32.to_le_bytes()); // Values offset
-
-        // Scale V animation track
-        data.extend_from_slice(&1u16.to_le_bytes()); // Interpolation type (Linear)
-        data.extend_from_slice(&(-1i16).to_le_bytes()); // Global sequence
-        data.extend_from_slice(&0u32.to_le_bytes()); // Interpolation ranges count
-        data.extend_from_slice(&0u32.to_le_bytes()); // Interpolation ranges offset
-        data.extend_from_slice(&0u32.to_le_bytes()); // Timestamps count
-        data.extend_from_slice(&0u32.to_le_bytes()); // Timestamps offset
-        data.extend_from_slice(&0u32.to_le_bytes()); // Values count
-        data.extend_from_slice(&0u32.to_le_bytes()); // Values offset
+        // Translation block (C3Vector)
+        write_empty_block(&mut data);
+        // Rotation block (C4Quaternion)
+        write_empty_block(&mut data);
+        // Scale block (C3Vector)
+        write_empty_block(&mut data);
 
         let mut cursor = Cursor::new(data);
         let tex_anim = M2TextureAnimation::parse(&mut cursor).unwrap();
 
-        assert_eq!(tex_anim.animation_type, M2TextureAnimationType::Scroll);
-
-        // Test write
+        // Test write round-trip: output size should match input
         let mut output = Vec::new();
         tex_anim.write(&mut output).unwrap();
-
-        // Check output size (should be the same as input)
         assert_eq!(output.len(), cursor.get_ref().len());
     }
 }
