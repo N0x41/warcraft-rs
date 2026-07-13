@@ -10,6 +10,8 @@ use crate::version::M2Version;
 /// Represents a ribbon emitter in an M2 model
 #[derive(Debug, Clone)]
 pub struct M2RibbonEmitter {
+    /// Ribbon ID (fix: The ID is at the start in the file, not at the end)
+    pub id: u32,
     /// Bone ID that this emitter is attached to
     pub bone_index: u32,
     /// Position of the emitter relative to the bone
@@ -21,7 +23,7 @@ pub struct M2RibbonEmitter {
     /// Color animation data
     pub color_animation: M2AnimationBlock<M2Color>,
     /// Alpha animation data
-    pub alpha_animation: M2AnimationBlock<f32>,
+    pub alpha_animation: M2AnimationBlock<u16>,
     /// Height above animation data
     pub height_above_animation: M2AnimationBlock<f32>,
     /// Height below animation data
@@ -36,19 +38,20 @@ pub struct M2RibbonEmitter {
     pub texture_rows: u16,
     /// Number of texture columns
     pub texture_cols: u16,
+    /// Texture slot animation (fix: The texture_slot is an animation block, not a simple value)
+    pub texture_slot: M2AnimationBlock<u16>,
+    /// Visibility animation (fix: The visibility is an animation block, not a simple value)
+    pub visibility: M2AnimationBlock<u16>,
     /// Texture slice (added in MoP)
     pub texture_slice: Option<u16>,
     /// Variation of the ribbon (added in MoP)
     pub variation: Option<u16>,
-    /// Ribbon ID
-    pub id: u32,
-    /// Ribbon flags
-    pub flags: u32,
 }
 
 impl M2RibbonEmitter {
     /// Parse a ribbon emitter from a reader based on the M2 version
     pub fn parse<R: Read + Seek>(reader: &mut R, version: u32) -> Result<Self> {
+        let id = reader.read_u32_le()?;
         let bone_index = reader.read_u32_le()?;
         let position = C3Vector::parse(reader)?;
         let texture_indices = M2Array::parse(reader)?;
@@ -66,6 +69,10 @@ impl M2RibbonEmitter {
         let texture_rows = reader.read_u16_le()?;
         let texture_cols = reader.read_u16_le()?;
 
+        // FIX: The texture_slot is an animation block, not a simple value
+        let texture_slot = M2AnimationBlock::parse(reader)?;
+        let visibility = M2AnimationBlock::parse(reader)?;
+
         // Version-specific fields
         // Version 272 is used by both Cataclysm and MoP, and includes texture_slice/variation
         let (texture_slice, variation) = if version >= 272 {
@@ -76,10 +83,8 @@ impl M2RibbonEmitter {
             (None, None)
         };
 
-        let id = reader.read_u32_le()?;
-        let flags = reader.read_u32_le()?;
-
         Ok(Self {
+            id,
             bone_index,
             position,
             texture_indices,
@@ -93,15 +98,15 @@ impl M2RibbonEmitter {
             gravity,
             texture_rows,
             texture_cols,
+            texture_slot,
+            visibility,
             texture_slice,
             variation,
-            id,
-            flags,
         })
     }
 
-    /// Write a ribbon emitter to a writer based on the M2 version
     pub fn write<W: Write>(&self, writer: &mut W, version: u32) -> Result<()> {
+        writer.write_u32_le(self.id)?;
         writer.write_u32_le(self.bone_index)?;
         self.position.write(writer)?;
         self.texture_indices.write(writer)?;
@@ -119,15 +124,15 @@ impl M2RibbonEmitter {
         writer.write_u16_le(self.texture_rows)?;
         writer.write_u16_le(self.texture_cols)?;
 
+        self.texture_slot.write(writer)?;
+        self.visibility.write(writer)?;
+
         // Version-specific fields
         // Version 272 is used by both Cataclysm and MoP, and includes texture_slice/variation
         if version >= 272 {
             writer.write_u16_le(self.texture_slice.unwrap_or(0))?;
             writer.write_u16_le(self.variation.unwrap_or(0))?;
         }
-
-        writer.write_u32_le(self.id)?;
-        writer.write_u32_le(self.flags)?;
 
         Ok(())
     }

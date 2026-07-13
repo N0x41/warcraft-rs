@@ -11,6 +11,8 @@ bitflags::bitflags! {
     /// Particle flags as defined in the M2 format
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct M2ParticleFlags: u32 {
+        /// Identifies that this particle has a position.
+        const HAS_POSITION = 0x00000001;
         /// Particles are billboarded
         const BILLBOARDED = 0x00000008;
         /// Particles stretch based on their velocity
@@ -114,8 +116,12 @@ pub struct M2ParticleEmitter {
     pub head_or_tail: u8,
     /// Texture file IDs (for multi-texture particles)
     pub texture_file_data_ids: Option<M2Array<u32>>,
-    /// Tile coordinates in the texture(s)
-    pub texture_tile_coordinates: M2Array<C2Vector>,
+    /// Texture tile rotation (added in MoP)
+    pub texture_tile_rotation: u16,
+    /// Number of texture rows (added in MoP)
+    pub texture_dimensions_rows: u16,
+    /// Number of texture columns (added in MoP)
+    pub texture_dimensions_columns: u16,
     /// Flag to enable encryption (WoD and later)
     pub enable_encryption: Option<u8>,
     /// Multi-texture particle blend operation
@@ -260,8 +266,15 @@ impl M2ParticleEmitter {
     /// Parse a particle emitter from a reader based on the M2 version
     pub fn parse<R: Read + Seek>(reader: &mut R, version: u32) -> Result<Self> {
         let id = reader.read_u32_le()?;
-        let flags = M2ParticleFlags::from_bits_retain(reader.read_u32_le()?);
-        let position = C3Vector::parse(reader)?;
+        let flag_bits = reader.read_u32_le()?;
+        let flags = M2ParticleFlags::from_bits_retain(flag_bits);
+        
+        let position = if flags.contains(M2ParticleFlags::HAS_POSITION) {
+            C3Vector::parse(reader)? // Move 12 bytes
+        } else {
+            C3Vector::default()      // Move 0 bytes
+        };
+        
         let bone_index = reader.read_u16_le()?;
         let texture_index = reader.read_u16_le()?;
         let model_filename = M2Array::parse(reader)?;
@@ -361,7 +374,9 @@ impl M2ParticleEmitter {
         };
 
         // Texture tile coordinates are in all versions
-        let texture_tile_coordinates = M2Array::parse(reader)?;
+        let texture_tile_rotation = reader.read_u16_le()?;
+        let texture_dimensions_rows = reader.read_u16_le()?;
+        let texture_dimensions_columns = reader.read_u16_le()?;
 
         // Read common parameters
         let lifetime = reader.read_f32_le()?;
@@ -487,7 +502,9 @@ impl M2ParticleEmitter {
             particle_type,
             head_or_tail,
             texture_file_data_ids,
-            texture_tile_coordinates,
+            texture_tile_rotation,
+            texture_dimensions_rows,
+            texture_dimensions_columns,
             enable_encryption,
             multi_texture_param0,
             multi_texture_param1,
@@ -641,8 +658,10 @@ impl M2ParticleEmitter {
             writer.write_u8(self.head_or_tail)?;
         }
 
-        // Texture tile coordinates are in all versions
-        self.texture_tile_coordinates.write(writer)?;
+        // Write texture tile rotation/dimensions (3 × u16)
+        writer.write_u16_le(self.texture_tile_rotation)?;
+        writer.write_u16_le(self.texture_dimensions_rows)?;
+        writer.write_u16_le(self.texture_dimensions_columns)?;
 
         // Write common parameters
         writer.write_f32_le(self.lifetime)?;
