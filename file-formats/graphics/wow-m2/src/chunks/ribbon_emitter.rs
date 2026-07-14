@@ -57,10 +57,10 @@ impl M2RibbonEmitter {
         let texture_indices = M2Array::parse(reader)?;
         let material_indices = M2Array::parse(reader)?;
 
-        let color_animation = M2AnimationBlock::parse(reader)?;
-        let alpha_animation = M2AnimationBlock::parse(reader)?;
-        let height_above_animation = M2AnimationBlock::parse(reader)?;
-        let height_below_animation = M2AnimationBlock::parse(reader)?;
+        let color_animation = M2AnimationBlock::parse(reader, version)?;
+        let alpha_animation = M2AnimationBlock::parse(reader, version)?;
+        let height_above_animation = M2AnimationBlock::parse(reader, version)?;
+        let height_below_animation = M2AnimationBlock::parse(reader, version)?;
 
         let edges_per_second = reader.read_f32_le()?;
         let edge_lifetime = reader.read_f32_le()?;
@@ -70,8 +70,8 @@ impl M2RibbonEmitter {
         let texture_cols = reader.read_u16_le()?;
 
         // FIX: The texture_slot is an animation block, not a simple value
-        let texture_slot = M2AnimationBlock::parse(reader)?;
-        let visibility = M2AnimationBlock::parse(reader)?;
+        let texture_slot = M2AnimationBlock::parse(reader, version)?;
+        let visibility = M2AnimationBlock::parse(reader, version)?;
 
         // Version-specific fields
         // Version 272 is used by both Cataclysm and MoP, and includes texture_slice/variation
@@ -112,10 +112,10 @@ impl M2RibbonEmitter {
         self.texture_indices.write(writer)?;
         self.material_indices.write(writer)?;
 
-        self.color_animation.write(writer)?;
-        self.alpha_animation.write(writer)?;
-        self.height_above_animation.write(writer)?;
-        self.height_below_animation.write(writer)?;
+        self.color_animation.write(writer, version)?;
+        self.alpha_animation.write(writer, version)?;
+        self.height_above_animation.write(writer, version)?;
+        self.height_below_animation.write(writer, version)?;
 
         writer.write_f32_le(self.edges_per_second)?;
         writer.write_f32_le(self.edge_lifetime)?;
@@ -124,8 +124,8 @@ impl M2RibbonEmitter {
         writer.write_u16_le(self.texture_rows)?;
         writer.write_u16_le(self.texture_cols)?;
 
-        self.texture_slot.write(writer)?;
-        self.visibility.write(writer)?;
+        self.texture_slot.write(writer, version)?;
+        self.visibility.write(writer, version)?;
 
         // Version-specific fields
         // Version 272 is used by both Cataclysm and MoP, and includes texture_slice/variation

@@ -48,11 +48,11 @@ pub struct M2TextureAnimation {
 
 impl M2TextureAnimation {
     /// Parse animation from raw binary data
-    pub fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self> {
+    pub fn parse<R: Read + Seek>(reader: &mut R, version: u32) -> Result<Self> {
         // No more fake "animation_type" and "padding", directly read the 3 blocks!
-        let translation = M2AnimationBlock::parse(reader)?;
-        let rotation = M2AnimationBlock::parse(reader)?;
-        let scale = M2AnimationBlock::parse(reader)?;
+        let translation = M2AnimationBlock::parse(reader, version)?;
+        let rotation = M2AnimationBlock::parse(reader, version)?;
+        let scale = M2AnimationBlock::parse(reader, version)?;
 
         Ok(Self {
             translation,
@@ -62,10 +62,10 @@ impl M2TextureAnimation {
     }
 
     /// Writes the animation to binary
-    pub fn write<W: Write>(&self, writer: &mut W) -> Result<()> {
-        self.translation.write(writer)?;
-        self.rotation.write(writer)?;
-        self.scale.write(writer)?;
+    pub fn write<W: Write>(&self, writer: &mut W, version: u32) -> Result<()> {
+        self.translation.write(writer, version)?;
+        self.rotation.write(writer, version)?;
+        self.scale.write(writer, version)?;
         Ok(())
     }
 

@@ -174,7 +174,7 @@ where
         .map_err(M2Error::Io)?;
 
     // Read each element
-    let mut result = Vec::with_capacity(array.count as usize);
+    let mut result = Vec::with_capacity(std::cmp::min(array.count as usize, 10_000));
     for _ in 0..array.count {
         result.push(parse_fn(reader)?);
     }

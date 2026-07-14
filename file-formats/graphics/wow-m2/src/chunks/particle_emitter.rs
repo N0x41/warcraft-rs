@@ -268,19 +268,13 @@ impl M2ParticleEmitter {
         let id = reader.read_u32_le()?;
         let flag_bits = reader.read_u32_le()?;
         let flags = M2ParticleFlags::from_bits_retain(flag_bits);
-        
-        let position = if flags.contains(M2ParticleFlags::HAS_POSITION) {
-            C3Vector::parse(reader)? // Move 12 bytes
-        } else {
-            C3Vector::default()      // Move 0 bytes
-        };
+        let position = C3Vector::parse(reader)?;
         
         let bone_index = reader.read_u16_le()?;
         let texture_index = reader.read_u16_le()?;
         let model_filename = M2Array::parse(reader)?;
         let parent_emitter = reader.read_u16_le()?;
         let geometry_model_unknown = reader.read_u16_le()?;
-        
 
         // Version-specific fields
         let (
@@ -373,6 +367,8 @@ impl M2ParticleEmitter {
             (None, blend, emitter, particle, head, None, None, None, None)
         };
 
+        
+
         // Texture tile coordinates are in all versions
         let texture_tile_rotation = reader.read_u16_le()?;
         let texture_dimensions_rows = reader.read_u16_le()?;
@@ -434,7 +430,7 @@ impl M2ParticleEmitter {
         let max_initial_rotation = reader.read_f32_le()?;
 
         // Read color parameters
-        let mid_point_color = M2Color::parse(reader)?;
+        let mid_point_color = M2Color::parse(reader).unwrap_or_default();
         let color_animation_speed = reader.read_f32_le()?;
         let color_median_time = reader.read_f32_le()?;
 
@@ -445,16 +441,16 @@ impl M2ParticleEmitter {
         let unknown_2 = reader.read_f32_le()?;
 
         // Read animation blocks
-        let emission_speed_animation = M2AnimationBlock::parse(reader)?;
-        let emission_rate_animation = M2AnimationBlock::parse(reader)?;
-        let emission_area_animation = M2AnimationBlock::parse(reader)?;
-        let xy_scale_animation = M2AnimationBlock::parse(reader)?;
-        let z_scale_animation = M2AnimationBlock::parse(reader)?;
-        let color_animation = M2AnimationBlock::parse(reader)?;
-        let transparency_animation = M2AnimationBlock::parse(reader)?;
-        let size_animation = M2AnimationBlock::parse(reader)?;
-        let intensity_animation = M2AnimationBlock::parse(reader)?;
-        let z_source_animation = M2AnimationBlock::parse(reader)?;
+        let emission_speed_animation = M2AnimationBlock::parse(reader, version)?;
+        let emission_rate_animation = M2AnimationBlock::parse(reader, version)?;
+        let emission_area_animation = M2AnimationBlock::parse(reader, version)?;
+        let xy_scale_animation = M2AnimationBlock::parse(reader, version)?;
+        let z_scale_animation = M2AnimationBlock::parse(reader, version)?;
+        let color_animation = M2AnimationBlock::parse(reader, version)?;
+        let transparency_animation = M2AnimationBlock::parse(reader, version)?;
+        let size_animation = M2AnimationBlock::parse(reader, version)?;
+        let intensity_animation = M2AnimationBlock::parse(reader, version)?;
+        let z_source_animation = M2AnimationBlock::parse(reader, version)?;
 
         // Additional fields for Legion and later
         let (particle_initial_state, particle_initial_state_variation, particle_convergence_time) =
@@ -730,16 +726,16 @@ impl M2ParticleEmitter {
         writer.write_f32_le(self.unknown_2)?;
 
         // Write animation blocks
-        self.emission_speed_animation.write(writer)?;
-        self.emission_rate_animation.write(writer)?;
-        self.emission_area_animation.write(writer)?;
-        self.xy_scale_animation.write(writer)?;
-        self.z_scale_animation.write(writer)?;
-        self.color_animation.write(writer)?;
-        self.transparency_animation.write(writer)?;
-        self.size_animation.write(writer)?;
-        self.intensity_animation.write(writer)?;
-        self.z_source_animation.write(writer)?;
+        self.emission_speed_animation.write(writer, version)?;
+        self.emission_rate_animation.write(writer, version)?;
+        self.emission_area_animation.write(writer, version)?;
+        self.xy_scale_animation.write(writer, version)?;
+        self.z_scale_animation.write(writer, version)?;
+        self.color_animation.write(writer, version)?;
+        self.transparency_animation.write(writer, version)?;
+        self.size_animation.write(writer, version)?;
+        self.intensity_animation.write(writer, version)?;
+        self.z_source_animation.write(writer, version)?;
 
         // Additional fields for Legion and later
         if let Some(m2_version) = M2Version::from_header_version(version)
