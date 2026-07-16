@@ -128,15 +128,15 @@ impl ParticleEmitter {
             _ => EmissionType::Point,
         };
 
-        // Calculate max particles based on lifespan and emission rate
-        let max_lifespan = m2_emitter.lifetime.max(m2_emitter.max_lifetime);
-        let max_rate = m2_emitter.emission_rate.max(m2_emitter.max_emission_rate);
-        let max_particles = ((max_lifespan * max_rate * 1.5) as usize).max(16);
 
-        // Calculate texture scale from tile dimensions
-        // Default to 1x1 if not specified
-        let tex_cols = 1u32; // Would come from texture_dimensions_cols
-        let tex_rows = 1u32; // Would come from texture_dimension_rows
+        // Since we now rely on M2AnimationBlocks, we don't have an absolute "max_lifetime" 
+        // easily extractable at initialization. 
+        // We allocate a sufficiently large buffer by default for WotLK systems.
+        let max_particles = 1000; 
+
+        // Secure extraction of texture dimensions (to avoid division by zéro)
+        let tex_cols = m2_emitter.texture_dimensions_columns.max(1);
+        let tex_rows = m2_emitter.texture_dimensions_rows.max(1);
         let tex_scale_x = 1.0 / tex_rows as f32;
         let tex_scale_y = 1.0 / tex_cols as f32;
         let tex_col_bits = (tex_cols as f32).log2().ceil() as u32;
@@ -154,26 +154,29 @@ impl ParticleEmitter {
                 m2_emitter.position.y,
                 m2_emitter.position.z,
             ],
-            drag: 0.0, // Drag would come from parsed data
+            drag: m2_emitter.drag,
             particles_to_emit: 0.0,
-            lifespan_variance: m2_emitter.max_lifetime - m2_emitter.min_lifetime,
+            lifespan_variance: m2_emitter.lifespan_variation.unwrap_or(0.0),
             max_particles,
             bone_index: m2_emitter.bone_index,
-            texture_index: m2_emitter.texture_index,
+            texture_index: m2_emitter.texture_indices[0],
             blend_mode: BlendMode::from_u8(m2_emitter.blending_type),
             flags: m2_emitter.flags,
             params: EmitterParams {
                 enabled: true,
-                gravity: [0.0, 0.0, -m2_emitter.gravity],
-                emission_speed: m2_emitter.emission_velocity,
-                speed_variation: m2_emitter.speed_variation,
-                vertical_range: m2_emitter.vertical_range,
-                horizontal_range: m2_emitter.horizontal_range,
-                lifespan: m2_emitter.lifetime,
-                emission_rate: m2_emitter.emission_rate,
-                emission_area_length: m2_emitter.emission_area_length,
-                emission_area_width: m2_emitter.emission_area_width,
-                z_source: 0.0,
+                // Note: These values are driven by dynamic animation tracks. 
+                // They are initialized to 0.0 as placeholders. The consuming client 
+                // engine is responsible for evaluating the `M2AnimationBlock` and 
+                // updating these parameters per logical tick to interpolate them correctly.
+                gravity: [0.0, 0.0, 0.0],
+                emission_speed: 0.0,
+                speed_variation: 0.0,
+                vertical_range: 0.0,
+                horizontal_range: 0.0,
+                lifespan: 0.0,
+                emission_rate: 0.0,
+                emission_area_length: 0.0,
+                emission_area_width: 0.0,
             },
             tex_scale_x,
             tex_scale_y,

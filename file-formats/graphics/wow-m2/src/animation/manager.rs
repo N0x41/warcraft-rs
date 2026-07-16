@@ -6,6 +6,7 @@
 use super::interpolation::interpolate_with_blend;
 use super::state::{AnimationState, LcgRng};
 use super::types::{Lerp, Quat, ResolvedTrack, Vec3};
+//use crate::chunks::m2_track_resolver::M2TrackFloatExt;
 
 /// Animation sequence data (resolved from M2Sequence)
 #[derive(Debug, Clone)]
@@ -69,6 +70,36 @@ pub struct ResolvedBone {
     pub pivot: Vec3,
 }
 
+/// Resolved particle emitter animation data
+/// 
+/// Contains all interpolated tracks required to simulate a particle emitter
+/// over the lifetime of a specific animation sequence.
+#[derive(Debug, Clone)]
+pub struct ResolvedParticleEmitter {
+    /// Emitter index in the original M2 array
+    pub emitter_index: usize,
+    /// Track controlling whether the emitter is currently spawning particles (0.0 = false, >0.0 = true)
+    pub enabled: ResolvedTrack<f32>,
+    /// Track for the initial velocity of spawned particles
+    pub emission_speed: ResolvedTrack<f32>,
+    /// Track for the speed variance
+    pub speed_variation: ResolvedTrack<f32>,
+    /// Track for the vertical emission angle (radians)
+    pub vertical_range: ResolvedTrack<f32>,
+    /// Track for the horizontal emission angle (radians)
+    pub horizontal_range: ResolvedTrack<f32>,
+    /// Track for the gravitational pull (applied to the Z axis in world space)
+    pub gravity: ResolvedTrack<f32>,
+    /// Track for the lifespan of spawned particles (in seconds)
+    pub lifespan: ResolvedTrack<f32>,
+    /// Track for the emission rate (particles spawned per second)
+    pub emission_rate: ResolvedTrack<f32>,
+    /// Track for the length of the emission area
+    pub emission_area_length: ResolvedTrack<f32>,
+    /// Track for the width of the emission area
+    pub emission_area_width: ResolvedTrack<f32>,
+}
+
 /// M2 Animation Manager
 ///
 /// Manages animation state and provides interpolated values for animated properties.
@@ -83,6 +114,8 @@ pub struct AnimationManager {
     sequences: Vec<AnimSequence>,
     /// Resolved bone data with animation tracks
     bones: Vec<ResolvedBone>,
+    /// Resolved particle emitter data
+    particle_emitters: Vec<ResolvedParticleEmitter>,
     /// Current animation state
     current_animation: AnimationState,
     /// Next animation state (for blending)
@@ -91,6 +124,10 @@ pub struct AnimationManager {
     blend_factor: f32,
     /// Random number generator for variation selection
     rng: LcgRng,
+    /// Opacity tracks (Texture Weights)
+    texture_weights: Vec<ResolvedTrack<f32>>,
+    /// UV Translation tracks (Texture Transforms)
+    texture_transforms: Vec<ResolvedTrack<Vec3>>,
 }
 
 impl AnimationManager {
@@ -104,6 +141,7 @@ impl AnimationManager {
         global_sequence_durations: Vec<u32>,
         sequences: Vec<AnimSequence>,
         bones: Vec<ResolvedBone>,
+        particle_emitters: Vec<ResolvedParticleEmitter>
     ) -> Self {
         let global_sequence_times = vec![0.0; global_sequence_durations.len()];
 
@@ -123,10 +161,13 @@ impl AnimationManager {
             global_sequence_times,
             sequences,
             bones,
+            particle_emitters,
             current_animation,
             next_animation: AnimationState::none(),
             blend_factor: 1.0,
             rng,
+            texture_weights: Vec::new(),
+            texture_transforms: Vec::new()
         }
     }
 
@@ -137,10 +178,13 @@ impl AnimationManager {
             global_sequence_times: Vec::new(),
             sequences: Vec::new(),
             bones: Vec::new(),
+            particle_emitters: Vec::new(),
             current_animation: AnimationState::none(),
             next_animation: AnimationState::none(),
             blend_factor: 1.0,
             rng: LcgRng::default(),
+            texture_weights: Vec::new(),
+            texture_transforms: Vec::new()
         }
     }
 
@@ -159,6 +203,22 @@ impl AnimationManager {
 
         // Handle animation transitions
         self.update_animation_transitions();
+    }
+
+    /// Get index opacity value
+    pub fn get_texture_weight(&self, index: usize) -> f32 {
+        if index >= self.texture_weights.len() {
+            return 1.0; // Opacité max par défaut
+        }
+        self.get_current_value_with_default(&self.texture_weights[index], 1.0)
+    }
+
+    /// Get index UV translation
+    pub fn get_texture_transform(&self, index: usize) -> Vec3 {
+        if index >= self.texture_transforms.len() {
+            return Vec3::ZERO; // Pas de mouvement par défaut
+        }
+        self.get_current_value_with_default(&self.texture_transforms[index], Vec3::ZERO)
     }
 
     /// Handle animation looping and transitions
@@ -400,6 +460,49 @@ impl AnimationManager {
     pub fn blend_factor(&self) -> f32 {
         self.blend_factor
     }
+
+    /// Get interpolated particle emitter parameters for the current animation state.
+    /// 
+    /// This seamlessly handles animation blending, global sequences, and track evaluation.
+    /// 
+    /// # Arguments
+    /// * `emitter_index` - The index of the emitter to evaluate
+    /// * `default_params` - Base parameters to fallback to if a track is missing
+    pub fn get_emitter_params(
+        &self, 
+        emitter_index: usize, 
+        default_params: &crate::particles::EmitterParams
+    ) -> crate::particles::EmitterParams {
+        
+        let Some(resolved) = self.particle_emitters.get(emitter_index) else {
+            return default_params.clone(); // Fallback if not resolved
+        };
+
+        let mut params = default_params.clone();
+
+        // 1. Evaluate Enabled state (typically stored as a float where > 0.5 is true)
+        let default_enabled = if default_params.enabled { 1.0 } else { 0.0 };
+        let enabled_val = self.get_current_value_with_default(&resolved.enabled, default_enabled);
+        params.enabled = enabled_val > 0.5;
+
+        // 2. Evaluate Core physics
+        params.emission_speed = self.get_current_value_with_default(&resolved.emission_speed, default_params.emission_speed);
+        params.speed_variation = self.get_current_value_with_default(&resolved.speed_variation, default_params.speed_variation);
+        params.vertical_range = self.get_current_value_with_default(&resolved.vertical_range, default_params.vertical_range);
+        params.horizontal_range = self.get_current_value_with_default(&resolved.horizontal_range, default_params.horizontal_range);
+        
+        // WoW M2 gravity is typically a 1D float track applied to the Z axis
+        let gravity_z = self.get_current_value_with_default(&resolved.gravity, default_params.gravity[2]);
+        params.gravity = [0.0, 0.0, gravity_z];
+
+        // 3. Evaluate Lifecycle & Volume
+        params.lifespan = self.get_current_value_with_default(&resolved.lifespan, default_params.lifespan);
+        params.emission_rate = self.get_current_value_with_default(&resolved.emission_rate, default_params.emission_rate);
+        params.emission_area_length = self.get_current_value_with_default(&resolved.emission_area_length, default_params.emission_area_length);
+        params.emission_area_width = self.get_current_value_with_default(&resolved.emission_area_width, default_params.emission_area_width);
+
+        params
+    }
 }
 
 /// Builder for creating AnimationManager from M2Model data
@@ -473,6 +576,30 @@ impl AnimationManagerBuilder {
 
         let num_sequences = sequences.len();
 
+        // Extracted from transparency_animations which contains the alpha tracks
+        // --- TEXTURE WEIGHTS (OPACITY) EXTRACTION ---
+        // Extracted from transparency_animations which contains the alpha tracks
+        let mut texture_weights = Vec::with_capacity(model.transparency_animations.len());
+        let mut cursor = std::io::Cursor::new(data);
+
+        for anim in &model.transparency_animations {
+            match Self::resolve_fixed16_track(&anim.alpha, &mut cursor, num_sequences) {
+                Ok(resolved) => texture_weights.push(resolved),
+                Err(_) => texture_weights.push(ResolvedTrack::empty()), // Maintain index alignment
+            }
+        }
+
+        // --- TEXTURE TRANSFORMS (UVs) EXTRACTION ---
+        // Extracted from texture_animations which contains translation tracks
+        let mut texture_transforms = Vec::with_capacity(model.texture_animations.len());
+        
+        for anim in &model.texture_animations {
+            match Self::resolve_c3vector_block(&anim.translation, &mut cursor, num_sequences) {
+                Ok(resolved) => texture_transforms.push(resolved),
+                Err(_) => texture_transforms.push(ResolvedTrack::empty()), // Maintain index alignment
+            }
+        }
+
         // Resolve bone animation data
         let mut cursor = Cursor::new(data);
         let mut bones = Vec::with_capacity(model.bones.len());
@@ -499,10 +626,32 @@ impl AnimationManagerBuilder {
             });
         }
 
+        let mut particle_emitters = Vec::with_capacity(model.particle_emitters.len());
+        
+        for (idx, emitter) in model.particle_emitters.iter().enumerate() {
+            particle_emitters.push(ResolvedParticleEmitter {
+                emitter_index: idx,
+                // Fallback to empty track if the parser doesn't expose an 'enabled' track
+                enabled: ResolvedTrack::empty(), 
+                
+                // Use the exact field names provided by the M2ParticleEmitter struct
+                emission_speed: Self::resolve_f32_track(&emitter.emission_speed, &mut cursor, num_sequences)?,
+                speed_variation: Self::resolve_f32_track(&emitter.speed_variation, &mut cursor, num_sequences)?,
+                vertical_range: Self::resolve_f32_track(&emitter.vertical_range, &mut cursor, num_sequences)?,
+                horizontal_range: Self::resolve_f32_track(&emitter.horizontal_range, &mut cursor, num_sequences)?,
+                gravity: Self::resolve_f32_track(&emitter.gravity, &mut cursor, num_sequences)?,
+                lifespan: Self::resolve_f32_track(&emitter.lifespan, &mut cursor, num_sequences)?,
+                emission_rate: Self::resolve_f32_track(&emitter.emission_rate, &mut cursor, num_sequences)?,
+                emission_area_length: Self::resolve_f32_track(&emitter.emission_area_length, &mut cursor, num_sequences)?,
+                emission_area_width: Self::resolve_f32_track(&emitter.emission_area_width, &mut cursor, num_sequences)?,
+            });
+        }
+
         Ok(AnimationManager::new(
             global_sequence_durations,
             sequences,
             bones,
+            particle_emitters,
         ))
     }
 
@@ -553,6 +702,178 @@ impl AnimationManagerBuilder {
 
         Ok(ResolvedTrack {
             interpolation_type: track.base.interpolation_type as u16,
+            global_sequence,
+            timestamps,
+            values,
+        })
+    }
+
+    /// Resolves a transparency animation track (Fixed16 / u16 to f32)
+    fn resolve_fixed16_track<R: std::io::Read + std::io::Seek>(
+        block: &crate::chunks::animation::M2AnimationBlock<u16>,
+        reader: &mut R,
+        num_sequences: usize,
+    ) -> crate::Result<ResolvedTrack<f32>> {
+        // Direct access to fields (M2AnimationTrack flattens the M2Array wrapper)
+        let ts_count = block.track.timestamps.count as usize;
+        let ts_offset = block.track.timestamps.offset as u64;
+        let v_count = block.track.values.array.count as usize;
+        let v_offset = block.track.values.array.offset as u64;
+
+        let mut timestamps_flat = Vec::with_capacity(ts_count);
+        if ts_count > 0 {
+            reader.seek(std::io::SeekFrom::Start(ts_offset))?;
+            let mut buf = [0u8; 4];
+            for _ in 0..ts_count {
+                reader.read_exact(&mut buf)?;
+                timestamps_flat.push(u32::from_le_bytes(buf));
+            }
+        }
+
+        let mut values_flat = Vec::with_capacity(v_count);
+        if v_count > 0 {
+            reader.seek(std::io::SeekFrom::Start(v_offset))?;
+            let mut buf = [0u8; 2];
+            for _ in 0..v_count {
+                reader.read_exact(&mut buf)?;
+                let val = i16::from_le_bytes(buf);
+                values_flat.push(val as f32 / 32767.0); // Convert Fixed16 to Float
+            }
+        }
+
+        // Convert global_sequence: 0xFFFF means no global sequence, map to -1
+        let global_sequence = if block.track.global_sequence == 0xFFFFu16 as i16 {
+            -1i16
+        } else {
+            block.track.global_sequence as i16
+        };
+
+        // If using global sequence, put all data in one sequence slot
+        if global_sequence >= 0 {
+            return Ok(ResolvedTrack {
+                interpolation_type: block.track.interpolation_type as u16,
+                global_sequence,
+                timestamps: vec![timestamps_flat],
+                values: vec![values_flat],
+            });
+        }
+
+        // Split by animation sequence using ranges
+        let (timestamps, values) = Self::split_by_ranges(timestamps_flat, values_flat, None, num_sequences);
+        Ok(ResolvedTrack {
+            interpolation_type: block.track.interpolation_type as u16,
+            global_sequence: -1,
+            timestamps,
+            values,
+        })
+    }
+
+    /// Resolves a UV translation track (C3Vector to Vec3)
+    fn resolve_c3vector_block<R: std::io::Read + std::io::Seek>(
+        block: &crate::chunks::animation::M2AnimationBlock<crate::common::C3Vector>,
+        reader: &mut R,
+        num_sequences: usize,
+    ) -> crate::Result<ResolvedTrack<Vec3>> {
+        let ts_count = block.track.timestamps.count as usize;
+        let ts_offset = block.track.timestamps.offset as u64;
+        let v_count = block.track.values.array.count as usize;
+        let v_offset = block.track.values.array.offset as u64;
+
+        let mut timestamps_flat = Vec::with_capacity(ts_count);
+        if ts_count > 0 {
+            reader.seek(std::io::SeekFrom::Start(ts_offset))?;
+            let mut buf = [0u8; 4];
+            for _ in 0..ts_count {
+                reader.read_exact(&mut buf)?;
+                timestamps_flat.push(u32::from_le_bytes(buf));
+            }
+        }
+
+        let mut values_flat = Vec::with_capacity(v_count);
+        if v_count > 0 {
+            reader.seek(std::io::SeekFrom::Start(v_offset))?;
+            let mut buf = [0u8; 12]; // C3Vector uses 12 bytes (3 * f32)
+            for _ in 0..v_count {
+                reader.read_exact(&mut buf)?;
+                let x = f32::from_le_bytes(buf[0..4].try_into().unwrap());
+                let y = f32::from_le_bytes(buf[4..8].try_into().unwrap());
+                let z = f32::from_le_bytes(buf[8..12].try_into().unwrap());
+                values_flat.push(Vec3::new(x, y, z));
+            }
+        }
+
+        let global_sequence = block.track.global_sequence as i16;
+        if global_sequence != -1 && global_sequence != 65535u16 as i16 {
+            return Ok(ResolvedTrack {
+                interpolation_type: block.track.interpolation_type as u16,
+                global_sequence,
+                timestamps: vec![timestamps_flat],
+                values: vec![values_flat],
+            });
+        }
+
+        let (timestamps, values) = Self::split_by_ranges(timestamps_flat, values_flat, None, num_sequences);
+        Ok(ResolvedTrack {
+            interpolation_type: block.track.interpolation_type as u16,
+            global_sequence: -1,
+            timestamps,
+            values,
+        })
+    }
+
+    /// Resolve an f32 (float) animation track from M2 data
+    /// 
+    /// This resolves standard scalar tracks commonly used by particle emitters 
+    /// (e.g., emission rate, speed, gravity, lifespan) and other numeric animations.
+    ///
+    /// # Arguments
+    /// * `track` - The raw M2 track structure for floats
+    /// * `reader` - Stream reader containing the M2 file data
+    /// * `num_sequences` - Total number of animation sequences in the model
+    fn resolve_f32_track<R: std::io::Read + std::io::Seek>(
+        block: &crate::chunks::animation::M2AnimationBlock<f32>,
+        reader: &mut R,
+        num_sequences: usize,
+    ) -> crate::Result<ResolvedTrack<f32>> {
+        
+        // Ensure M2TrackFloatExt is implemented in your m2_track_resolver module
+        // exactly like M2TrackVec3Ext!
+        use crate::chunks::m2_track_resolver::M2TrackFloatExt;
+
+        // Extract raw data from the binary stream
+        let (timestamps_flat, values_flat, ranges) = block.resolve_data(reader)?;
+
+        if timestamps_flat.is_empty() || values_flat.is_empty() {
+            return Ok(ResolvedTrack::empty());
+        }
+
+        // Convert global_sequence: 0xFFFF means no global sequence, map to -1
+        let global_sequence = if block.track.global_sequence == 0xFFFFu16 as i16 {
+            -1i16
+        } else {
+            block.track.global_sequence as i16
+        };
+
+        // If using global sequence, put all data in one sequence slot
+        if global_sequence >= 0 {
+            return Ok(ResolvedTrack {
+                interpolation_type: block.track.interpolation_type as u16,
+                global_sequence,
+                timestamps: vec![timestamps_flat],
+                values: vec![values_flat],
+            });
+        }
+
+        // Split the flat data arrays into sequence-specific chunks based on the provided ranges
+        let (timestamps, values) = Self::split_by_ranges(
+            timestamps_flat,
+            values_flat,
+            ranges.as_deref(),
+            num_sequences,
+        );
+
+        Ok(ResolvedTrack {
+            interpolation_type: block.track.interpolation_type as u16,
             global_sequence,
             timestamps,
             values,

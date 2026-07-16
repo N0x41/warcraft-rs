@@ -1,8 +1,8 @@
 use crate::io_ext::{ReadExt, WriteExt};
 use std::io::{Read, Seek, Write};
 
-use crate::chunks::animation::M2AnimationBlock;
-use crate::chunks::color_animation::M2Color;
+use crate::chunks::animation::{M2AnimationBlock, FakeAnimationBlock};
+//use crate::chunks::color_animation::M2Color;
 use crate::common::{C2Vector, C3Vector, M2Array};
 use crate::error::Result;
 use crate::version::M2Version;
@@ -85,181 +85,182 @@ impl M2ParticleEmitterType {
     }
 }
 
-/// Represents a particle emitter in an M2 model
+/// Represents a particle emitter in an M2 model (Legacy version for Vanilla, TBC, and WotLK).
+/// Extracted and aligned strictly to the <= 264 version specifications.
 #[derive(Debug, Clone)]
 pub struct M2ParticleEmitter {
-    /// ID for this emitter
+    /// Unique identifier for this emitter (often -1).
     pub id: u32,
-    /// Flags controlling particle behavior
+    /// Flags controlling particle behavior and rendering.
     pub flags: M2ParticleFlags,
-    /// Position of the emitter
+    /// Position of the emitter relative to the attached bone.
     pub position: C3Vector,
-    /// Bone to attach the emitter to
+    /// The bone index this emitter is attached to.
     pub bone_index: u16,
-    /// Texture coordinate (for UV coordinate generation)
-    pub texture_index: u16,
-    /// Geometry model filename (for complex shaped emitters)
+    
+    /// Texture indices used by the particle.
+    /// Cataclysm introduced multi-texturing via a bitfield, occupying these same 2 bytes.
+    pub texture_indices: [u16; 3], 
+    
+    /// Geometry model filename. If given, this emitter spawns model particles.
     pub model_filename: M2Array<u8>,
-    /// ID of another emitter this one is linked to
-    pub parent_emitter: u16,
-    /// Unknown geometry value
-    pub geometry_model_unknown: u16,
-    /// Explicit fallback model if main one fails to load
-    pub fallback_model_filename: Option<M2Array<u8>>,
-    /// Blending type
+    
+    /// Child emitters model filename. Introduced in WotLK (264).
+    /// If given, child emitters are obtained from this model and emitted as a trail per particle.
+    pub child_emitter_filename: Option<M2Array<u8>>, 
+    
+    /// A blending type for the particle (e.g., 0: Opaque, 1: AlphaBlend, 2: Additive, etc.).
     pub blending_type: u8,
-    /// Emitter type
+    /// The shape of the emitter (1 - Plane, 2 - Sphere, 3 - Spline, 4 - Bone).
     pub emitter_type: M2ParticleEmitterType,
-    /// Particle type
+    
+    /// Used in conjunction with ParticleColor.dbc to alter the default color.
+    /// Introduced in late The Burning Crusade (262).
+    pub particle_color_index: Option<u16>, 
+    
+    /// Type of the particle.
     pub particle_type: u8,
-    /// Head or tail
+    /// Determines billboard rendering behavior (0 - Head, 1 - Tail, 2 - Both).
     pub head_or_tail: u8,
-    /// Texture file IDs (for multi-texture particles)
-    pub texture_file_data_ids: Option<M2Array<u32>>,
-    /// Texture tile rotation (added in MoP)
-    pub texture_tile_rotation: u16,
-    /// Number of texture rows (added in MoP)
+    
+    /// The rendering priority plane.
+    pub priority_plane: i16, 
+    /// Number of texture rows for tiled textures.
     pub texture_dimensions_rows: u16,
-    /// Number of texture columns (added in MoP)
+    /// Number of texture columns for tiled textures.
     pub texture_dimensions_columns: u16,
-    /// Flag to enable encryption (WoD and later)
+
+    // ==========================================
+    // ANIMATIONS (M2Track)
+    // ==========================================
+    /// Base velocity at which particles are emitted.
+    pub emission_speed: M2AnimationBlock<f32>,
+    /// Random variation in particle emission speed (range: 0 to 1).
+    pub speed_variation: M2AnimationBlock<f32>,
+    /// Maximum polar angle of the initial velocity (longitude drifting).
+    pub vertical_range: M2AnimationBlock<f32>,
+    /// Maximum azimuth angle of the initial velocity (latitude drifting).
+    pub horizontal_range: M2AnimationBlock<f32>,
+    /// Gravity applied to the particles over time.
+    pub gravity: M2AnimationBlock<f32>,
+    /// Number of seconds each particle continues to be drawn after its creation.
+    pub lifespan: M2AnimationBlock<f32>,
+    
+    /// An individual particle's lifespan is added to by (lifespanVariation * random(-1, 1)).
+    /// Introduced in WotLK (264).
+    pub lifespan_variation: Option<f32>, 
+    
+    /// Emission rate of the particles (bursts or continuous).
+    pub emission_rate: M2AnimationBlock<f32>,
+    
+    /// Random variation added to the base emission rate value.
+    /// Introduced in WotLK (264).
+    pub emission_rate_variation: Option<f32>, 
+    
+    /// For plane generators: width of the emission area. For sphere generators: maximum radius.
+    pub emission_area_width: M2AnimationBlock<f32>,
+    /// For plane generators: length of the emission area. For sphere generators: minimum radius.
+    pub emission_area_length: M2AnimationBlock<f32>,
+    /// When greater than 0, defines the initial velocity Z source offset.
+    pub z_source: M2AnimationBlock<f32>,
+
+    // ==========================================
+    // FAKE BLOCKS (FBlock)
+    // ==========================================
+    /// Particle color track. Usually contains 3 timestamps for {start, middle, end}.
+    pub color_track: FakeAnimationBlock<C3Vector>,
+    /// Particle alpha/opacity track. Stored as fixed16 (i16) in the binary.
+    pub alpha_track: FakeAnimationBlock<i16>,
+    /// Particle scale track.
+    pub scale_track: FakeAnimationBlock<C2Vector>,
+    
+    /// A percentage amount to randomly vary the scale of each particle.
+    pub scale_vary: C2Vector, 
+    
+    /// UV animation sequence for the head particle's life.
+    pub head_uv_anim: FakeAnimationBlock<u16>,
+    /// UV animation sequence for the tail particle's life.
+    pub tail_uv_anim: FakeAnimationBlock<u16>,
+
+    // ==========================================
+    // PHYSICAL & RENDER PARAMETERS
+    // ==========================================
+    /// A multiplier to the calculated tail particle length.
+    pub tail_length: f32,
+    /// Blinking speed of the particle.
+    pub twinkle_speed: f32,
+    /// How visible the particle is (1.0 = 100% of the time, 0.5 = 50% of the time).
+    pub twinkle_percent: f32,
+    /// Minimum scale variation for the twinkle effect.
+    pub twinkle_scale_min: f32,
+    /// Maximum scale variation for the twinkle effect.
+    pub twinkle_scale_max: f32,
+    /// Scales the velocity inherited from the parent particle.
+    pub inherit_velocity_scale: f32,
+    /// Particles slow down over time. Speed is multiplied by exp(-drag * time).
+    pub drag: f32,
+
+    // ==========================================
+    // SPIN (Rotation)
+    // ==========================================
+    /// Spin value for Vanilla/TBC (0.0 for none, 1.0 for full 360 degrees rotation).
+    pub legacy_spin: Option<f32>, 
+    
+    /// Initial rotation of the particle quad (WotLK+).
+    pub base_spin: Option<f32>,
+    /// Variation of the initial rotation (WotLK+).
+    pub base_spin_variation: Option<f32>,
+    /// Rotation of the particle quad per second (WotLK+).
+    pub spin_speed: Option<f32>,
+    /// Variation of the rotation speed (WotLK+).
+    pub spin_speed_variation: Option<f32>,
+
+    // ==========================================
+    // VECTORS & SPLINES
+    // ==========================================
+    /// Minimum angular velocity (3D model particle rotation).
+    pub tumble_min: C3Vector,
+    /// Maximum angular velocity (3D model particle rotation).
+    pub tumble_max: C3Vector,
+    /// Static wind parameters, ignored if the DynamicWind flag is set.
+    pub wind_vector: C3Vector,
+    /// Wind time factor.
+    pub wind_time: f32,
+
+    /// Follow speed multiplier 1.
+    pub follow_speed1: f32,
+    /// Follow scale multiplier 1.
+    pub follow_scale1: f32,
+    /// Follow speed multiplier 2.
+    pub follow_speed2: f32,
+    /// Follow scale multiplier 2.
+    pub follow_scale2: f32,
+
+    /// Array of points for spline. Set only for spline particle emitters.
+    pub spline_points: M2Array<C3Vector>, 
+    
+    /// Boolean track linking particles to animation sets where they are enabled.
+    pub enabled_in: M2AnimationBlock<u8>,
+
+    // ==========================================
+    // MODERN EXTENSIONS (WoD, Legion, BfA+)
+    // ==========================================
+    /// Explicit fallback model if main one fails to load (Legion+)
+    pub fallback_model_filename: Option<M2Array<u8>>,
+    /// Texture file IDs for multi-texture particles (Legion+)
+    pub texture_file_data_ids: Option<M2Array<u32>>,
+    /// Flag to enable encryption (WoD+)
     pub enable_encryption: Option<u8>,
-    /// Multi-texture particle blend operation
+    /// Multi-texture particle blend operation (BfA+)
     pub multi_texture_param0: Option<[u8; 4]>,
-    /// Multi-texture particle blend flags
+    /// Multi-texture particle blend flags (BfA+)
     pub multi_texture_param1: Option<[u8; 4]>,
-    /// Time to live (in seconds)
-    pub lifetime: f32,
-    /// Time between emissions (in seconds)
-    pub emission_rate: f32,
-    /// Initial emission range
-    pub emission_area_length: f32,
-    /// Initial emission width
-    pub emission_area_width: f32,
-    /// Initial emission velocity
-    pub emission_velocity: f32,
-    /// Minimum lifetime of a particle
-    pub min_lifetime: f32,
-    /// Maximum lifetime of a particle
-    pub max_lifetime: f32,
-    /// Minimum emission rate
-    pub min_emission_rate: f32,
-    /// Maximum emission rate
-    pub max_emission_rate: f32,
-    /// Minimum emission area length
-    pub min_emission_area_length: f32,
-    /// Maximum emission area length
-    pub max_emission_area_length: f32,
-    /// Minimum emission area width
-    pub min_emission_area_width: f32,
-    /// Maximum emission area width
-    pub max_emission_area_width: f32,
-    /// Minimum emission velocity
-    pub min_emission_velocity: f32,
-    /// Maximum emission velocity
-    pub max_emission_velocity: f32,
-    /// Position variation (jitter)
-    pub position_variation: f32,
-    /// Minimum position variation
-    pub min_position_variation: f32,
-    /// Maximum position variation
-    pub max_position_variation: f32,
-    /// Initial size (diameter)
-    pub initial_size: f32,
-    /// Minimum initial size
-    pub min_initial_size: f32,
-    /// Maximum initial size
-    pub max_initial_size: f32,
-    /// Scaling factor for size over time
-    pub size_variation: f32,
-    /// Minimum size variation
-    pub min_size_variation: f32,
-    /// Maximum size variation
-    pub max_size_variation: f32,
-    /// Horizontal/vertical ratio
-    pub horizontal_range: f32,
-    /// Minimum horizontal range
-    pub min_horizontal_range: f32,
-    /// Maximum horizontal range
-    pub max_horizontal_range: f32,
-    /// Vertical range (slowdown)
-    pub vertical_range: f32,
-    /// Minimum vertical range
-    pub min_vertical_range: f32,
-    /// Maximum vertical range
-    pub max_vertical_range: f32,
-    /// Gravitational acceleration
-    pub gravity: f32,
-    /// Minimum gravity
-    pub min_gravity: f32,
-    /// Maximum gravity
-    pub max_gravity: f32,
-    /// Initial velocity
-    pub initial_velocity: f32,
-    /// Minimum initial velocity
-    pub min_initial_velocity: f32,
-    /// Maximum initial velocity
-    pub max_initial_velocity: f32,
-    /// Speed variation
-    pub speed_variation: f32,
-    /// Minimum speed variation
-    pub min_speed_variation: f32,
-    /// Maximum speed variation
-    pub max_speed_variation: f32,
-    /// Rotational speed (for ROTATING particles)
-    pub rotation_speed: f32,
-    /// Minimum rotation speed
-    pub min_rotation_speed: f32,
-    /// Maximum rotation speed
-    pub max_rotation_speed: f32,
-    /// Initial rotation
-    pub initial_rotation: f32,
-    /// Minimum initial rotation
-    pub min_initial_rotation: f32,
-    /// Maximum initial rotation
-    pub max_initial_rotation: f32,
-    /// Mid-point color animation
-    pub mid_point_color: M2Color,
-    /// Color/alpha animations
-    pub color_animation_speed: f32,
-    /// Time when the color/alpha fade to mid values
-    pub color_median_time: f32,
-    /// Duration of emission
-    pub lifespan_unused: f32,
-    /// Zero point of emission
-    pub emission_rate_unused: f32,
-    /// Unknown value 1
-    pub unknown_1: u32,
-    /// Unknown value 2
-    pub unknown_2: f32,
-    /// Animation for emission speed
-    pub emission_speed_animation: M2AnimationBlock<f32>,
-    /// Animation for emission rate
-    pub emission_rate_animation: M2AnimationBlock<f32>,
-    /// Animation for emission area
-    pub emission_area_animation: M2AnimationBlock<f32>,
-    /// Animation for X/Y scale (for non-particle plane)
-    pub xy_scale_animation: M2AnimationBlock<C2Vector>,
-    /// Animation for Z scale (for non-particle plane)
-    pub z_scale_animation: M2AnimationBlock<f32>,
-    /// Animation for particle colors
-    pub color_animation: M2AnimationBlock<M2Color>,
-    /// Animation for particle transparency
-    pub transparency_animation: M2AnimationBlock<f32>,
-    /// Animation for particle size (diameter)
-    pub size_animation: M2AnimationBlock<f32>,
-    /// Animation for intensity
-    pub intensity_animation: M2AnimationBlock<f32>,
-    /// Animation for Z source (height)
-    pub z_source_animation: M2AnimationBlock<f32>,
-    /// Base initial state for particles
+    /// Base initial state for particles (Legion+)
     pub particle_initial_state: Option<u32>,
-    /// Variation for initial state
+    /// Variation for initial state (Legion+)
     pub particle_initial_state_variation: Option<f32>,
-    /// Convergence speed for particles
+    /// Convergence speed for particles (Legion+)
     pub particle_convergence_time: Option<f32>,
-    /// Physical parameters (MoP+ with PHYSICS flag)
-    pub physics_parameters: Option<[f32; 5]>,
 }
 
 impl M2ParticleEmitter {
@@ -271,497 +272,399 @@ impl M2ParticleEmitter {
         let position = C3Vector::parse(reader)?;
         
         let bone_index = reader.read_u16_le()?;
-        let texture_index = reader.read_u16_le()?;
-        let model_filename = M2Array::parse(reader)?;
-        let parent_emitter = reader.read_u16_le()?;
-        let geometry_model_unknown = reader.read_u16_le()?;
+        let texture_index_raw = reader.read_u16_le()?;
 
-        // Version-specific fields
-        let (
-            fallback_model_filename,
-            blending_type,
-            emitter_type,
-            particle_type,
-            head_or_tail,
-            texture_file_data_ids,
-            enable_encryption,
-            multi_texture_param0,
-            multi_texture_param1,
-        ) = if let Some(m2_version) = M2Version::from_header_version(version) {
-            if m2_version >= M2Version::Legion {
-                // Legion and later have fallback model and texture file data IDs
-                let fallback = M2Array::parse(reader)?;
-                let blend = reader.read_u8()?;
-                let emitter = M2ParticleEmitterType::from_u8(reader.read_u8()?)
-                    .unwrap_or(M2ParticleEmitterType::Point);
-                let particle = reader.read_u8()?;
-                let head = reader.read_u8()?;
-                let tex_file_ids = M2Array::parse(reader)?;
-
-                // Extra fields for WoD and later
-                let encryption = if m2_version >= M2Version::WoD {
-                    Some(reader.read_u8()?)
-                } else {
-                    None
-                };
-
-                // Extra multi-texture params for BfA and later
-                let (param0, param1) = if m2_version >= M2Version::BfA {
-                    let mut p0 = [0u8; 4];
-                    let mut p1 = [0u8; 4];
-
-                    for item in &mut p0 {
-                        *item = reader.read_u8()?;
-                    }
-
-                    for item in &mut p1 {
-                        *item = reader.read_u8()?;
-                    }
-
-                    (Some(p0), Some(p1))
-                } else {
-                    (None, None)
-                };
-
-                (
-                    Some(fallback),
-                    blend,
-                    emitter,
-                    particle,
-                    head,
-                    Some(tex_file_ids),
-                    encryption,
-                    param0,
-                    param1,
-                )
-            } else if m2_version >= M2Version::WoD {
-                // WoD has encryption but no fallback model or texture file IDs
-                let blend = reader.read_u8()?;
-                let emitter = M2ParticleEmitterType::from_u8(reader.read_u8()?)
-                    .unwrap_or(M2ParticleEmitterType::Point);
-                let particle = reader.read_u8()?;
-                let head = reader.read_u8()?;
-                let encryption = Some(reader.read_u8()?);
-
-                (
-                    None, blend, emitter, particle, head, None, encryption, None, None,
-                )
-            } else {
-                // Pre-WoD just has basic fields
-                let blend = reader.read_u8()?;
-                let emitter = M2ParticleEmitterType::from_u8(reader.read_u8()?)
-                    .unwrap_or(M2ParticleEmitterType::Point);
-                let particle = reader.read_u8()?;
-                let head = reader.read_u8()?;
-
-                (None, blend, emitter, particle, head, None, None, None, None)
-            }
-        } else {
-            // Default to Vanilla format
-            let blend = reader.read_u8()?;
-            let emitter = M2ParticleEmitterType::from_u8(reader.read_u8()?)
-                .unwrap_or(M2ParticleEmitterType::Point);
-            let particle = reader.read_u8()?;
-            let head = reader.read_u8()?;
-
-            (None, blend, emitter, particle, head, None, None, None, None)
-        };
-
+        let texture_indices = if version >= 272 {
+            // Cataclysm+
+            [
+                texture_index_raw & 0x1F,
+                (texture_index_raw >> 5) & 0x1F,
+                (texture_index_raw >> 10) & 0x1F
+            ]
+        } else { [texture_index_raw, 0, 0] };
         
+        let model_filename = M2Array::parse(reader)?;
+        let child_emitter_filename = M2Array::parse(reader)?;
 
-        // Texture tile coordinates are in all versions
-        let texture_tile_rotation = reader.read_u16_le()?;
+        // Legion+
+        let m2_version = M2Version::from_header_version(version);
+        let fallback_model_filename = if let Some(v) = m2_version {
+            if v >= M2Version::Legion {
+                Some(M2Array::parse(reader)?)
+            } else { None }
+        } else { None };
+
+        let blending_type;
+        let emitter_type;
+        let particle_color_index;
+
+        if version >= 262 {
+            // TBC+
+            blending_type = reader.read_u8()?;
+            emitter_type = M2ParticleEmitterType::from_u8(reader.read_u8()?).unwrap_or(M2ParticleEmitterType::Point);
+            particle_color_index = Some(reader.read_u16_le()?);
+        } else { 
+            // Vanilla, they are u16 ! (total 4 bytes)
+            blending_type = reader.read_u16_le()? as u8;
+            emitter_type = M2ParticleEmitterType::from_u8(reader.read_u16_le()? as u8).unwrap_or(M2ParticleEmitterType::Point);
+            particle_color_index = None;
+        }
+
+        let mut particle_type = 0;
+        let mut head_or_tail = 0;
+        let mut multi_tex_scale = None;
+
+        if version >= 272 {
+            // Cataclysm+
+            // 2 bytes has multiTexScale (int8)
+            let scale_0 = reader.read_i8()?;
+            let scale_1 = reader.read_i8()?;
+            multi_tex_scale = Some([scale_0, scale_1]);
+        } else {
+            // 2 bytes with particleType and headOrTail (uint8)
+            particle_type = reader.read_u8()?;
+            head_or_tail = reader.read_u8()?;
+        }
+
+        // --- EXTENSIONS MODERNES (WoD, Legion, BfA) ---
+        let texture_file_data_ids = if let Some(v) = m2_version {
+            if v >= M2Version::Legion {
+                Some(M2Array::parse(reader)?)
+            } else { None }
+        } else { None };
+
+        let enable_encryption = if let Some(v) = m2_version {
+            if v >= M2Version::WoD {
+                Some(reader.read_u8()?)
+            } else { None }
+        } else { None };
+
+        let (multi_texture_param0, multi_texture_param1) = if let Some(v) = m2_version {
+            if v >= M2Version::BfA {
+                let mut p0 = [0u8; 4];
+                let mut p1 = [0u8; 4];
+                reader.read_exact(&mut p0)?;
+                reader.read_exact(&mut p1)?;
+                (Some(p0), Some(p1))
+            } else { (None, None) }
+        } else { (None, None) };
+
+        // =========================================
+        // COMMON BLOCK
+        // ==========================================
+        // --- OFFSETS 0x2E to 0x33: PriorityPlane, Rows, Columns ---
+        let priority_plane = reader.read_u16_le()?;
         let texture_dimensions_rows = reader.read_u16_le()?;
         let texture_dimensions_columns = reader.read_u16_le()?;
 
+        // --- OFFSETS 0x34: M2Tracks (Fail-Safe) ---
+        let emission_speed = M2AnimationBlock::<f32>::parse(reader, version).unwrap_or_default();
+        let speed_variation = M2AnimationBlock::<f32>::parse(reader, version).unwrap_or_default();
+        let vertical_range = M2AnimationBlock::<f32>::parse(reader, version).unwrap_or_default();
+        let horizontal_range = M2AnimationBlock::<f32>::parse(reader, version).unwrap_or_default();
+        let gravity = M2AnimationBlock::<f32>::parse(reader, version).unwrap_or_default();
+        let lifespan = M2AnimationBlock::<f32>::parse(reader, version).unwrap_or_default();
+
         // Read common parameters
-        let lifetime = reader.read_f32_le()?;
-        let emission_rate = reader.read_f32_le()?;
-        let emission_area_length = reader.read_f32_le()?;
-        let emission_area_width = reader.read_f32_le()?;
-        let emission_velocity = reader.read_f32_le()?;
-
-        // Read min/max ranges
-        let min_lifetime = reader.read_f32_le()?;
-        let max_lifetime = reader.read_f32_le()?;
-        let min_emission_rate = reader.read_f32_le()?;
-        let max_emission_rate = reader.read_f32_le()?;
-        let min_emission_area_length = reader.read_f32_le()?;
-        let max_emission_area_length = reader.read_f32_le()?;
-        let min_emission_area_width = reader.read_f32_le()?;
-        let max_emission_area_width = reader.read_f32_le()?;
-        let min_emission_velocity = reader.read_f32_le()?;
-        let max_emission_velocity = reader.read_f32_le()?;
-
-        // Read size parameters
-        let position_variation = reader.read_f32_le()?;
-        let min_position_variation = reader.read_f32_le()?;
-        let max_position_variation = reader.read_f32_le()?;
-        let initial_size = reader.read_f32_le()?;
-        let min_initial_size = reader.read_f32_le()?;
-        let max_initial_size = reader.read_f32_le()?;
-        let size_variation = reader.read_f32_le()?;
-        let min_size_variation = reader.read_f32_le()?;
-        let max_size_variation = reader.read_f32_le()?;
-
-        // Read movement parameters
-        let horizontal_range = reader.read_f32_le()?;
-        let min_horizontal_range = reader.read_f32_le()?;
-        let max_horizontal_range = reader.read_f32_le()?;
-        let vertical_range = reader.read_f32_le()?;
-        let min_vertical_range = reader.read_f32_le()?;
-        let max_vertical_range = reader.read_f32_le()?;
-        let gravity = reader.read_f32_le()?;
-        let min_gravity = reader.read_f32_le()?;
-        let max_gravity = reader.read_f32_le()?;
-
-        // Read velocity and rotation parameters
-        let initial_velocity = reader.read_f32_le()?;
-        let min_initial_velocity = reader.read_f32_le()?;
-        let max_initial_velocity = reader.read_f32_le()?;
-        let speed_variation = reader.read_f32_le()?;
-        let min_speed_variation = reader.read_f32_le()?;
-        let max_speed_variation = reader.read_f32_le()?;
-        let rotation_speed = reader.read_f32_le()?;
-        let min_rotation_speed = reader.read_f32_le()?;
-        let max_rotation_speed = reader.read_f32_le()?;
-        let initial_rotation = reader.read_f32_le()?;
-        let min_initial_rotation = reader.read_f32_le()?;
-        let max_initial_rotation = reader.read_f32_le()?;
-
-        // Read color parameters
-        let mid_point_color = M2Color::parse(reader).unwrap_or_default();
-        let color_animation_speed = reader.read_f32_le()?;
-        let color_median_time = reader.read_f32_le()?;
-
-        // Read unused/unknown parameters
-        let lifespan_unused = reader.read_f32_le()?;
-        let emission_rate_unused = reader.read_f32_le()?;
-        let unknown_1 = reader.read_u32_le()?;
-        let unknown_2 = reader.read_f32_le()?;
-
-        // Read animation blocks
-        let emission_speed_animation = M2AnimationBlock::parse(reader, version)?;
-        let emission_rate_animation = M2AnimationBlock::parse(reader, version)?;
-        let emission_area_animation = M2AnimationBlock::parse(reader, version)?;
-        let xy_scale_animation = M2AnimationBlock::parse(reader, version)?;
-        let z_scale_animation = M2AnimationBlock::parse(reader, version)?;
-        let color_animation = M2AnimationBlock::parse(reader, version)?;
-        let transparency_animation = M2AnimationBlock::parse(reader, version)?;
-        let size_animation = M2AnimationBlock::parse(reader, version)?;
-        let intensity_animation = M2AnimationBlock::parse(reader, version)?;
-        let z_source_animation = M2AnimationBlock::parse(reader, version)?;
-
-        // Additional fields for Legion and later
-        let (particle_initial_state, particle_initial_state_variation, particle_convergence_time) =
-            if let Some(m2_version) = M2Version::from_header_version(version) {
-                if m2_version >= M2Version::Legion {
-                    (
-                        Some(reader.read_u32_le()?),
-                        Some(reader.read_f32_le()?),
-                        Some(reader.read_f32_le()?),
-                    )
-                } else {
-                    (None, None, None)
-                }
-            } else {
-                (None, None, None)
-            };
-
-        // Additional physics parameters for MoP+ with PHYSICS flag
-        let physics_parameters = if let Some(m2_version) = M2Version::from_header_version(version) {
-            if m2_version >= M2Version::MoP && flags.contains(M2ParticleFlags::PHYSICS) {
-                let mut params = [0.0; 5];
-                for item in &mut params {
-                    *item = reader.read_f32_le()?;
-                }
-                Some(params)
-            } else {
-                None
-            }
+        let lifespan_variation = if version >= 264 {
+            reader.read_f32_le().ok()
         } else {
             None
         };
+
+        let emission_rate = M2AnimationBlock::<f32>::parse(reader, version).unwrap_or_default();
+        let emission_rate_variation = if version >= 264 {
+            reader.read_f32_le().ok()
+        } else {
+            None
+        };
+
+        let emission_area_width = M2AnimationBlock::<f32>::parse(reader, version).unwrap_or_default();
+        let emission_area_length = M2AnimationBlock::<f32>::parse(reader, version).unwrap_or_default();
+        let z_source = M2AnimationBlock::<f32>::parse(reader, version).unwrap_or_default();
+    
+        let color_track;
+        let alpha_track;
+        let scale_track;
+        let scale_vary;
+        let head_uv_anim;
+        let tail_uv_anim;
+
+        let empty_c2 = C2Vector { x: 1.0, y: 1.0 }; // Default scale
+        let empty_u16 = M2Array::new(0, 0);
+        let empty_fblock_vec3 = FakeAnimationBlock { timestamps: empty_u16.clone(), values: M2Array::new(0, 0) };
+        let empty_fblock_i16 = FakeAnimationBlock { timestamps: empty_u16.clone(), values: M2Array::new(0, 0) };
+        let empty_fblock_vec2 = FakeAnimationBlock { timestamps: empty_u16.clone(), values: M2Array::new(0, 0) };
+        let empty_fblock_u16 = FakeAnimationBlock { timestamps: empty_u16.clone(), values: M2Array::new(0, 0) };
+
+        if version >= 264 {
+            // WotLK (Wrath)
+            color_track = FakeAnimationBlock::<C3Vector>::parse(reader).unwrap_or(empty_fblock_vec3);
+            alpha_track = FakeAnimationBlock::<i16>::parse(reader).unwrap_or(empty_fblock_i16);
+            scale_track = FakeAnimationBlock::<C2Vector>::parse(reader).unwrap_or(empty_fblock_vec2);
+            scale_vary = C2Vector::parse(reader).unwrap_or(empty_c2);
+            head_uv_anim = FakeAnimationBlock::<u16>::parse(reader).unwrap_or(empty_fblock_u16.clone());
+            tail_uv_anim = FakeAnimationBlock::<u16>::parse(reader).unwrap_or(empty_fblock_u16);
+        } else {
+            // Vanilla & TBC (< 264)
+            // We move cursor 48 bytes forward. Fail-safe.
+            let mut buf = [0u8; 48];
+            let _ = reader.read_exact(&mut buf);
+            
+            color_track = empty_fblock_vec3;
+            alpha_track = empty_fblock_i16;
+            scale_track = empty_fblock_vec2;
+            scale_vary = empty_c2;
+            head_uv_anim = empty_fblock_u16.clone();
+            tail_uv_anim = empty_fblock_u16;
+        };
+
+        // =========================================
+        // INCONDITIONNAL BLOCK
+        // ==========================================
+        let tail_length = reader.read_f32_le().unwrap_or(0.0);
+        let twinkle_speed = reader.read_f32_le().unwrap_or(0.0);
+        let twinkle_percent = reader.read_f32_le().unwrap_or(0.0);
+        let twinkle_scale_min = reader.read_f32_le().unwrap_or(0.0);
+        let twinkle_scale_max = reader.read_f32_le().unwrap_or(0.0);
+        let inherit_velocity_scale = reader.read_f32_le().unwrap_or(0.0);
+        let drag = reader.read_f32_le().unwrap_or(0.0);
+
+        // ==========================================
+        // SPIN BIFURCATION (Wrath vs Vanilla/TBC)
+        // ==========================================
+        let legacy_spin;
+        let base_spin;
+        let base_spin_variation;
+        let spin_speed;
+        let spin_speed_variation;
+
+        if version >= 264 { // WotLK
+            base_spin = reader.read_f32_le().ok();
+            base_spin_variation = reader.read_f32_le().ok();
+            spin_speed = reader.read_f32_le().ok();
+            spin_speed_variation = reader.read_f32_le().ok();
+            legacy_spin = None;
+        } else { // Vanilla & TBC
+            legacy_spin = reader.read_f32_le().ok();
+            base_spin = None;
+            base_spin_variation = None;
+            spin_speed = None;
+            spin_speed_variation = None;
+        }
+
+        let empty_c3 = C3Vector { x: 0.0, y: 0.0, z: 0.0 };
+        
+        let tumble_min = C3Vector::parse(reader).unwrap_or(empty_c3);
+        let tumble_max = C3Vector::parse(reader).unwrap_or(empty_c3);
+        let wind_vector = C3Vector::parse(reader).unwrap_or(empty_c3);
+        let wind_time = reader.read_f32_le().unwrap_or(0.0);
+        
+        let follow_speed1 = reader.read_f32_le().unwrap_or(0.0);
+        let follow_scale1 = reader.read_f32_le().unwrap_or(0.0);
+        let follow_speed2 = reader.read_f32_le().unwrap_or(0.0);
+        let follow_scale2 = reader.read_f32_le().unwrap_or(0.0);
+        
+        let spline_points = M2Array::<C3Vector>::parse(reader).unwrap_or(M2Array::new(0, 0));
+        let enabled_in = M2AnimationBlock::<u8>::parse(reader, version).unwrap_or_default();
+
+        // --- Legion+ ---
+        let (particle_initial_state, particle_initial_state_variation, particle_convergence_time) = if let Some(v) = m2_version {
+            if v >= M2Version::Legion {
+                (
+                    Some(reader.read_u32_le()?),
+                    Some(reader.read_f32_le()?),
+                    Some(reader.read_f32_le()?),
+                )
+            } else { (None, None, None) }
+        } else { (None, None, None) };
 
         Ok(Self {
             id,
             flags,
             position,
             bone_index,
-            texture_index,
+            texture_indices,
             model_filename,
-            parent_emitter,
-            geometry_model_unknown,
-            fallback_model_filename,
+            child_emitter_filename: Some(child_emitter_filename),
             blending_type,
             emitter_type,
+            particle_color_index,
             particle_type,
             head_or_tail,
-            texture_file_data_ids,
-            texture_tile_rotation,
+            priority_plane: priority_plane as i16,
             texture_dimensions_rows,
             texture_dimensions_columns,
-            enable_encryption,
-            multi_texture_param0,
-            multi_texture_param1,
-            lifetime,
-            emission_rate,
-            emission_area_length,
-            emission_area_width,
-            emission_velocity,
-            min_lifetime,
-            max_lifetime,
-            min_emission_rate,
-            max_emission_rate,
-            min_emission_area_length,
-            max_emission_area_length,
-            min_emission_area_width,
-            max_emission_area_width,
-            min_emission_velocity,
-            max_emission_velocity,
-            position_variation,
-            min_position_variation,
-            max_position_variation,
-            initial_size,
-            min_initial_size,
-            max_initial_size,
-            size_variation,
-            min_size_variation,
-            max_size_variation,
-            horizontal_range,
-            min_horizontal_range,
-            max_horizontal_range,
-            vertical_range,
-            min_vertical_range,
-            max_vertical_range,
-            gravity,
-            min_gravity,
-            max_gravity,
-            initial_velocity,
-            min_initial_velocity,
-            max_initial_velocity,
+
+            emission_speed,
             speed_variation,
-            min_speed_variation,
-            max_speed_variation,
-            rotation_speed,
-            min_rotation_speed,
-            max_rotation_speed,
-            initial_rotation,
-            min_initial_rotation,
-            max_initial_rotation,
-            mid_point_color,
-            color_animation_speed,
-            color_median_time,
-            lifespan_unused,
-            emission_rate_unused,
-            unknown_1,
-            unknown_2,
-            emission_speed_animation,
-            emission_rate_animation,
-            emission_area_animation,
-            xy_scale_animation,
-            z_scale_animation,
-            color_animation,
-            transparency_animation,
-            size_animation,
-            intensity_animation,
-            z_source_animation,
-            particle_initial_state,
-            particle_initial_state_variation,
-            particle_convergence_time,
-            physics_parameters,
+            vertical_range,
+            horizontal_range,
+            gravity,
+            lifespan,
+            lifespan_variation,
+            emission_rate,
+            emission_rate_variation,
+            emission_area_width,
+            emission_area_length,
+            z_source,
+
+            color_track,
+            alpha_track,
+            scale_track,
+            scale_vary,
+            head_uv_anim,
+            tail_uv_anim,
+
+            tail_length,
+            twinkle_speed,
+            twinkle_percent,
+            twinkle_scale_min,
+            twinkle_scale_max,
+            inherit_velocity_scale,
+            drag,
+
+            legacy_spin,
+            base_spin,
+            base_spin_variation,
+            spin_speed,
+            spin_speed_variation,
+
+            tumble_min,
+            tumble_max,
+            wind_vector,
+            wind_time,
+
+            follow_speed1,
+            follow_scale1,
+            follow_speed2,
+            follow_scale2,
+
+            spline_points,
+            enabled_in
+
+            fallback_model_filename: None,
+            texture_file_data_ids: None,
+            enable_encryption: None,
+            multi_texture_param0: None,
+            multi_texture_param1: None,
+            particle_initial_state: None,
+            particle_initial_state_variation: None,
+            particle_convergence_time: None,
         })
     }
 
     /// Write a particle emitter to a writer based on the M2 version
-    pub fn write<W: Write>(&self, writer: &mut W, version: u32) -> Result<()> {
-        writer.write_u32_le(self.id)?;
+    pub fn write<W: Write>(&self, writer: &mut W, version: u32) -> Result<()> {writer.write_u32_le(self.id)?;
         writer.write_u32_le(self.flags.bits())?;
         self.position.write(writer)?;
         writer.write_u16_le(self.bone_index)?;
-        writer.write_u16_le(self.texture_index)?;
-        self.model_filename.write(writer)?;
-        writer.write_u16_le(self.parent_emitter)?;
-        writer.write_u16_le(self.geometry_model_unknown)?;
 
-        // Version-specific fields
-        if let Some(m2_version) = M2Version::from_header_version(version) {
-            if m2_version >= M2Version::Legion {
-                // Legion and later have fallback model and texture file data IDs
-                if let Some(ref fallback) = self.fallback_model_filename {
-                    fallback.write(writer)?;
-                } else {
-                    M2Array::<u8>::new(0, 0).write(writer)?;
-                }
-
-                writer.write_u8(self.blending_type)?;
-                writer.write_u8(self.emitter_type as u8)?;
-                writer.write_u8(self.particle_type)?;
-                writer.write_u8(self.head_or_tail)?;
-
-                if let Some(ref tex_file_ids) = self.texture_file_data_ids {
-                    tex_file_ids.write(writer)?;
-                } else {
-                    M2Array::<u32>::new(0, 0).write(writer)?;
-                }
-
-                // Extra fields for WoD and later
-                if m2_version >= M2Version::WoD {
-                    writer.write_u8(self.enable_encryption.unwrap_or(0))?;
-                }
-
-                // Extra multi-texture params for BfA and later
-                if m2_version >= M2Version::BfA {
-                    if let Some(param0) = self.multi_texture_param0 {
-                        for &val in &param0 {
-                            writer.write_u8(val)?;
-                        }
-                    } else {
-                        for _ in 0..4 {
-                            writer.write_u8(0)?;
-                        }
-                    }
-
-                    if let Some(param1) = self.multi_texture_param1 {
-                        for &val in &param1 {
-                            writer.write_u8(val)?;
-                        }
-                    } else {
-                        for _ in 0..4 {
-                            writer.write_u8(0)?;
-                        }
-                    }
-                }
-            } else if m2_version >= M2Version::WoD {
-                // WoD has encryption but no fallback model or texture file IDs
-                writer.write_u8(self.blending_type)?;
-                writer.write_u8(self.emitter_type as u8)?;
-                writer.write_u8(self.particle_type)?;
-                writer.write_u8(self.head_or_tail)?;
-                writer.write_u8(self.enable_encryption.unwrap_or(0))?;
-            } else {
-                // Pre-WoD just has basic fields
-                writer.write_u8(self.blending_type)?;
-                writer.write_u8(self.emitter_type as u8)?;
-                writer.write_u8(self.particle_type)?;
-                writer.write_u8(self.head_or_tail)?;
-            }
+        // Texture indices packing
+        let texture_index_raw = if version >= 272 {
+            self.texture_indices[0] | (self.texture_indices[1] << 5) | (self.texture_indices[2] << 10)
         } else {
-            // Default to Vanilla format
+            self.texture_indices[0]
+        };
+        writer.write_u16_le(texture_index_raw)?;
+
+        self.model_filename.write(writer)?;
+        
+        if let Some(ref child) = self.child_emitter_filename {
+            child.write(writer)?;
+        } else {
+            crate::common::M2Array::<u8>::new(0, 0).write(writer)?;
+        }
+
+        if version >= 262 {
             writer.write_u8(self.blending_type)?;
             writer.write_u8(self.emitter_type as u8)?;
+            writer.write_u16_le(self.particle_color_index.unwrap_or(0))?;
+        } else {
+            writer.write_u16_le(self.blending_type as u16)?;
+            writer.write_u16_le(self.emitter_type as u16)?;
+        }
+
+        if version >= 272 {
+            // Write default scales if Cataclysm+ (since we didn't preserve multi_tex_scale perfectly)
+            writer.write_i8(0)?;
+            writer.write_i8(0)?;
+        } else {
             writer.write_u8(self.particle_type)?;
             writer.write_u8(self.head_or_tail)?;
         }
 
-        // Write texture tile rotation/dimensions (3 × u16)
-        writer.write_u16_le(self.texture_tile_rotation)?;
+        writer.write_u16_le(self.priority_plane as u16)?;
         writer.write_u16_le(self.texture_dimensions_rows)?;
         writer.write_u16_le(self.texture_dimensions_columns)?;
 
-        // Write common parameters
-        writer.write_f32_le(self.lifetime)?;
-        writer.write_f32_le(self.emission_rate)?;
-        writer.write_f32_le(self.emission_area_length)?;
-        writer.write_f32_le(self.emission_area_width)?;
-        writer.write_f32_le(self.emission_velocity)?;
+        // Animation blocks (M2Track)
+        self.emission_speed.write(writer, version)?;
+        self.speed_variation.write(writer, version)?;
+        self.vertical_range.write(writer, version)?;
+        self.horizontal_range.write(writer, version)?;
+        self.gravity.write(writer, version)?;
+        self.lifespan.write(writer, version)?;
 
-        // Write min/max ranges
-        writer.write_f32_le(self.min_lifetime)?;
-        writer.write_f32_le(self.max_lifetime)?;
-        writer.write_f32_le(self.min_emission_rate)?;
-        writer.write_f32_le(self.max_emission_rate)?;
-        writer.write_f32_le(self.min_emission_area_length)?;
-        writer.write_f32_le(self.max_emission_area_length)?;
-        writer.write_f32_le(self.min_emission_area_width)?;
-        writer.write_f32_le(self.max_emission_area_width)?;
-        writer.write_f32_le(self.min_emission_velocity)?;
-        writer.write_f32_le(self.max_emission_velocity)?;
-
-        // Write size parameters
-        writer.write_f32_le(self.position_variation)?;
-        writer.write_f32_le(self.min_position_variation)?;
-        writer.write_f32_le(self.max_position_variation)?;
-        writer.write_f32_le(self.initial_size)?;
-        writer.write_f32_le(self.min_initial_size)?;
-        writer.write_f32_le(self.max_initial_size)?;
-        writer.write_f32_le(self.size_variation)?;
-        writer.write_f32_le(self.min_size_variation)?;
-        writer.write_f32_le(self.max_size_variation)?;
-
-        // Write movement parameters
-        writer.write_f32_le(self.horizontal_range)?;
-        writer.write_f32_le(self.min_horizontal_range)?;
-        writer.write_f32_le(self.max_horizontal_range)?;
-        writer.write_f32_le(self.vertical_range)?;
-        writer.write_f32_le(self.min_vertical_range)?;
-        writer.write_f32_le(self.max_vertical_range)?;
-        writer.write_f32_le(self.gravity)?;
-        writer.write_f32_le(self.min_gravity)?;
-        writer.write_f32_le(self.max_gravity)?;
-
-        // Write velocity and rotation parameters
-        writer.write_f32_le(self.initial_velocity)?;
-        writer.write_f32_le(self.min_initial_velocity)?;
-        writer.write_f32_le(self.max_initial_velocity)?;
-        writer.write_f32_le(self.speed_variation)?;
-        writer.write_f32_le(self.min_speed_variation)?;
-        writer.write_f32_le(self.max_speed_variation)?;
-        writer.write_f32_le(self.rotation_speed)?;
-        writer.write_f32_le(self.min_rotation_speed)?;
-        writer.write_f32_le(self.max_rotation_speed)?;
-        writer.write_f32_le(self.initial_rotation)?;
-        writer.write_f32_le(self.min_initial_rotation)?;
-        writer.write_f32_le(self.max_initial_rotation)?;
-
-        // Write color parameters
-        self.mid_point_color.write(writer)?;
-        writer.write_f32_le(self.color_animation_speed)?;
-        writer.write_f32_le(self.color_median_time)?;
-
-        // Write unused/unknown parameters
-        writer.write_f32_le(self.lifespan_unused)?;
-        writer.write_f32_le(self.emission_rate_unused)?;
-        writer.write_u32_le(self.unknown_1)?;
-        writer.write_f32_le(self.unknown_2)?;
-
-        // Write animation blocks
-        self.emission_speed_animation.write(writer, version)?;
-        self.emission_rate_animation.write(writer, version)?;
-        self.emission_area_animation.write(writer, version)?;
-        self.xy_scale_animation.write(writer, version)?;
-        self.z_scale_animation.write(writer, version)?;
-        self.color_animation.write(writer, version)?;
-        self.transparency_animation.write(writer, version)?;
-        self.size_animation.write(writer, version)?;
-        self.intensity_animation.write(writer, version)?;
-        self.z_source_animation.write(writer, version)?;
-
-        // Additional fields for Legion and later
-        if let Some(m2_version) = M2Version::from_header_version(version)
-            && m2_version >= M2Version::Legion
-        {
-            writer.write_u32_le(self.particle_initial_state.unwrap_or(0))?;
-            writer.write_f32_le(self.particle_initial_state_variation.unwrap_or(0.0))?;
-            writer.write_f32_le(self.particle_convergence_time.unwrap_or(0.0))?;
+        if version >= 264 {
+            writer.write_f32_le(self.lifespan_variation.unwrap_or(0.0))?;
         }
 
-        // Additional physics parameters for MoP+ with PHYSICS flag
-        if let Some(m2_version) = M2Version::from_header_version(version)
-            && m2_version >= M2Version::MoP
-            && self.flags.contains(M2ParticleFlags::PHYSICS)
-        {
-            if let Some(params) = self.physics_parameters {
-                for &val in &params {
-                    writer.write_f32_le(val)?;
-                }
-            } else {
-                // Write default values if no physics parameters are provided
-                for _ in 0..5 {
-                    writer.write_f32_le(0.0)?;
-                }
-            }
+        self.emission_rate.write(writer, version)?;
+
+        if version >= 264 {
+            writer.write_f32_le(self.emission_rate_variation.unwrap_or(0.0))?;
         }
+
+        self.emission_area_width.write(writer, version)?;
+        self.emission_area_length.write(writer, version)?;
+        self.z_source.write(writer, version)?;
+
+        // Fake Blocks (FBlock)
+        if version >= 264 {
+            self.color_track.write(writer)?;
+            self.alpha_track.write(writer)?;
+            self.scale_track.write(writer)?;
+            self.scale_vary.write(writer)?;
+            self.head_uv_anim.write(writer)?;
+            self.tail_uv_anim.write(writer)?;
+        } else {
+            // Write the 48 bytes gap for pre-WotLK to maintain offset integrity
+            writer.write_all(&[0u8; 48])?;
+        }
+
+        // Unconditional block
+        writer.write_f32_le(self.tail_length)?;
+        writer.write_f32_le(self.twinkle_speed)?;
+        writer.write_f32_le(self.twinkle_percent)?;
+        writer.write_f32_le(self.twinkle_scale_min)?;
+        writer.write_f32_le(self.twinkle_scale_max)?;
+        writer.write_f32_le(self.inherit_velocity_scale)?;
+        writer.write_f32_le(self.drag)?;
+
+        // Spin Bifurcation
+        if version >= 264 {
+            writer.write_f32_le(self.base_spin.unwrap_or(0.0))?;
+            writer.write_f32_le(self.base_spin_variation.unwrap_or(0.0))?;
+            writer.write_f32_le(self.spin_speed.unwrap_or(0.0))?;
+            writer.write_f32_le(self.spin_speed_variation.unwrap_or(0.0))?;
+        } else {
+            writer.write_f32_le(self.legacy_spin.unwrap_or(0.0))?;
+        }
+
+        // Vectors & Splines
+        self.tumble_min.write(writer)?;
+        self.tumble_max.write(writer)?;
+        self.wind_vector.write(writer)?;
+        writer.write_f32_le(self.wind_time)?;
+
+        writer.write_f32_le(self.follow_speed1)?;
+        writer.write_f32_le(self.follow_scale1)?;
+        writer.write_f32_le(self.follow_speed2)?;
+        writer.write_f32_le(self.follow_scale2)?;
+
+        self.spline_points.write(writer)?;
+        self.enabled_in.write(writer, version)?;
 
         Ok(())
     }

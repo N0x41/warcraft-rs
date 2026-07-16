@@ -1367,108 +1367,132 @@ fn collect_particle_animation_data<R: Read + Seek>(
     let mut animation_data = Vec::new();
 
     for (emitter_idx, emitter) in emitters.iter().enumerate() {
+
         // Collect emission speed track (f32 = 4 bytes)
         if let Some(data) = collect_particle_track_data(
-            reader,
-            &emitter.emission_speed_animation,
-            emitter_idx,
-            ParticleTrackType::EmissionSpeed,
-        )? {
-            animation_data.push(data);
-        }
+            reader, &emitter.emission_speed, emitter_idx, ParticleTrackType::EmissionSpeed
+        )? { animation_data.push(data); }
 
         // Collect emission rate track (f32 = 4 bytes)
         if let Some(data) = collect_particle_track_data(
-            reader,
-            &emitter.emission_rate_animation,
-            emitter_idx,
-            ParticleTrackType::EmissionRate,
-        )? {
-            animation_data.push(data);
-        }
+            reader, &emitter.emission_rate, emitter_idx, ParticleTrackType::EmissionRate
+        )? { animation_data.push(data); }
 
         // Collect emission area track (f32 = 4 bytes)
         if let Some(data) = collect_particle_track_data(
-            reader,
-            &emitter.emission_area_animation,
-            emitter_idx,
-            ParticleTrackType::EmissionArea,
-        )? {
-            animation_data.push(data);
-        }
-
-        // Collect XY scale track (C2Vector = 8 bytes)
-        if let Some(data) = collect_particle_track_data(
-            reader,
-            &emitter.xy_scale_animation,
-            emitter_idx,
-            ParticleTrackType::XYScale,
-        )? {
-            animation_data.push(data);
-        }
+            reader, &emitter.emission_area_length, emitter_idx, ParticleTrackType::EmissionArea
+        )? { animation_data.push(data); }
 
         // Collect Z scale track (f32 = 4 bytes)
         if let Some(data) = collect_particle_track_data(
-            reader,
-            &emitter.z_scale_animation,
-            emitter_idx,
-            ParticleTrackType::ZScale,
-        )? {
-            animation_data.push(data);
-        }
-
-        // Collect color track (M2Color = 12 bytes)
-        if let Some(data) = collect_particle_track_data(
-            reader,
-            &emitter.color_animation,
-            emitter_idx,
-            ParticleTrackType::Color,
-        )? {
-            animation_data.push(data);
-        }
-
-        // Collect transparency track (f32 = 4 bytes)
-        if let Some(data) = collect_particle_track_data(
-            reader,
-            &emitter.transparency_animation,
-            emitter_idx,
-            ParticleTrackType::Transparency,
-        )? {
-            animation_data.push(data);
-        }
-
-        // Collect size track (f32 = 4 bytes)
-        if let Some(data) = collect_particle_track_data(
-            reader,
-            &emitter.size_animation,
-            emitter_idx,
-            ParticleTrackType::Size,
-        )? {
-            animation_data.push(data);
-        }
-
-        // Collect intensity track (f32 = 4 bytes)
-        if let Some(data) = collect_particle_track_data(
-            reader,
-            &emitter.intensity_animation,
-            emitter_idx,
-            ParticleTrackType::Intensity,
-        )? {
-            animation_data.push(data);
-        }
-
-        // Collect Z source track (f32 = 4 bytes)
-        if let Some(data) = collect_particle_track_data(
-            reader,
-            &emitter.z_source_animation,
-            emitter_idx,
-            ParticleTrackType::ZSource,
-        )? {
-            animation_data.push(data);
-        }
+            reader, &emitter.z_source, emitter_idx, ParticleTrackType::ZSource
+        )? { animation_data.push(data); }
     }
 
     Ok(animation_data)
+    //for (emitter_idx, emitter) in emitters.iter().enumerate() {
+    //    // Collect emission speed track (f32 = 4 bytes)
+    //    if let Some(data) = collect_particle_track_data(
+    //        reader,
+    //        &emitter.emission_speed_animation,
+    //        emitter_idx,
+    //        ParticleTrackType::EmissionSpeed,
+    //    )? {
+    //        animation_data.push(data);
+    //    }
+//
+    //    // Collect emission rate track (f32 = 4 bytes)
+    //    if let Some(data) = collect_particle_track_data(
+    //        reader,
+    //        &emitter.emission_rate_animation,
+    //        emitter_idx,
+    //        ParticleTrackType::EmissionRate,
+    //    )? {
+    //        animation_data.push(data);
+    //    }
+//
+    //    // Collect emission area track (f32 = 4 bytes)
+    //    if let Some(data) = collect_particle_track_data(
+    //        reader,
+    //        &emitter.emission_area_animation,
+    //        emitter_idx,
+    //        ParticleTrackType::EmissionArea,
+    //    )? {
+    //        animation_data.push(data);
+    //    }
+//
+    //    // Collect XY scale track (C2Vector = 8 bytes)
+    //    if let Some(data) = collect_particle_track_data(
+    //        reader,
+    //        &emitter.xy_scale_animation,
+    //        emitter_idx,
+    //        ParticleTrackType::XYScale,
+    //    )? {
+    //        animation_data.push(data);
+    //    }
+//
+    //    // Collect Z scale track (f32 = 4 bytes)
+    //    if let Some(data) = collect_particle_track_data(
+    //        reader,
+    //        &emitter.z_scale_animation,
+    //        emitter_idx,
+    //        ParticleTrackType::ZScale,
+    //    )? {
+    //        animation_data.push(data);
+    //    }
+//
+    //    // Collect color track (M2Color = 12 bytes)
+    //    if let Some(data) = collect_particle_track_data(
+    //        reader,
+    //        &emitter.color_animation,
+    //        emitter_idx,
+    //        ParticleTrackType::Color,
+    //    )? {
+    //        animation_data.push(data);
+    //    }
+//
+    //    // Collect transparency track (f32 = 4 bytes)
+    //    if let Some(data) = collect_particle_track_data(
+    //        reader,
+    //        &emitter.transparency_animation,
+    //        emitter_idx,
+    //        ParticleTrackType::Transparency,
+    //    )? {
+    //        animation_data.push(data);
+    //    }
+//
+    //    // Collect size track (f32 = 4 bytes)
+    //    if let Some(data) = collect_particle_track_data(
+    //        reader,
+    //        &emitter.size_animation,
+    //        emitter_idx,
+    //        ParticleTrackType::Size,
+    //    )? {
+    //        animation_data.push(data);
+    //    }
+//
+    //    // Collect intensity track (f32 = 4 bytes)
+    //    if let Some(data) = collect_particle_track_data(
+    //        reader,
+    //        &emitter.intensity_animation,
+    //        emitter_idx,
+    //        ParticleTrackType::Intensity,
+    //    )? {
+    //        animation_data.push(data);
+    //    }
+//
+    //    // Collect Z source track (f32 = 4 bytes)
+    //    if let Some(data) = collect_particle_track_data(
+    //        reader,
+    //        &emitter.z_source_animation,
+    //        emitter_idx,
+    //        ParticleTrackType::ZSource,
+    //    )? {
+    //        animation_data.push(data);
+    //    }
+    //}
+
+    Ok(Vec::new())
 }
 
 /// Collects raw animation keyframe data for a single ribbon emitter M2AnimationBlock

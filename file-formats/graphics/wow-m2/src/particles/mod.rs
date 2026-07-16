@@ -29,7 +29,7 @@
 //! # Reference
 //!
 //! Based on noclip.website's particle implementation:
-//! `noclip.website/rust/src/wow/particles.rs`
+//! `https://github.com/magcius/noclip.website/blob/main/rust/src/wow/particles.rs`
 
 mod emission;
 mod emitter;

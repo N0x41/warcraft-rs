@@ -1,7 +1,8 @@
 use crate::{
     Result,
-    chunks::m2_track::{M2CompQuat, M2Track, M2TrackQuat, M2TrackVec3},
+    chunks::m2_track::{M2CompQuat, M2Track, M2TrackQuat, M2TrackVec3, /* M2TrackFloat */},
     common::{C3Vector, read_array},
+    chunks::animation::M2AnimationBlock,
     io_ext::ReadExt,
 };
 use std::io::{Read, Seek};
@@ -33,6 +34,26 @@ impl M2TrackResolver {
         }
 
         read_array(reader, &track.values, |r| C3Vector::parse(r))
+    }
+
+    /// Resolve scalar f32 values from the M2 track
+    pub fn resolve_f32_values<R: std::io::Read + std::io::Seek>(
+        reader: &mut R,
+        track: &M2AnimationBlock<f32>,
+    ) -> std::io::Result<Vec<f32>> {
+        let count = track.track.values.array.count;
+        let offset = track.track.values.array.offset;
+
+        let mut values = Vec::with_capacity(count as usize);
+        reader.seek(std::io::SeekFrom::Start(offset as u64))?;
+        
+        let mut buffer = [0u8; 4];
+        for _ in 0..track.track.values.array.count {
+            reader.read_exact(&mut buffer)?;
+            values.push(f32::from_le_bytes(buffer));
+        }
+        
+        Ok(values)
     }
 
     /// Resolve quaternion track values (rotation)
@@ -83,6 +104,36 @@ impl M2TrackVec3Ext for M2TrackVec3 {
         let timestamps = M2TrackResolver::resolve_timestamps(reader, self)?;
         let values = M2TrackResolver::resolve_vec3_values(reader, self)?;
         let ranges = M2TrackResolver::resolve_ranges(reader, self)?;
+        Ok((timestamps, values, ranges))
+    }
+}
+
+pub trait M2TrackFloatExt {
+    fn resolve_data<R: Read + Seek>(
+        &self,
+        reader: &mut R,
+    ) -> Result<(Vec<u32>, Vec<f32>, Option<Vec<u32>>)>;
+}
+
+impl M2TrackFloatExt for M2AnimationBlock<f32> {
+    fn resolve_data<R: Read + Seek>(
+        &self,
+        reader: &mut R,
+    ) -> Result<(Vec<u32>, Vec<f32>, Option<Vec<u32>>)> {
+        let count = self.track.timestamps.count as usize;
+        let offset = self.track.timestamps.offset as u64;
+    
+        let mut timestamps = Vec::with_capacity(count);
+        if count > 0 {
+            reader.seek(std::io::SeekFrom::Start(offset))?;
+            let mut buffer = [0u8; 4];
+            for _ in 0..count {
+                reader.read_exact(&mut buffer)?;
+                timestamps.push(u32::from_le_bytes(buffer));
+            }
+        }
+        let values = M2TrackResolver::resolve_f32_values(reader, self)?;
+        let ranges = None;
         Ok((timestamps, values, ranges))
     }
 }

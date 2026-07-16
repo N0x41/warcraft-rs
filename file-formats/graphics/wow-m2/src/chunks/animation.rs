@@ -75,6 +75,33 @@ impl M2Range {
     }
 }
 
+/// A simplified animation block (without interpolation or global sequence ID) used in WotLK and earlier.
+/// Referred to as `FBlock` in the WoWDev M2 documentation.
+#[derive(Debug, Clone)]
+pub struct FakeAnimationBlock<T> {
+    pub timestamps: M2Array<u16>,
+    pub values: M2Array<T>,
+}
+
+impl<T: Clone> FakeAnimationBlock<T> {
+    /// Parses a FakeAnimationBlock from the given reader.
+    pub fn parse<R: std::io::Read + std::io::Seek>(reader: &mut R) -> crate::error::Result<Self> {
+        Ok(Self {
+            timestamps: M2Array::parse(reader)?,
+            values: M2Array::parse(reader)?,
+        })
+    }
+}
+
+impl<T: crate::common::M2Parse + Clone> FakeAnimationBlock<T> {
+    /// Writes a FakeAnimationBlock to the given writer.
+    pub fn write<W: std::io::Write>(&self, writer: &mut W) -> crate::error::Result<()> {
+        self.timestamps.write(writer)?;
+        self.values.write(writer)?;
+        Ok(())
+    }
+}
+
 /// An animation track header
 #[derive(Debug, Clone)]
 pub struct M2AnimationTrack<T: M2Parse> {
