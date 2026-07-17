@@ -1,8 +1,6 @@
 //! Particle emitter runtime state
 
-use super::emission::{
-    EmissionParams, EmissionType, ParticleRng, create_planar, create_spherical, create_spline,
-};
+use super::emission::{EmissionParams, EmissionType, ParticleRng, create_planar, create_spherical, create_spline};
 use super::particle::Particle;
 use super::{PARTICLE_COORDINATE_FIX, TEXELS_PER_PARTICLE};
 use crate::chunks::particle_emitter::{M2ParticleEmitter, M2ParticleEmitterType, M2ParticleFlags};
@@ -128,11 +126,10 @@ impl ParticleEmitter {
             _ => EmissionType::Point,
         };
 
-
-        // Since we now rely on M2AnimationBlocks, we don't have an absolute "max_lifetime" 
-        // easily extractable at initialization. 
+        // Since we now rely on M2AnimationBlocks, we don't have an absolute "max_lifetime"
+        // easily extractable at initialization.
         // We allocate a sufficiently large buffer by default for WotLK systems.
-        let max_particles = 1000; 
+        let max_particles = 1000;
 
         // Secure extraction of texture dimensions (to avoid division by zéro)
         let tex_cols = m2_emitter.texture_dimensions_columns.max(1);
@@ -149,11 +146,7 @@ impl ParticleEmitter {
             model_matrix: identity_matrix(),
             coordinate_fix: PARTICLE_COORDINATE_FIX,
             wind: [0.0, 0.0, 0.0],
-            position: [
-                m2_emitter.position.x,
-                m2_emitter.position.y,
-                m2_emitter.position.z,
-            ],
+            position: [m2_emitter.position.x, m2_emitter.position.y, m2_emitter.position.z],
             drag: m2_emitter.drag,
             particles_to_emit: 0.0,
             lifespan_variance: m2_emitter.lifespan_variation.unwrap_or(0.0),
@@ -164,9 +157,9 @@ impl ParticleEmitter {
             flags: m2_emitter.flags,
             params: EmitterParams {
                 enabled: true,
-                // Note: These values are driven by dynamic animation tracks. 
-                // They are initialized to 0.0 as placeholders. The consuming client 
-                // engine is responsible for evaluating the `M2AnimationBlock` and 
+                // Note: These values are driven by dynamic animation tracks.
+                // They are initialized to 0.0 as placeholders. The consuming client
+                // engine is responsible for evaluating the `M2AnimationBlock` and
                 // updating these parameters per logical tick to interpolate them correctly.
                 gravity: [0.0, 0.0, 0.0],
                 emission_speed: 0.0,
@@ -177,6 +170,7 @@ impl ParticleEmitter {
                 emission_rate: 0.0,
                 emission_area_length: 0.0,
                 emission_area_width: 0.0,
+                z_source: 0.0,
             },
             tex_scale_x,
             tex_scale_y,
@@ -226,12 +220,7 @@ impl ParticleEmitter {
     /// * `dt_ms` - Delta time in milliseconds
     /// * `bone_transform` - 4x4 bone transform matrix (column-major)
     /// * `bone_post_billboard` - 4x4 post-billboard transform matrix (column-major)
-    pub fn update(
-        &mut self,
-        dt_ms: f32,
-        bone_transform: &[f32; 16],
-        bone_post_billboard: &[f32; 16],
-    ) {
+    pub fn update(&mut self, dt_ms: f32, bone_transform: &[f32; 16], bone_post_billboard: &[f32; 16]) {
         let dt = dt_ms / 1000.0;
 
         // Update model matrix: bone_post_billboard * bone_transform * local_offset
@@ -239,8 +228,7 @@ impl ParticleEmitter {
 
         // Emit new particles if enabled
         if self.params.enabled {
-            let emission_rate =
-                self.params.emission_rate + self.rng.random_range(self.params.emission_rate * 0.1);
+            let emission_rate = self.params.emission_rate + self.rng.random_range(self.params.emission_rate * 0.1);
             self.particles_to_emit += emission_rate * dt;
 
             while self.particles_to_emit > 1.0 && self.particles.len() < self.max_particles {
@@ -312,17 +300,14 @@ impl ParticleEmitter {
 
         let mut particle = match self.emission_type {
             EmissionType::Planar => create_planar(&emission_params, &mut self.rng),
-            EmissionType::Spherical => {
-                create_spherical(&emission_params, &mut self.rng, particles_go_up)
-            }
+            EmissionType::Spherical => create_spherical(&emission_params, &mut self.rng, particles_go_up),
             EmissionType::Spline => {
                 // For spline, we'd need spline points - use origin for now
                 create_spline(&emission_params, &mut self.rng, [0.0, 0.0, 0.0])
             }
             EmissionType::Point => {
                 // Point emission - particles start at origin with random velocity
-                let speed = self.params.emission_speed
-                    * (1.0 + self.rng.random_range(self.params.speed_variation));
+                let speed = self.params.emission_speed * (1.0 + self.rng.random_range(self.params.speed_variation));
                 Particle::new(
                     [0.0, 0.0, 0.0],
                     [0.0, 0.0, speed],
@@ -393,10 +378,7 @@ impl ParticleEmitter {
     fn extract_tex_coords(&self, cell: u16) -> [f32; 2] {
         let x_int = cell as u32 & self.tex_col_mask;
         let y_int = cell as u32 >> self.tex_col_bits;
-        [
-            x_int as f32 * self.tex_scale_x,
-            y_int as f32 * self.tex_scale_y,
-        ]
+        [x_int as f32 * self.tex_scale_x, y_int as f32 * self.tex_scale_y]
     }
 }
 

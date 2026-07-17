@@ -20,12 +20,11 @@ use crate::chunks::ribbon_emitter::M2RibbonEmitter;
 use crate::chunks::texture_animation::M2TextureAnimation;
 use crate::chunks::transparency_animation::M2TransparencyAnimation;
 use crate::chunks::{
-    AfraChunk, AnimationFileIds, BoneData, BoneFileIds, CollisionMeshData, DbocChunk, DpivChunk,
-    EdgeFadeData, ExtendedParticleData, GeometryParticleIds, LightingDetails, LodData, M2Texture,
-    M2Vertex, ModelAlphaData, ParentAnimationBlacklist, ParentAnimationData, ParentEventData,
-    ParentSequenceBounds, ParticleGeosetData, PhysicsData, PhysicsFileDataChunk, PhysicsFileId,
-    RecursiveParticleIds, SkeletonData, SkeletonFileId, SkinFileIds, TextureAnimationChunk,
-    TextureFileIds, WaterfallEffect,
+    AfraChunk, AnimationFileIds, BoneData, BoneFileIds, CollisionMeshData, DbocChunk, DpivChunk, EdgeFadeData,
+    ExtendedParticleData, GeometryParticleIds, LightingDetails, LodData, M2Texture, M2Vertex, ModelAlphaData,
+    ParentAnimationBlacklist, ParentAnimationData, ParentEventData, ParentSequenceBounds, ParticleGeosetData,
+    PhysicsData, PhysicsFileDataChunk, PhysicsFileId, RecursiveParticleIds, SkeletonData, SkeletonFileId, SkinFileIds,
+    TextureAnimationChunk, TextureFileIds, WaterfallEffect,
 };
 use crate::common::{M2Array, M2Parse, read_array, read_raw_bytes};
 use crate::error::{M2Error, Result};
@@ -575,9 +574,7 @@ impl LightTrackType {
     pub fn value_size(&self) -> usize {
         match self {
             LightTrackType::AmbientColor | LightTrackType::DiffuseColor => 12, // M2Color (3 f32s)
-            LightTrackType::AttenuationStart
-            | LightTrackType::AttenuationEnd
-            | LightTrackType::Visibility => 4, // f32
+            LightTrackType::AttenuationStart | LightTrackType::AttenuationEnd | LightTrackType::Visibility => 4, // f32
         }
     }
 }
@@ -705,9 +702,7 @@ pub fn parse_m2<R: Read + Seek>(reader: &mut R) -> Result<M2Format> {
 
     match &magic {
         magic if magic == &M2_MAGIC_LEGACY => Ok(M2Format::Legacy(M2Model::parse_legacy(reader)?)),
-        magic if magic == &M2_MAGIC_CHUNKED => {
-            Ok(M2Format::Chunked(M2Model::parse_chunked(reader)?))
-        }
+        magic if magic == &M2_MAGIC_CHUNKED => Ok(M2Format::Chunked(M2Model::parse_chunked(reader)?)),
         _ => Err(M2Error::InvalidMagicBytes(magic)),
     }
 }
@@ -786,33 +781,19 @@ fn collect_bone_animation_data<R: Read + Seek>(
 
     for (bone_idx, bone) in bones.iter().enumerate() {
         // Collect translation track (C3Vector = 12 bytes per value)
-        if let Some(data) = collect_track_data(
-            reader,
-            &bone.translation,
-            version,
-            12,
-            bone_idx,
-            TrackType::Translation,
-        )? {
+        if let Some(data) =
+            collect_track_data(reader, &bone.translation, version, 12, bone_idx, TrackType::Translation)?
+        {
             animation_data.push(data);
         }
 
         // Collect rotation track (M2CompQuat = 8 bytes per value)
-        if let Some(data) = collect_track_data(
-            reader,
-            &bone.rotation,
-            version,
-            8,
-            bone_idx,
-            TrackType::Rotation,
-        )? {
+        if let Some(data) = collect_track_data(reader, &bone.rotation, version, 8, bone_idx, TrackType::Rotation)? {
             animation_data.push(data);
         }
 
         // Collect scale track (C3Vector = 12 bytes per value)
-        if let Some(data) =
-            collect_track_data(reader, &bone.scale, version, 12, bone_idx, TrackType::Scale)?
-        {
+        if let Some(data) = collect_track_data(reader, &bone.scale, version, 12, bone_idx, TrackType::Scale)? {
             animation_data.push(data);
         }
     }
@@ -871,10 +852,7 @@ fn relocate_bone_track_offsets(bone: &mut M2Bone, offset_map: &HashMap<u32, u32>
 ///
 /// If a track's original offset is not in the map but the track has data,
 /// the track is zeroed out to avoid invalid references.
-fn relocate_particle_animation_offsets(
-    emitter: &mut M2ParticleEmitter,
-    offset_map: &HashMap<u32, u32>,
-) {
+fn relocate_particle_animation_offsets(emitter: &mut M2ParticleEmitter, offset_map: &HashMap<u32, u32>) {
     // Helper to relocate or zero an animation block
     fn relocate_or_zero_animation_block<T: M2Parse + Default + Clone>(
         block: &mut M2AnimationBlock<T>,
@@ -914,27 +892,24 @@ fn relocate_particle_animation_offsets(
             }
         }
     }
-
-    relocate_or_zero_animation_block(&mut emitter.emission_speed_animation, offset_map);
-    relocate_or_zero_animation_block(&mut emitter.emission_rate_animation, offset_map);
-    relocate_or_zero_animation_block(&mut emitter.emission_area_animation, offset_map);
-    relocate_or_zero_animation_block(&mut emitter.xy_scale_animation, offset_map);
-    relocate_or_zero_animation_block(&mut emitter.z_scale_animation, offset_map);
-    relocate_or_zero_animation_block(&mut emitter.color_animation, offset_map);
-    relocate_or_zero_animation_block(&mut emitter.transparency_animation, offset_map);
-    relocate_or_zero_animation_block(&mut emitter.size_animation, offset_map);
-    relocate_or_zero_animation_block(&mut emitter.intensity_animation, offset_map);
-    relocate_or_zero_animation_block(&mut emitter.z_source_animation, offset_map);
+    relocate_or_zero_animation_block(&mut emitter.emission_speed, offset_map);
+    relocate_or_zero_animation_block(&mut emitter.speed_variation, offset_map);
+    relocate_or_zero_animation_block(&mut emitter.vertical_range, offset_map);
+    relocate_or_zero_animation_block(&mut emitter.horizontal_range, offset_map);
+    relocate_or_zero_animation_block(&mut emitter.gravity, offset_map);
+    relocate_or_zero_animation_block(&mut emitter.lifespan, offset_map);
+    relocate_or_zero_animation_block(&mut emitter.emission_rate, offset_map);
+    relocate_or_zero_animation_block(&mut emitter.emission_area_width, offset_map);
+    relocate_or_zero_animation_block(&mut emitter.emission_area_length, offset_map);
+    relocate_or_zero_animation_block(&mut emitter.z_source, offset_map);
+    relocate_or_zero_animation_block(&mut emitter.enabled_in, offset_map);
 }
 
 /// Updates M2AnimationBlock offsets in a ribbon emitter using the relocation map
 ///
 /// If a track's original offset is not in the map but the track has data,
 /// the track is zeroed out to avoid invalid references.
-fn relocate_ribbon_animation_offsets(
-    emitter: &mut M2RibbonEmitter,
-    offset_map: &HashMap<u32, u32>,
-) {
+fn relocate_ribbon_animation_offsets(emitter: &mut M2RibbonEmitter, offset_map: &HashMap<u32, u32>) {
     // Helper to relocate or zero an animation block
     fn relocate_or_zero_animation_block<T: M2Parse + Default + Clone>(
         block: &mut M2AnimationBlock<T>,
@@ -982,10 +957,7 @@ fn relocate_ribbon_animation_offsets(
 }
 
 /// Relocates texture animation offsets in a texture animation to new positions
-fn relocate_texture_animation_offsets(
-    animation: &mut M2TextureAnimation,
-    offset_map: &HashMap<u32, u32>,
-) {
+fn relocate_texture_animation_offsets(animation: &mut M2TextureAnimation, offset_map: &HashMap<u32, u32>) {
     // Helper to relocate or zero an animation block
     fn relocate_or_zero_animation_block<T: M2Parse + Default + Clone>(
         block: &mut M2AnimationBlock<T>,
@@ -1032,10 +1004,7 @@ fn relocate_texture_animation_offsets(
 }
 
 /// Relocates color animation offsets in a color animation to new positions
-fn relocate_color_animation_offsets(
-    animation: &mut M2ColorAnimation,
-    offset_map: &HashMap<u32, u32>,
-) {
+fn relocate_color_animation_offsets(animation: &mut M2ColorAnimation, offset_map: &HashMap<u32, u32>) {
     // Helper to relocate or zero an animation block
     fn relocate_or_zero_animation_block<T: M2Parse + Default + Clone>(
         block: &mut M2AnimationBlock<T>,
@@ -1081,10 +1050,7 @@ fn relocate_color_animation_offsets(
 }
 
 /// Relocates transparency animation offsets in a transparency animation to new positions
-fn relocate_transparency_animation_offsets(
-    animation: &mut M2TransparencyAnimation,
-    offset_map: &HashMap<u32, u32>,
-) {
+fn relocate_transparency_animation_offsets(animation: &mut M2TransparencyAnimation, offset_map: &HashMap<u32, u32>) {
     // Helper to relocate or zero an animation block
     fn relocate_or_zero_animation_block<T: M2Parse + Default + Clone>(
         block: &mut M2AnimationBlock<T>,
@@ -1154,10 +1120,7 @@ fn relocate_event_offset(event: &mut M2Event, offset_map: &HashMap<u32, u32>) {
 /// Relocates attachment animation offsets to new positions
 ///
 /// Attachments have a single scale animation track (`M2AnimationBlock<f32>`).
-fn relocate_attachment_animation_offsets(
-    attachment: &mut M2Attachment,
-    offset_map: &HashMap<u32, u32>,
-) {
+fn relocate_attachment_animation_offsets(attachment: &mut M2Attachment, offset_map: &HashMap<u32, u32>) {
     // Helper to relocate or zero an animation block
     fn relocate_or_zero_animation_block<T: M2Parse + Default + Clone>(
         block: &mut M2AnimationBlock<T>,
@@ -1335,11 +1298,7 @@ fn collect_particle_track_data<R: Read + Seek, T: M2Parse>(
 
     // Read values (size depends on track type)
     let values = if !track.values.array.is_empty() {
-        read_raw_bytes(
-            reader,
-            &track.values.array.convert(),
-            track_type.value_size(),
-        )?
+        read_raw_bytes(reader, &track.values.array.convert(), track_type.value_size())?
     } else {
         Vec::new()
     };
@@ -1367,29 +1326,38 @@ fn collect_particle_animation_data<R: Read + Seek>(
     let mut animation_data = Vec::new();
 
     for (emitter_idx, emitter) in emitters.iter().enumerate() {
-
-        // Collect emission speed track (f32 = 4 bytes)
         if let Some(data) = collect_particle_track_data(
-            reader, &emitter.emission_speed, emitter_idx, ParticleTrackType::EmissionSpeed
-        )? { animation_data.push(data); }
-
-        // Collect emission rate track (f32 = 4 bytes)
+            reader,
+            &emitter.emission_speed,
+            emitter_idx,
+            ParticleTrackType::EmissionSpeed,
+        )? {
+            animation_data.push(data);
+        }
         if let Some(data) = collect_particle_track_data(
-            reader, &emitter.emission_rate, emitter_idx, ParticleTrackType::EmissionRate
-        )? { animation_data.push(data); }
-
-        // Collect emission area track (f32 = 4 bytes)
+            reader,
+            &emitter.emission_rate,
+            emitter_idx,
+            ParticleTrackType::EmissionRate,
+        )? {
+            animation_data.push(data);
+        }
         if let Some(data) = collect_particle_track_data(
-            reader, &emitter.emission_area_length, emitter_idx, ParticleTrackType::EmissionArea
-        )? { animation_data.push(data); }
-
-        // Collect Z scale track (f32 = 4 bytes)
-        if let Some(data) = collect_particle_track_data(
-            reader, &emitter.z_source, emitter_idx, ParticleTrackType::ZSource
-        )? { animation_data.push(data); }
+            reader,
+            &emitter.emission_area_length,
+            emitter_idx,
+            ParticleTrackType::EmissionArea,
+        )? {
+            animation_data.push(data);
+        }
+        if let Some(data) =
+            collect_particle_track_data(reader, &emitter.z_source, emitter_idx, ParticleTrackType::ZSource)?
+        {
+            animation_data.push(data);
+        }
     }
 
-    Ok(animation_data)
+    return Ok(animation_data);
     //for (emitter_idx, emitter) in emitters.iter().enumerate() {
     //    // Collect emission speed track (f32 = 4 bytes)
     //    if let Some(data) = collect_particle_track_data(
@@ -1400,7 +1368,7 @@ fn collect_particle_animation_data<R: Read + Seek>(
     //    )? {
     //        animation_data.push(data);
     //    }
-//
+    //
     //    // Collect emission rate track (f32 = 4 bytes)
     //    if let Some(data) = collect_particle_track_data(
     //        reader,
@@ -1410,7 +1378,7 @@ fn collect_particle_animation_data<R: Read + Seek>(
     //    )? {
     //        animation_data.push(data);
     //    }
-//
+    //
     //    // Collect emission area track (f32 = 4 bytes)
     //    if let Some(data) = collect_particle_track_data(
     //        reader,
@@ -1420,7 +1388,7 @@ fn collect_particle_animation_data<R: Read + Seek>(
     //    )? {
     //        animation_data.push(data);
     //    }
-//
+    //
     //    // Collect XY scale track (C2Vector = 8 bytes)
     //    if let Some(data) = collect_particle_track_data(
     //        reader,
@@ -1430,7 +1398,7 @@ fn collect_particle_animation_data<R: Read + Seek>(
     //    )? {
     //        animation_data.push(data);
     //    }
-//
+    //
     //    // Collect Z scale track (f32 = 4 bytes)
     //    if let Some(data) = collect_particle_track_data(
     //        reader,
@@ -1440,7 +1408,7 @@ fn collect_particle_animation_data<R: Read + Seek>(
     //    )? {
     //        animation_data.push(data);
     //    }
-//
+    //
     //    // Collect color track (M2Color = 12 bytes)
     //    if let Some(data) = collect_particle_track_data(
     //        reader,
@@ -1450,7 +1418,7 @@ fn collect_particle_animation_data<R: Read + Seek>(
     //    )? {
     //        animation_data.push(data);
     //    }
-//
+    //
     //    // Collect transparency track (f32 = 4 bytes)
     //    if let Some(data) = collect_particle_track_data(
     //        reader,
@@ -1460,7 +1428,7 @@ fn collect_particle_animation_data<R: Read + Seek>(
     //    )? {
     //        animation_data.push(data);
     //    }
-//
+    //
     //    // Collect size track (f32 = 4 bytes)
     //    if let Some(data) = collect_particle_track_data(
     //        reader,
@@ -1470,7 +1438,7 @@ fn collect_particle_animation_data<R: Read + Seek>(
     //    )? {
     //        animation_data.push(data);
     //    }
-//
+    //
     //    // Collect intensity track (f32 = 4 bytes)
     //    if let Some(data) = collect_particle_track_data(
     //        reader,
@@ -1480,7 +1448,7 @@ fn collect_particle_animation_data<R: Read + Seek>(
     //    )? {
     //        animation_data.push(data);
     //    }
-//
+    //
     //    // Collect Z source track (f32 = 4 bytes)
     //    if let Some(data) = collect_particle_track_data(
     //        reader,
@@ -1491,8 +1459,6 @@ fn collect_particle_animation_data<R: Read + Seek>(
     //        animation_data.push(data);
     //    }
     //}
-
-    Ok(Vec::new())
 }
 
 /// Collects raw animation keyframe data for a single ribbon emitter M2AnimationBlock
@@ -1528,11 +1494,7 @@ fn collect_ribbon_track_data<R: Read + Seek, T: M2Parse>(
 
     // Read values (size depends on track type)
     let values = if !track.values.array.is_empty() {
-        read_raw_bytes(
-            reader,
-            &track.values.array.convert(),
-            track_type.value_size(),
-        )?
+        read_raw_bytes(reader, &track.values.array.convert(), track_type.value_size())?
     } else {
         Vec::new()
     };
@@ -1561,22 +1523,16 @@ fn collect_ribbon_animation_data<R: Read + Seek>(
 
     for (emitter_idx, emitter) in emitters.iter().enumerate() {
         // Collect color track (M2Color = 12 bytes)
-        if let Some(data) = collect_ribbon_track_data(
-            reader,
-            &emitter.color_animation,
-            emitter_idx,
-            RibbonTrackType::Color,
-        )? {
+        if let Some(data) =
+            collect_ribbon_track_data(reader, &emitter.color_animation, emitter_idx, RibbonTrackType::Color)?
+        {
             animation_data.push(data);
         }
 
         // Collect alpha track (f32 = 4 bytes)
-        if let Some(data) = collect_ribbon_track_data(
-            reader,
-            &emitter.alpha_animation,
-            emitter_idx,
-            RibbonTrackType::Alpha,
-        )? {
+        if let Some(data) =
+            collect_ribbon_track_data(reader, &emitter.alpha_animation, emitter_idx, RibbonTrackType::Alpha)?
+        {
             animation_data.push(data);
         }
 
@@ -1634,11 +1590,7 @@ fn collect_texture_track_data<R: Read + Seek, T: M2Parse>(
 
     // Read values (4 bytes per f32 value)
     let values = if !track.values.array.is_empty() {
-        read_raw_bytes(
-            reader,
-            &track.values.array.convert(),
-            track_type.value_size(),
-        )?
+        read_raw_bytes(reader, &track.values.array.convert(), track_type.value_size())?
     } else {
         Vec::new()
     };
@@ -1666,27 +1618,17 @@ fn collect_texture_animation_data<R: Read + Seek>(
     let mut animation_data = Vec::new();
 
     for (anim_idx, anim) in animations.iter().enumerate() {
-        if let Some(data) = collect_texture_track_data(
-            reader,
-            &anim.translation,
-            anim_idx,
-            TextureTrackType::Translation,
-        )? {
-            animation_data.push(data);
-        }
-
-        if let Some(data) = collect_texture_track_data(
-            reader,
-            &anim.rotation,
-            anim_idx,
-            TextureTrackType::Rotation,
-        )? {
-            animation_data.push(data);
-        }
-
         if let Some(data) =
-            collect_texture_track_data(reader, &anim.scale, anim_idx, TextureTrackType::Scale)?
+            collect_texture_track_data(reader, &anim.translation, anim_idx, TextureTrackType::Translation)?
         {
+            animation_data.push(data);
+        }
+
+        if let Some(data) = collect_texture_track_data(reader, &anim.rotation, anim_idx, TextureTrackType::Rotation)? {
+            animation_data.push(data);
+        }
+
+        if let Some(data) = collect_texture_track_data(reader, &anim.scale, anim_idx, TextureTrackType::Scale)? {
             animation_data.push(data);
         }
     }
@@ -1724,11 +1666,7 @@ fn collect_color_track_data<R: Read + Seek, T: M2Parse>(
 
     // Read values (size depends on track type)
     let values = if !track.values.array.is_empty() {
-        read_raw_bytes(
-            reader,
-            &track.values.array.convert(),
-            track_type.value_size(),
-        )?
+        read_raw_bytes(reader, &track.values.array.convert(), track_type.value_size())?
     } else {
         Vec::new()
     };
@@ -1757,16 +1695,12 @@ fn collect_color_animation_data<R: Read + Seek>(
 
     for (anim_idx, anim) in animations.iter().enumerate() {
         // Collect color track (M2Color = 12 bytes)
-        if let Some(data) =
-            collect_color_track_data(reader, &anim.color, anim_idx, ColorTrackType::Color)?
-        {
+        if let Some(data) = collect_color_track_data(reader, &anim.color, anim_idx, ColorTrackType::Color)? {
             animation_data.push(data);
         }
 
         // Collect alpha track (u16 = 2 bytes)
-        if let Some(data) =
-            collect_color_track_data(reader, &anim.alpha, anim_idx, ColorTrackType::Alpha)?
-        {
+        if let Some(data) = collect_color_track_data(reader, &anim.alpha, anim_idx, ColorTrackType::Alpha)? {
             animation_data.push(data);
         }
     }
@@ -1804,11 +1738,7 @@ fn collect_transparency_track_data<R: Read + Seek, T: M2Parse>(
 
     // Read values (f32 = 4 bytes per alpha value)
     let values = if !track.values.array.is_empty() {
-        read_raw_bytes(
-            reader,
-            &track.values.array.convert(),
-            track_type.value_size(),
-        )?
+        read_raw_bytes(reader, &track.values.array.convert(), track_type.value_size())?
     } else {
         Vec::new()
     };
@@ -1837,12 +1767,9 @@ fn collect_transparency_animation_data<R: Read + Seek>(
 
     for (anim_idx, anim) in animations.iter().enumerate() {
         // Collect alpha track (f32 = 4 bytes)
-        if let Some(data) = collect_transparency_track_data(
-            reader,
-            &anim.alpha,
-            anim_idx,
-            TransparencyTrackType::Alpha,
-        )? {
+        if let Some(data) =
+            collect_transparency_track_data(reader, &anim.alpha, anim_idx, TransparencyTrackType::Alpha)?
+        {
             animation_data.push(data);
         }
     }
@@ -1919,11 +1846,7 @@ fn collect_attachment_track_data<R: Read + Seek, T: M2Parse>(
 
     // Read values (size depends on track type)
     let values = if !track.values.array.is_empty() {
-        read_raw_bytes(
-            reader,
-            &track.values.array.convert(),
-            track_type.value_size(),
-        )?
+        read_raw_bytes(reader, &track.values.array.convert(), track_type.value_size())?
     } else {
         Vec::new()
     };
@@ -1995,11 +1918,7 @@ fn collect_camera_track_data<R: Read + Seek, T: M2Parse>(
 
     // Read values (size depends on track type)
     let values = if !track.values.array.is_empty() {
-        read_raw_bytes(
-            reader,
-            &track.values.array.convert(),
-            track_type.value_size(),
-        )?
+        read_raw_bytes(reader, &track.values.array.convert(), track_type.value_size())?
     } else {
         Vec::new()
     };
@@ -2048,12 +1967,9 @@ fn collect_camera_animation_data<R: Read + Seek>(
         }
 
         // Collect roll track (f32 = 4 bytes)
-        if let Some(data) = collect_camera_track_data(
-            reader,
-            &camera.roll_animation,
-            camera_idx,
-            CameraTrackType::Roll,
-        )? {
+        if let Some(data) =
+            collect_camera_track_data(reader, &camera.roll_animation, camera_idx, CameraTrackType::Roll)?
+        {
             animation_data.push(data);
         }
     }
@@ -2091,11 +2007,7 @@ fn collect_light_track_data<R: Read + Seek, T: M2Parse>(
 
     // Read values (size depends on track type)
     let values = if !track.values.array.is_empty() {
-        read_raw_bytes(
-            reader,
-            &track.values.array.convert(),
-            track_type.value_size(),
-        )?
+        read_raw_bytes(reader, &track.values.array.convert(), track_type.value_size())?
     } else {
         Vec::new()
     };
@@ -2116,10 +2028,7 @@ fn collect_light_track_data<R: Read + Seek, T: M2Parse>(
 ///
 /// This reads the actual keyframe bytes (interpolation_ranges, timestamps, values) from the file,
 /// storing them for later serialization with offset relocation.
-fn collect_light_animation_data<R: Read + Seek>(
-    reader: &mut R,
-    lights: &[M2Light],
-) -> Result<Vec<LightAnimationRaw>> {
+fn collect_light_animation_data<R: Read + Seek>(reader: &mut R, lights: &[M2Light]) -> Result<Vec<LightAnimationRaw>> {
     let mut animation_data = Vec::new();
 
     for (light_idx, light) in lights.iter().enumerate() {
@@ -2181,10 +2090,7 @@ fn collect_light_animation_data<R: Read + Seek>(
 ///
 /// Pre-WotLK models have skin profile data embedded directly in the M2 file.
 /// This function reads the ModelView structures and all data they reference.
-fn collect_embedded_skin_data<R: Read + Seek>(
-    reader: &mut R,
-    header: &M2Header,
-) -> Result<Vec<EmbeddedSkinRaw>> {
+fn collect_embedded_skin_data<R: Read + Seek>(reader: &mut R, header: &M2Header) -> Result<Vec<EmbeddedSkinRaw>> {
     // Only pre-WotLK (version <= 263) has embedded skins
     // Version 264+ uses external .skin files
     if header.version > 263 {
@@ -2213,58 +2119,20 @@ fn collect_embedded_skin_data<R: Read + Seek>(
 
         // Parse the M2Array offsets from ModelView
         // Layout: indices(8) + triangles(8) + properties(8) + submeshes(8) + batches(8) + bone_count_max(4)
-        let n_indices =
-            u32::from_le_bytes([model_view[0], model_view[1], model_view[2], model_view[3]]);
-        let ofs_indices =
-            u32::from_le_bytes([model_view[4], model_view[5], model_view[6], model_view[7]]);
+        let n_indices = u32::from_le_bytes([model_view[0], model_view[1], model_view[2], model_view[3]]);
+        let ofs_indices = u32::from_le_bytes([model_view[4], model_view[5], model_view[6], model_view[7]]);
 
-        let n_triangles =
-            u32::from_le_bytes([model_view[8], model_view[9], model_view[10], model_view[11]]);
-        let ofs_triangles = u32::from_le_bytes([
-            model_view[12],
-            model_view[13],
-            model_view[14],
-            model_view[15],
-        ]);
+        let n_triangles = u32::from_le_bytes([model_view[8], model_view[9], model_view[10], model_view[11]]);
+        let ofs_triangles = u32::from_le_bytes([model_view[12], model_view[13], model_view[14], model_view[15]]);
 
-        let n_properties = u32::from_le_bytes([
-            model_view[16],
-            model_view[17],
-            model_view[18],
-            model_view[19],
-        ]);
-        let ofs_properties = u32::from_le_bytes([
-            model_view[20],
-            model_view[21],
-            model_view[22],
-            model_view[23],
-        ]);
+        let n_properties = u32::from_le_bytes([model_view[16], model_view[17], model_view[18], model_view[19]]);
+        let ofs_properties = u32::from_le_bytes([model_view[20], model_view[21], model_view[22], model_view[23]]);
 
-        let n_submeshes = u32::from_le_bytes([
-            model_view[24],
-            model_view[25],
-            model_view[26],
-            model_view[27],
-        ]);
-        let ofs_submeshes = u32::from_le_bytes([
-            model_view[28],
-            model_view[29],
-            model_view[30],
-            model_view[31],
-        ]);
+        let n_submeshes = u32::from_le_bytes([model_view[24], model_view[25], model_view[26], model_view[27]]);
+        let ofs_submeshes = u32::from_le_bytes([model_view[28], model_view[29], model_view[30], model_view[31]]);
 
-        let n_batches = u32::from_le_bytes([
-            model_view[32],
-            model_view[33],
-            model_view[34],
-            model_view[35],
-        ]);
-        let ofs_batches = u32::from_le_bytes([
-            model_view[36],
-            model_view[37],
-            model_view[38],
-            model_view[39],
-        ]);
+        let n_batches = u32::from_le_bytes([model_view[32], model_view[33], model_view[34], model_view[35]]);
+        let ofs_batches = u32::from_le_bytes([model_view[36], model_view[37], model_view[38], model_view[39]]);
 
         // Read indices data (u16 per entry)
         let indices = if n_indices > 0 && ofs_indices > 0 {
@@ -2664,8 +2532,7 @@ impl M2Model {
                     let chunk_cursor = std::io::Cursor::new(chunk_data);
                     let mut chunk_reader = ChunkReader::new(chunk_cursor, header.clone())?;
 
-                    extended_particle_data =
-                        Some(ExtendedParticleData::parse_expt(&mut chunk_reader)?);
+                    extended_particle_data = Some(ExtendedParticleData::parse_expt(&mut chunk_reader)?);
 
                     // Position is already correct after reading chunk_data
                 }
@@ -2680,8 +2547,7 @@ impl M2Model {
                     let chunk_cursor = std::io::Cursor::new(chunk_data);
                     let mut chunk_reader = ChunkReader::new(chunk_cursor, header.clone())?;
 
-                    extended_particle_data =
-                        Some(ExtendedParticleData::parse_exp2(&mut chunk_reader)?);
+                    extended_particle_data = Some(ExtendedParticleData::parse_exp2(&mut chunk_reader)?);
 
                     // Position is already correct after reading chunk_data
                 }
@@ -2696,8 +2562,7 @@ impl M2Model {
                     let chunk_cursor = std::io::Cursor::new(chunk_data);
                     let mut chunk_reader = ChunkReader::new(chunk_cursor, header.clone())?;
 
-                    parent_animation_blacklist =
-                        Some(ParentAnimationBlacklist::parse(&mut chunk_reader)?);
+                    parent_animation_blacklist = Some(ParentAnimationBlacklist::parse(&mut chunk_reader)?);
 
                     // Position is already correct after reading chunk_data
                 }
@@ -2847,8 +2712,7 @@ impl M2Model {
                     let chunk_cursor = std::io::Cursor::new(chunk_data);
                     let mut chunk_reader = ChunkReader::new(chunk_cursor, header.clone())?;
 
-                    texture_animation_chunk =
-                        Some(TextureAnimationChunk::parse(&mut chunk_reader)?);
+                    texture_animation_chunk = Some(TextureAnimationChunk::parse(&mut chunk_reader)?);
 
                     // Position is already correct after reading chunk_data
                 }
@@ -3272,21 +3136,21 @@ impl M2Model {
 
         Ok(Self {
             header,
-            name: None,                     // TODO: Parse name from chunk-relative offset
-            global_sequences: Vec::new(),   // TODO: Parse from chunk
-            animations: Vec::new(),         // TODO: Parse from chunk
-            animation_lookup: Vec::new(),   // TODO: Parse from chunk
-            bones: Vec::new(),              // TODO: Parse from chunk
-            key_bone_lookup: Vec::new(),    // TODO: Parse from chunk
-            vertices: Vec::new(),           // TODO: Parse from chunk
-            textures: Vec::new(),           // TODO: Parse from chunk
-            materials: Vec::new(),          // TODO: Parse from chunk
-            particle_emitters: Vec::new(),  // TODO: Parse from chunk
-            ribbon_emitters: Vec::new(),    // TODO: Parse from chunk
-            texture_animations: Vec::new(), // TODO: Parse from chunk
-            color_animations: Vec::new(),   // TODO: Parse from chunk
+            name: None,                          // TODO: Parse name from chunk-relative offset
+            global_sequences: Vec::new(),        // TODO: Parse from chunk
+            animations: Vec::new(),              // TODO: Parse from chunk
+            animation_lookup: Vec::new(),        // TODO: Parse from chunk
+            bones: Vec::new(),                   // TODO: Parse from chunk
+            key_bone_lookup: Vec::new(),         // TODO: Parse from chunk
+            vertices: Vec::new(),                // TODO: Parse from chunk
+            textures: Vec::new(),                // TODO: Parse from chunk
+            materials: Vec::new(),               // TODO: Parse from chunk
+            particle_emitters: Vec::new(),       // TODO: Parse from chunk
+            ribbon_emitters: Vec::new(),         // TODO: Parse from chunk
+            texture_animations: Vec::new(),      // TODO: Parse from chunk
+            color_animations: Vec::new(),        // TODO: Parse from chunk
             transparency_animations: Vec::new(), // TODO: Parse from chunk
-            events: Vec::new(),             // TODO: Parse from chunk
+            events: Vec::new(),                  // TODO: Parse from chunk
             attachments: Vec::new(),
             cameras: Vec::new(),
             lights: Vec::new(), // TODO: Parse from chunk
@@ -3338,10 +3202,7 @@ impl M2Model {
             let name_bytes = read_array(reader, &header.name, |r| Ok(r.read_u8()?))?;
 
             // Convert to string, stopping at null terminator
-            let name_end = name_bytes
-                .iter()
-                .position(|&b| b == 0)
-                .unwrap_or(name_bytes.len());
+            let name_end = name_bytes.iter().position(|&b| b == 0).unwrap_or(name_bytes.len());
             let name_str = String::from_utf8_lossy(&name_bytes[..name_end]).to_string();
             Some(name_str)
         } else {
@@ -3349,8 +3210,7 @@ impl M2Model {
         };
 
         // Parse global sequences
-        let global_sequences =
-            read_array(reader, &header.global_sequences, |r| Ok(r.read_u32_le()?))?;
+        let global_sequences = read_array(reader, &header.global_sequences, |r| Ok(r.read_u32_le()?))?;
 
         // Parse animations
         let animations = read_array(reader, &header.animations.convert(), |r| {
@@ -3358,8 +3218,7 @@ impl M2Model {
         })?;
 
         // Parse animation lookups
-        let animation_lookup =
-            read_array(reader, &header.animation_lookup, |r| Ok(r.read_u16_le()?))?;
+        let animation_lookup = read_array(reader, &header.animation_lookup, |r| Ok(r.read_u16_le()?))?;
 
         // Parse bones
         // Special handling for BC item files with 203 bones
@@ -3380,20 +3239,15 @@ impl M2Model {
                 Vec::new()
             } else {
                 // File is large enough, parse normally
-                read_array(reader, &header.bones.convert(), |r| {
-                    M2Bone::parse(r, header.version)
-                })?
+                read_array(reader, &header.bones.convert(), |r| M2Bone::parse(r, header.version))?
             }
         } else {
             // Normal bone parsing for other versions
-            read_array(reader, &header.bones.convert(), |r| {
-                M2Bone::parse(r, header.version)
-            })?
+            read_array(reader, &header.bones.convert(), |r| M2Bone::parse(r, header.version))?
         };
 
         // Parse key bone lookups
-        let key_bone_lookup =
-            read_array(reader, &header.key_bone_lookup, |r| Ok(r.read_u16_le()?))?;
+        let key_bone_lookup = read_array(reader, &header.key_bone_lookup, |r| Ok(r.read_u16_le()?))?;
 
         // Parse vertices with bone index validation
         let bone_count = header.bones.count;
@@ -3421,7 +3275,8 @@ impl M2Model {
         // FIX : Fault tolerence. If it fails, return an empty list and save the 3D model!
         let particle_emitters = read_array(reader, &header.particle_emitters.convert(), |r| {
             M2ParticleEmitter::parse(r, header.version)
-        }).unwrap_or_else(|e| {
+        })
+        .unwrap_or_else(|e| {
             log::warn!("[M2] Error parsing particles: {}, ignoring.", e);
             Vec::new()
         });
@@ -3429,7 +3284,8 @@ impl M2Model {
         // Parse ribbon emitters
         let ribbon_emitters = read_array(reader, &header.ribbon_emitters.convert(), |r| {
             M2RibbonEmitter::parse(r, header.version)
-        }).unwrap_or_else(|e| {
+        })
+        .unwrap_or_else(|e| {
             log::warn!("[M2] Error parsing ribbon emitters: {}, ignoring.", e);
             Vec::new()
         });
@@ -3437,7 +3293,8 @@ impl M2Model {
         // Parse texture animations
         let texture_animations = read_array(reader, &header.texture_animations.convert(), |r| {
             M2TextureAnimation::parse(r, header.version)
-        }).unwrap_or_else(|e| {
+        })
+        .unwrap_or_else(|e| {
             log::warn!("[M2] Error parsing texture animations: {}, ignoring.", e);
             Vec::new()
         });
@@ -3445,72 +3302,63 @@ impl M2Model {
         // Parse color animations
         let color_animations = read_array(reader, &header.color_animations.convert(), |r| {
             M2ColorAnimation::parse(r, header.version)
-        }).unwrap_or_default();
+        })
+        .unwrap_or_default();
 
         // Parse transparency animations (stored in header.transparency_lookup field,
         // which despite its name contains M2TransparencyAnimation structures, not lookup indices)
-        let transparency_animations =
-            read_array(reader, &header.transparency_lookup.convert(), |r| {
-                M2TransparencyAnimation::parse(r, header.version)
-            }).unwrap_or_default();
+        let transparency_animations = read_array(reader, &header.transparency_lookup.convert(), |r| {
+            M2TransparencyAnimation::parse(r, header.version)
+        })
+        .unwrap_or_default();
 
         // Parse events (timeline triggers for sounds, effects, etc.)
-        let events = read_array(reader, &header.events.convert(), |r| {
-            M2Event::parse(r, header.version)
-        }).unwrap_or_default();
+        let events =
+            read_array(reader, &header.events.convert(), |r| M2Event::parse(r, header.version)).unwrap_or_default();
 
         // Parse attachments (attach points for weapons, effects, etc.)
         let attachments = read_array(reader, &header.attachments.convert(), |r| {
             M2Attachment::parse(r, header.version)
-        }).unwrap_or_default();
+        })
+        .unwrap_or_default();
 
         // Parse cameras
         let cameras = read_array(reader, &header.cameras.convert(), |r| {
             M2Camera::parse(r, header.version)
-        }).unwrap_or_default();
+        })
+        .unwrap_or_default();
 
         // Parse lights
-        let lights = read_array(reader, &header.lights.convert(), |r| {
-            M2Light::parse(r, header.version)
-        }).unwrap_or_default();
+        let lights =
+            read_array(reader, &header.lights.convert(), |r| M2Light::parse(r, header.version)).unwrap_or_default();
 
         // Collect raw animation keyframe data for bones before constructing raw_data
-        let bone_animation_data =
-            collect_bone_animation_data(reader, &bones, header.version).unwrap_or_default();
+        let bone_animation_data = collect_bone_animation_data(reader, &bones, header.version).unwrap_or_default();
         // Collect raw animation keyframe data for particle emitters
-        let particle_animation_data =
-            collect_particle_animation_data(reader, &particle_emitters).unwrap_or_default();
+        let particle_animation_data = collect_particle_animation_data(reader, &particle_emitters).unwrap_or_default();
         // Collect raw animation keyframe data for ribbon emitters
-        let ribbon_animation_data =
-            collect_ribbon_animation_data(reader, &ribbon_emitters).unwrap_or_default();
+        let ribbon_animation_data = collect_ribbon_animation_data(reader, &ribbon_emitters).unwrap_or_default();
         // Collect raw animation keyframe data for texture animations
-        let texture_animation_data =
-            collect_texture_animation_data(reader, &texture_animations).unwrap_or_default();
+        let texture_animation_data = collect_texture_animation_data(reader, &texture_animations).unwrap_or_default();
 
         // Collect raw animation keyframe data for color animations
-        let color_animation_data =
-            collect_color_animation_data(reader, &color_animations).unwrap_or_default();
+        let color_animation_data = collect_color_animation_data(reader, &color_animations).unwrap_or_default();
 
         // Collect raw animation keyframe data for transparency animations
         let transparency_animation_data =
-            collect_transparency_animation_data(reader, &transparency_animations)
-                .unwrap_or_default();
+            collect_transparency_animation_data(reader, &transparency_animations).unwrap_or_default();
 
         // Collect raw event track data
-        let event_data =
-            collect_event_data(reader, &events).unwrap_or_default();
+        let event_data = collect_event_data(reader, &events).unwrap_or_default();
 
         // Collect raw animation keyframe data for attachments
-        let attachment_animation_data =
-            collect_attachment_animation_data(reader, &attachments).unwrap_or_default();
+        let attachment_animation_data = collect_attachment_animation_data(reader, &attachments).unwrap_or_default();
 
         // Collect raw animation keyframe data for cameras
-        let camera_animation_data =
-            collect_camera_animation_data(reader, &cameras).unwrap_or_default();
+        let camera_animation_data = collect_camera_animation_data(reader, &cameras).unwrap_or_default();
 
         // Collect raw animation keyframe data for lights
-        let light_animation_data =
-            collect_light_animation_data(reader, &lights).unwrap_or_default();
+        let light_animation_data = collect_light_animation_data(reader, &lights).unwrap_or_default();
 
         // Collect embedded skin data for pre-WotLK models (version <= 263)
         let embedded_skins = collect_embedded_skin_data(reader, &header).unwrap_or_default();
@@ -3529,32 +3377,24 @@ impl M2Model {
             attachment_animation_data,
             camera_animation_data,
             light_animation_data,
-            transparency_lookup_table: read_array(
-                reader,
-                &header.transparency_lookup_table,
-                |r| Ok(r.read_u16_le()?),
-            ).unwrap_or_default(),
-            texture_animation_lookup: read_array(reader, &header.texture_animation_lookup, |r| {
-                Ok(r.read_u16_le()?)
-            }).unwrap_or_default(),
-            bone_lookup_table: read_array(reader, &header.bone_lookup_table, |r| {
-                Ok(r.read_u16_le()?)
-            }).unwrap_or_default(),
-            texture_lookup_table: read_array(reader, &header.texture_lookup_table, |r| {
-                Ok(r.read_u16_le()?)
-            }).unwrap_or_default(),
+            transparency_lookup_table: read_array(reader, &header.transparency_lookup_table, |r| Ok(r.read_u16_le()?))
+                .unwrap_or_default(),
+            texture_animation_lookup: read_array(reader, &header.texture_animation_lookup, |r| Ok(r.read_u16_le()?))
+                .unwrap_or_default(),
+            bone_lookup_table: read_array(reader, &header.bone_lookup_table, |r| Ok(r.read_u16_le()?))
+                .unwrap_or_default(),
+            texture_lookup_table: read_array(reader, &header.texture_lookup_table, |r| Ok(r.read_u16_le()?))
+                .unwrap_or_default(),
             texture_units: read_array(reader, &header.texture_units, |r| Ok(r.read_u16_le()?)).unwrap_or_default(),
-            camera_lookup_table: read_array(reader, &header.camera_lookup_table, |r| {
-                Ok(r.read_u16_le()?)
-            }).unwrap_or_default(),
+            camera_lookup_table: read_array(reader, &header.camera_lookup_table, |r| Ok(r.read_u16_le()?))
+                .unwrap_or_default(),
             // Bounding data - read as raw bytes for preservation during conversion
             bounding_triangles: read_raw_bytes(reader, &header.bounding_triangles, 2).unwrap_or_default(), // u16 indices
             bounding_vertices: read_raw_bytes(reader, &header.bounding_vertices, 12).unwrap_or_default(),  // C3Vector
             bounding_normals: read_raw_bytes(reader, &header.bounding_normals, 12).unwrap_or_default(),    // C3Vector
             // Attachment lookup table
-            attachment_lookup_table: read_array(reader, &header.attachment_lookup_table, |r| {
-                Ok(r.read_u16_le()?)
-            }).unwrap_or_default(),
+            attachment_lookup_table: read_array(reader, &header.attachment_lookup_table, |r| Ok(r.read_u16_le()?))
+                .unwrap_or_default(),
             ..Default::default()
         };
 
@@ -3650,8 +3490,7 @@ impl M2Model {
 
         // Write global sequences
         if !self.global_sequences.is_empty() {
-            header.global_sequences =
-                M2Array::new(self.global_sequences.len() as u32, current_offset);
+            header.global_sequences = M2Array::new(self.global_sequences.len() as u32, current_offset);
 
             for &seq in &self.global_sequences {
                 data_section.extend_from_slice(&seq.to_le_bytes());
@@ -3682,8 +3521,7 @@ impl M2Model {
 
         // Write animation lookups
         if !self.animation_lookup.is_empty() {
-            header.animation_lookup =
-                M2Array::new(self.animation_lookup.len() as u32, current_offset);
+            header.animation_lookup = M2Array::new(self.animation_lookup.len() as u32, current_offset);
 
             for &lookup in &self.animation_lookup {
                 data_section.extend_from_slice(&lookup.to_le_bytes());
@@ -3741,8 +3579,7 @@ impl M2Model {
                     }
 
                     // Map ranges offset (pre-WotLK only, skip if already mapped)
-                    if let (Some(ranges), Some(orig_offset)) =
-                        (&anim.ranges, anim.original_ranges_offset)
+                    if let (Some(ranges), Some(orig_offset)) = (&anim.ranges, anim.original_ranges_offset)
                         && let Entry::Vacant(e) = offset_map.entry(orig_offset)
                     {
                         e.insert(anim_data_offset);
@@ -3761,27 +3598,21 @@ impl M2Model {
                 }
 
                 // Write animation keyframe data (only write each unique offset once)
-                let mut written_offsets: std::collections::HashSet<u32> =
-                    std::collections::HashSet::new();
+                let mut written_offsets: std::collections::HashSet<u32> = std::collections::HashSet::new();
 
                 for anim in &self.raw_data.bone_animation_data {
                     // Write timestamps only if not already written
-                    if !anim.timestamps.is_empty()
-                        && written_offsets.insert(anim.original_timestamps_offset)
-                    {
+                    if !anim.timestamps.is_empty() && written_offsets.insert(anim.original_timestamps_offset) {
                         data_section.extend_from_slice(&anim.timestamps);
                     }
 
                     // Write values only if not already written
-                    if !anim.values.is_empty()
-                        && written_offsets.insert(anim.original_values_offset)
-                    {
+                    if !anim.values.is_empty() && written_offsets.insert(anim.original_values_offset) {
                         data_section.extend_from_slice(&anim.values);
                     }
 
                     // Write ranges only if not already written
-                    if let (Some(ranges), Some(orig_offset)) =
-                        (&anim.ranges, anim.original_ranges_offset)
+                    if let (Some(ranges), Some(orig_offset)) = (&anim.ranges, anim.original_ranges_offset)
                         && written_offsets.insert(orig_offset)
                     {
                         data_section.extend_from_slice(ranges);
@@ -3810,8 +3641,7 @@ impl M2Model {
 
         // Write key bone lookups
         if !self.key_bone_lookup.is_empty() {
-            header.key_bone_lookup =
-                M2Array::new(self.key_bone_lookup.len() as u32, current_offset);
+            header.key_bone_lookup = M2Array::new(self.key_bone_lookup.len() as u32, current_offset);
 
             for &lookup in &self.key_bone_lookup {
                 data_section.extend_from_slice(&lookup.to_le_bytes());
@@ -3852,8 +3682,7 @@ impl M2Model {
 
             for texture in &self.textures {
                 // Save the current offset for this texture's filename
-                texture_name_offsets
-                    .push(current_offset + (self.textures.len() * texture_def_size) as u32);
+                texture_name_offsets.push(current_offset + (self.textures.len() * texture_def_size) as u32);
 
                 // Write the texture definition (without the actual filename)
                 let mut texture_def = Vec::new();
@@ -3887,9 +3716,8 @@ impl M2Model {
                 // Calculate the offset in the data section where this texture's definition was written
                 // The texture definitions start at (header.textures.offset - base_data_offset)
                 let base_data_offset = std::mem::size_of::<M2Header>();
-                let def_offset_in_data = (header.textures.offset as usize - base_data_offset)
-                    + (i * texture_def_size)
-                    + 8;
+                let def_offset_in_data =
+                    (header.textures.offset as usize - base_data_offset) + (i * texture_def_size) + 8;
 
                 // Update the count and offset for the filename
                 data_section[def_offset_in_data..def_offset_in_data + 4]
@@ -3925,81 +3753,67 @@ impl M2Model {
 
         // Write bone lookup table
         if !self.raw_data.bone_lookup_table.is_empty() {
-            header.bone_lookup_table =
-                M2Array::new(self.raw_data.bone_lookup_table.len() as u32, current_offset);
+            header.bone_lookup_table = M2Array::new(self.raw_data.bone_lookup_table.len() as u32, current_offset);
 
             for &lookup in &self.raw_data.bone_lookup_table {
                 data_section.extend_from_slice(&lookup.to_le_bytes());
             }
 
-            current_offset +=
-                (self.raw_data.bone_lookup_table.len() * std::mem::size_of::<u16>()) as u32;
+            current_offset += (self.raw_data.bone_lookup_table.len() * std::mem::size_of::<u16>()) as u32;
         } else {
             header.bone_lookup_table = M2Array::new(0, 0);
         }
 
         // Write texture lookup table
         if !self.raw_data.texture_lookup_table.is_empty() {
-            header.texture_lookup_table = M2Array::new(
-                self.raw_data.texture_lookup_table.len() as u32,
-                current_offset,
-            );
+            header.texture_lookup_table = M2Array::new(self.raw_data.texture_lookup_table.len() as u32, current_offset);
 
             for &lookup in &self.raw_data.texture_lookup_table {
                 data_section.extend_from_slice(&lookup.to_le_bytes());
             }
 
-            current_offset +=
-                (self.raw_data.texture_lookup_table.len() * std::mem::size_of::<u16>()) as u32;
+            current_offset += (self.raw_data.texture_lookup_table.len() * std::mem::size_of::<u16>()) as u32;
         } else {
             header.texture_lookup_table = M2Array::new(0, 0);
         }
 
         // Write texture units
         if !self.raw_data.texture_units.is_empty() {
-            header.texture_units =
-                M2Array::new(self.raw_data.texture_units.len() as u32, current_offset);
+            header.texture_units = M2Array::new(self.raw_data.texture_units.len() as u32, current_offset);
 
             for &unit in &self.raw_data.texture_units {
                 data_section.extend_from_slice(&unit.to_le_bytes());
             }
 
-            current_offset +=
-                (self.raw_data.texture_units.len() * std::mem::size_of::<u16>()) as u32;
+            current_offset += (self.raw_data.texture_units.len() * std::mem::size_of::<u16>()) as u32;
         } else {
             header.texture_units = M2Array::new(0, 0);
         }
 
         // Write transparency lookup table
         if !self.raw_data.transparency_lookup_table.is_empty() {
-            header.transparency_lookup_table = M2Array::new(
-                self.raw_data.transparency_lookup_table.len() as u32,
-                current_offset,
-            );
+            header.transparency_lookup_table =
+                M2Array::new(self.raw_data.transparency_lookup_table.len() as u32, current_offset);
 
             for &lookup in &self.raw_data.transparency_lookup_table {
                 data_section.extend_from_slice(&lookup.to_le_bytes());
             }
 
-            current_offset +=
-                (self.raw_data.transparency_lookup_table.len() * std::mem::size_of::<u16>()) as u32;
+            current_offset += (self.raw_data.transparency_lookup_table.len() * std::mem::size_of::<u16>()) as u32;
         } else {
             header.transparency_lookup_table = M2Array::new(0, 0);
         }
 
         // Write texture animation lookup
         if !self.raw_data.texture_animation_lookup.is_empty() {
-            header.texture_animation_lookup = M2Array::new(
-                self.raw_data.texture_animation_lookup.len() as u32,
-                current_offset,
-            );
+            header.texture_animation_lookup =
+                M2Array::new(self.raw_data.texture_animation_lookup.len() as u32, current_offset);
 
             for &lookup in &self.raw_data.texture_animation_lookup {
                 data_section.extend_from_slice(&lookup.to_le_bytes());
             }
 
-            current_offset +=
-                (self.raw_data.texture_animation_lookup.len() * std::mem::size_of::<u16>()) as u32;
+            current_offset += (self.raw_data.texture_animation_lookup.len() * std::mem::size_of::<u16>()) as u32;
         } else {
             header.texture_animation_lookup = M2Array::new(0, 0);
         }
@@ -4039,30 +3853,23 @@ impl M2Model {
 
         // Write attachment lookup table
         if !self.raw_data.attachment_lookup_table.is_empty() {
-            header.attachment_lookup_table = M2Array::new(
-                self.raw_data.attachment_lookup_table.len() as u32,
-                current_offset,
-            );
+            header.attachment_lookup_table =
+                M2Array::new(self.raw_data.attachment_lookup_table.len() as u32, current_offset);
             for &lookup in &self.raw_data.attachment_lookup_table {
                 data_section.extend_from_slice(&lookup.to_le_bytes());
             }
-            current_offset +=
-                (self.raw_data.attachment_lookup_table.len() * std::mem::size_of::<u16>()) as u32;
+            current_offset += (self.raw_data.attachment_lookup_table.len() * std::mem::size_of::<u16>()) as u32;
         } else {
             header.attachment_lookup_table = M2Array::new(0, 0);
         }
 
         // Write camera lookup table
         if !self.raw_data.camera_lookup_table.is_empty() {
-            header.camera_lookup_table = M2Array::new(
-                self.raw_data.camera_lookup_table.len() as u32,
-                current_offset,
-            );
+            header.camera_lookup_table = M2Array::new(self.raw_data.camera_lookup_table.len() as u32, current_offset);
             for &lookup in &self.raw_data.camera_lookup_table {
                 data_section.extend_from_slice(&lookup.to_le_bytes());
             }
-            current_offset +=
-                (self.raw_data.camera_lookup_table.len() * std::mem::size_of::<u16>()) as u32;
+            current_offset += (self.raw_data.camera_lookup_table.len() * std::mem::size_of::<u16>()) as u32;
         } else {
             header.camera_lookup_table = M2Array::new(0, 0);
         }
@@ -4209,8 +4016,7 @@ impl M2Model {
         // Write particle emitters with animation data preservation
         // Similar pattern to bones - write structures with relocated offsets, then animation data
         if !self.particle_emitters.is_empty() {
-            header.particle_emitters =
-                M2Array::new(self.particle_emitters.len() as u32, current_offset);
+            header.particle_emitters = M2Array::new(self.particle_emitters.len() as u32, current_offset);
 
             // First, write all emitter structures to a temporary buffer to calculate their total size
             let mut temp_emitter_data = Vec::new();
@@ -4269,28 +4075,21 @@ impl M2Model {
                 }
 
                 // Write animation keyframe data (only write each unique offset once)
-                let mut written_offsets: std::collections::HashSet<u32> =
-                    std::collections::HashSet::new();
+                let mut written_offsets: std::collections::HashSet<u32> = std::collections::HashSet::new();
 
                 for anim in &self.raw_data.particle_animation_data {
                     // Write interpolation_ranges only if not already written
-                    if !anim.interpolation_ranges.is_empty()
-                        && written_offsets.insert(anim.original_ranges_offset)
-                    {
+                    if !anim.interpolation_ranges.is_empty() && written_offsets.insert(anim.original_ranges_offset) {
                         data_section.extend_from_slice(&anim.interpolation_ranges);
                     }
 
                     // Write timestamps only if not already written
-                    if !anim.timestamps.is_empty()
-                        && written_offsets.insert(anim.original_timestamps_offset)
-                    {
+                    if !anim.timestamps.is_empty() && written_offsets.insert(anim.original_timestamps_offset) {
                         data_section.extend_from_slice(&anim.timestamps);
                     }
 
                     // Write values only if not already written
-                    if !anim.values.is_empty()
-                        && written_offsets.insert(anim.original_values_offset)
-                    {
+                    if !anim.values.is_empty() && written_offsets.insert(anim.original_values_offset) {
                         data_section.extend_from_slice(&anim.values);
                     }
                 }
@@ -4302,16 +4101,17 @@ impl M2Model {
                 for emitter in &self.particle_emitters {
                     let mut static_emitter = emitter.clone();
                     // Zero out all animation blocks by setting them to default
-                    static_emitter.emission_speed_animation = M2AnimationBlock::default();
-                    static_emitter.emission_rate_animation = M2AnimationBlock::default();
-                    static_emitter.emission_area_animation = M2AnimationBlock::default();
-                    static_emitter.xy_scale_animation = M2AnimationBlock::default();
-                    static_emitter.z_scale_animation = M2AnimationBlock::default();
-                    static_emitter.color_animation = M2AnimationBlock::default();
-                    static_emitter.transparency_animation = M2AnimationBlock::default();
-                    static_emitter.size_animation = M2AnimationBlock::default();
-                    static_emitter.intensity_animation = M2AnimationBlock::default();
-                    static_emitter.z_source_animation = M2AnimationBlock::default();
+                    static_emitter.emission_speed = Default::default();
+                    static_emitter.speed_variation = Default::default();
+                    static_emitter.vertical_range = Default::default();
+                    static_emitter.horizontal_range = Default::default();
+                    static_emitter.gravity = Default::default();
+                    static_emitter.lifespan = Default::default();
+                    static_emitter.emission_rate = Default::default();
+                    static_emitter.emission_area_width = Default::default();
+                    static_emitter.emission_area_length = Default::default();
+                    static_emitter.z_source = Default::default();
+                    static_emitter.enabled_in = Default::default();
 
                     let mut emitter_data = Vec::new();
                     static_emitter.write(&mut emitter_data, header.version)?;
@@ -4327,8 +4127,7 @@ impl M2Model {
         // Write ribbon emitters with animation data preservation
         // Similar pattern to particle emitters - write structures with relocated offsets, then animation data
         if !self.ribbon_emitters.is_empty() {
-            header.ribbon_emitters =
-                M2Array::new(self.ribbon_emitters.len() as u32, current_offset);
+            header.ribbon_emitters = M2Array::new(self.ribbon_emitters.len() as u32, current_offset);
 
             // First, write all emitter structures to a temporary buffer to calculate their total size
             let mut temp_emitter_data = Vec::new();
@@ -4387,28 +4186,21 @@ impl M2Model {
                 }
 
                 // Write animation keyframe data (only write each unique offset once)
-                let mut written_offsets: std::collections::HashSet<u32> =
-                    std::collections::HashSet::new();
+                let mut written_offsets: std::collections::HashSet<u32> = std::collections::HashSet::new();
 
                 for anim in &self.raw_data.ribbon_animation_data {
                     // Write interpolation_ranges only if not already written
-                    if !anim.interpolation_ranges.is_empty()
-                        && written_offsets.insert(anim.original_ranges_offset)
-                    {
+                    if !anim.interpolation_ranges.is_empty() && written_offsets.insert(anim.original_ranges_offset) {
                         data_section.extend_from_slice(&anim.interpolation_ranges);
                     }
 
                     // Write timestamps only if not already written
-                    if !anim.timestamps.is_empty()
-                        && written_offsets.insert(anim.original_timestamps_offset)
-                    {
+                    if !anim.timestamps.is_empty() && written_offsets.insert(anim.original_timestamps_offset) {
                         data_section.extend_from_slice(&anim.timestamps);
                     }
 
                     // Write values only if not already written
-                    if !anim.values.is_empty()
-                        && written_offsets.insert(anim.original_values_offset)
-                    {
+                    if !anim.values.is_empty() && written_offsets.insert(anim.original_values_offset) {
                         data_section.extend_from_slice(&anim.values);
                     }
                 }
@@ -4439,8 +4231,7 @@ impl M2Model {
         // Write texture animations with animation data preservation
         // Similar pattern to particle/ribbon emitters - write structures with relocated offsets, then animation data
         if !self.texture_animations.is_empty() {
-            header.texture_animations =
-                M2Array::new(self.texture_animations.len() as u32, current_offset);
+            header.texture_animations = M2Array::new(self.texture_animations.len() as u32, current_offset);
 
             // First, write all animation structures to a temporary buffer to calculate their total size
             let mut temp_anim_data = Vec::new();
@@ -4499,28 +4290,21 @@ impl M2Model {
                 }
 
                 // Write animation keyframe data (only write each unique offset once)
-                let mut written_offsets: std::collections::HashSet<u32> =
-                    std::collections::HashSet::new();
+                let mut written_offsets: std::collections::HashSet<u32> = std::collections::HashSet::new();
 
                 for anim in &self.raw_data.texture_animation_data {
                     // Write interpolation_ranges only if not already written
-                    if !anim.interpolation_ranges.is_empty()
-                        && written_offsets.insert(anim.original_ranges_offset)
-                    {
+                    if !anim.interpolation_ranges.is_empty() && written_offsets.insert(anim.original_ranges_offset) {
                         data_section.extend_from_slice(&anim.interpolation_ranges);
                     }
 
                     // Write timestamps only if not already written
-                    if !anim.timestamps.is_empty()
-                        && written_offsets.insert(anim.original_timestamps_offset)
-                    {
+                    if !anim.timestamps.is_empty() && written_offsets.insert(anim.original_timestamps_offset) {
                         data_section.extend_from_slice(&anim.timestamps);
                     }
 
                     // Write values only if not already written
-                    if !anim.values.is_empty()
-                        && written_offsets.insert(anim.original_values_offset)
-                    {
+                    if !anim.values.is_empty() && written_offsets.insert(anim.original_values_offset) {
                         data_section.extend_from_slice(&anim.values);
                     }
                 }
@@ -4550,8 +4334,7 @@ impl M2Model {
         // Write color animations with animation data preservation
         // Similar pattern to texture animations - write structures with relocated offsets, then animation data
         if !self.color_animations.is_empty() {
-            header.color_animations =
-                M2Array::new(self.color_animations.len() as u32, current_offset);
+            header.color_animations = M2Array::new(self.color_animations.len() as u32, current_offset);
 
             // First, write all animation structures to a temporary buffer to calculate their total size
             let mut temp_anim_data = Vec::new();
@@ -4610,28 +4393,21 @@ impl M2Model {
                 }
 
                 // Write animation keyframe data (only write each unique offset once)
-                let mut written_offsets: std::collections::HashSet<u32> =
-                    std::collections::HashSet::new();
+                let mut written_offsets: std::collections::HashSet<u32> = std::collections::HashSet::new();
 
                 for anim in &self.raw_data.color_animation_data {
                     // Write interpolation_ranges only if not already written
-                    if !anim.interpolation_ranges.is_empty()
-                        && written_offsets.insert(anim.original_ranges_offset)
-                    {
+                    if !anim.interpolation_ranges.is_empty() && written_offsets.insert(anim.original_ranges_offset) {
                         data_section.extend_from_slice(&anim.interpolation_ranges);
                     }
 
                     // Write timestamps only if not already written
-                    if !anim.timestamps.is_empty()
-                        && written_offsets.insert(anim.original_timestamps_offset)
-                    {
+                    if !anim.timestamps.is_empty() && written_offsets.insert(anim.original_timestamps_offset) {
                         data_section.extend_from_slice(&anim.timestamps);
                     }
 
                     // Write values only if not already written
-                    if !anim.values.is_empty()
-                        && written_offsets.insert(anim.original_values_offset)
-                    {
+                    if !anim.values.is_empty() && written_offsets.insert(anim.original_values_offset) {
                         data_section.extend_from_slice(&anim.values);
                     }
                 }
@@ -4659,8 +4435,7 @@ impl M2Model {
         // Write transparency animations with animation data preservation
         // Note: header.transparency_lookup field contains M2TransparencyAnimation structures
         if !self.transparency_animations.is_empty() {
-            header.transparency_lookup =
-                M2Array::new(self.transparency_animations.len() as u32, current_offset);
+            header.transparency_lookup = M2Array::new(self.transparency_animations.len() as u32, current_offset);
 
             // First, write all animation structures to a temporary buffer to calculate their total size
             let mut temp_anim_data = Vec::new();
@@ -4719,28 +4494,21 @@ impl M2Model {
                 }
 
                 // Write animation keyframe data (only write each unique offset once)
-                let mut written_offsets: std::collections::HashSet<u32> =
-                    std::collections::HashSet::new();
+                let mut written_offsets: std::collections::HashSet<u32> = std::collections::HashSet::new();
 
                 for anim in &self.raw_data.transparency_animation_data {
                     // Write interpolation_ranges only if not already written
-                    if !anim.interpolation_ranges.is_empty()
-                        && written_offsets.insert(anim.original_ranges_offset)
-                    {
+                    if !anim.interpolation_ranges.is_empty() && written_offsets.insert(anim.original_ranges_offset) {
                         data_section.extend_from_slice(&anim.interpolation_ranges);
                     }
 
                     // Write timestamps only if not already written
-                    if !anim.timestamps.is_empty()
-                        && written_offsets.insert(anim.original_timestamps_offset)
-                    {
+                    if !anim.timestamps.is_empty() && written_offsets.insert(anim.original_timestamps_offset) {
                         data_section.extend_from_slice(&anim.timestamps);
                     }
 
                     // Write values only if not already written
-                    if !anim.values.is_empty()
-                        && written_offsets.insert(anim.original_values_offset)
-                    {
+                    if !anim.values.is_empty() && written_offsets.insert(anim.original_values_offset) {
                         data_section.extend_from_slice(&anim.values);
                     }
                 }
@@ -4796,8 +4564,7 @@ impl M2Model {
                 for event_raw in &self.raw_data.event_data {
                     // Map timestamps offset (skip if already mapped - shared data)
                     if !event_raw.timestamps.is_empty()
-                        && let Entry::Vacant(e) =
-                            offset_map.entry(event_raw.original_timestamps_offset)
+                        && let Entry::Vacant(e) = offset_map.entry(event_raw.original_timestamps_offset)
                     {
                         e.insert(event_data_offset);
                         event_data_offset += event_raw.timestamps.len() as u32;
@@ -4815,19 +4582,15 @@ impl M2Model {
                 }
 
                 // Write event data (ranges and timestamps, only write each unique offset once)
-                let mut written_offsets: std::collections::HashSet<u32> =
-                    std::collections::HashSet::new();
+                let mut written_offsets: std::collections::HashSet<u32> = std::collections::HashSet::new();
 
                 for event_raw in &self.raw_data.event_data {
                     // Write ranges if not already written
-                    if !event_raw.ranges.is_empty()
-                        && written_offsets.insert(event_raw.original_ranges_offset)
-                    {
+                    if !event_raw.ranges.is_empty() && written_offsets.insert(event_raw.original_ranges_offset) {
                         data_section.extend_from_slice(&event_raw.ranges);
                     }
                     // Write timestamps if not already written
-                    if !event_raw.timestamps.is_empty()
-                        && written_offsets.insert(event_raw.original_timestamps_offset)
+                    if !event_raw.timestamps.is_empty() && written_offsets.insert(event_raw.original_timestamps_offset)
                     {
                         data_section.extend_from_slice(&event_raw.timestamps);
                     }
@@ -4919,28 +4682,21 @@ impl M2Model {
                 }
 
                 // Write animation keyframe data (only write each unique offset once)
-                let mut written_offsets: std::collections::HashSet<u32> =
-                    std::collections::HashSet::new();
+                let mut written_offsets: std::collections::HashSet<u32> = std::collections::HashSet::new();
 
                 for anim in &self.raw_data.attachment_animation_data {
                     // Write interpolation_ranges only if not already written
-                    if !anim.interpolation_ranges.is_empty()
-                        && written_offsets.insert(anim.original_ranges_offset)
-                    {
+                    if !anim.interpolation_ranges.is_empty() && written_offsets.insert(anim.original_ranges_offset) {
                         data_section.extend_from_slice(&anim.interpolation_ranges);
                     }
 
                     // Write timestamps only if not already written
-                    if !anim.timestamps.is_empty()
-                        && written_offsets.insert(anim.original_timestamps_offset)
-                    {
+                    if !anim.timestamps.is_empty() && written_offsets.insert(anim.original_timestamps_offset) {
                         data_section.extend_from_slice(&anim.timestamps);
                     }
 
                     // Write values only if not already written
-                    if !anim.values.is_empty()
-                        && written_offsets.insert(anim.original_values_offset)
-                    {
+                    if !anim.values.is_empty() && written_offsets.insert(anim.original_values_offset) {
                         data_section.extend_from_slice(&anim.values);
                     }
                 }
@@ -5030,28 +4786,21 @@ impl M2Model {
                 }
 
                 // Write animation keyframe data (only write each unique offset once)
-                let mut written_offsets: std::collections::HashSet<u32> =
-                    std::collections::HashSet::new();
+                let mut written_offsets: std::collections::HashSet<u32> = std::collections::HashSet::new();
 
                 for anim in &self.raw_data.camera_animation_data {
                     // Write interpolation_ranges only if not already written
-                    if !anim.interpolation_ranges.is_empty()
-                        && written_offsets.insert(anim.original_ranges_offset)
-                    {
+                    if !anim.interpolation_ranges.is_empty() && written_offsets.insert(anim.original_ranges_offset) {
                         data_section.extend_from_slice(&anim.interpolation_ranges);
                     }
 
                     // Write timestamps only if not already written
-                    if !anim.timestamps.is_empty()
-                        && written_offsets.insert(anim.original_timestamps_offset)
-                    {
+                    if !anim.timestamps.is_empty() && written_offsets.insert(anim.original_timestamps_offset) {
                         data_section.extend_from_slice(&anim.timestamps);
                     }
 
                     // Write values only if not already written
-                    if !anim.values.is_empty()
-                        && written_offsets.insert(anim.original_values_offset)
-                    {
+                    if !anim.values.is_empty() && written_offsets.insert(anim.original_values_offset) {
                         data_section.extend_from_slice(&anim.values);
                     }
                 }
@@ -5143,28 +4892,21 @@ impl M2Model {
                 }
 
                 // Write animation keyframe data (only write each unique offset once)
-                let mut written_offsets: std::collections::HashSet<u32> =
-                    std::collections::HashSet::new();
+                let mut written_offsets: std::collections::HashSet<u32> = std::collections::HashSet::new();
 
                 for anim in &self.raw_data.light_animation_data {
                     // Write interpolation_ranges only if not already written
-                    if !anim.interpolation_ranges.is_empty()
-                        && written_offsets.insert(anim.original_ranges_offset)
-                    {
+                    if !anim.interpolation_ranges.is_empty() && written_offsets.insert(anim.original_ranges_offset) {
                         data_section.extend_from_slice(&anim.interpolation_ranges);
                     }
 
                     // Write timestamps only if not already written
-                    if !anim.timestamps.is_empty()
-                        && written_offsets.insert(anim.original_timestamps_offset)
-                    {
+                    if !anim.timestamps.is_empty() && written_offsets.insert(anim.original_timestamps_offset) {
                         data_section.extend_from_slice(&anim.timestamps);
                     }
 
                     // Write values only if not already written
-                    if !anim.values.is_empty()
-                        && written_offsets.insert(anim.original_values_offset)
-                    {
+                    if !anim.values.is_empty() && written_offsets.insert(anim.original_values_offset) {
                         data_section.extend_from_slice(&anim.values);
                     }
                 }
@@ -5249,32 +4991,16 @@ impl M2Model {
         let header = self.header.convert(target_version)?;
 
         // Convert vertices
-        let vertices = self
-            .vertices
-            .iter()
-            .map(|v| v.convert(target_version))
-            .collect();
+        let vertices = self.vertices.iter().map(|v| v.convert(target_version)).collect();
 
         // Convert textures
-        let textures = self
-            .textures
-            .iter()
-            .map(|t| t.convert(target_version))
-            .collect();
+        let textures = self.textures.iter().map(|t| t.convert(target_version)).collect();
 
         // Convert bones
-        let bones = self
-            .bones
-            .iter()
-            .map(|b| b.convert(target_version))
-            .collect();
+        let bones = self.bones.iter().map(|b| b.convert(target_version)).collect();
 
         // Convert materials
-        let materials = self
-            .materials
-            .iter()
-            .map(|m| m.convert(target_version))
-            .collect();
+        let materials = self.materials.iter().map(|m| m.convert(target_version)).collect();
 
         // Create the new model
         let mut new_model = self.clone();
@@ -5388,9 +5114,7 @@ impl M2Model {
 
         // Validate vertices
         if self.vertices.is_empty() {
-            return Err(M2Error::ValidationError(
-                "Model has no vertices".to_string(),
-            ));
+            return Err(M2Error::ValidationError("Model has no vertices".to_string()));
         }
 
         // Validate bones
@@ -5453,71 +5177,63 @@ impl M2Model {
 
     /// Resolve a skin file path by index using a FileResolver
     pub fn resolve_skin_path(&self, index: usize, resolver: &dyn FileResolver) -> Result<String> {
-        let skin_ids = self.skin_file_ids.as_ref().ok_or_else(|| {
-            M2Error::ExternalFileError("Model has no external skin files".to_string())
-        })?;
+        let skin_ids = self
+            .skin_file_ids
+            .as_ref()
+            .ok_or_else(|| M2Error::ExternalFileError("Model has no external skin files".to_string()))?;
 
-        let id = skin_ids.get(index).ok_or_else(|| {
-            M2Error::ExternalFileError(format!("Skin index {} out of range", index))
-        })?;
+        let id = skin_ids
+            .get(index)
+            .ok_or_else(|| M2Error::ExternalFileError(format!("Skin index {} out of range", index)))?;
 
         resolver.resolve_file_data_id(id)
     }
 
     /// Load a skin file by index using a FileResolver
     pub fn load_skin_file(&self, index: usize, resolver: &dyn FileResolver) -> Result<Vec<u8>> {
-        let skin_ids = self.skin_file_ids.as_ref().ok_or_else(|| {
-            M2Error::ExternalFileError("Model has no external skin files".to_string())
-        })?;
+        let skin_ids = self
+            .skin_file_ids
+            .as_ref()
+            .ok_or_else(|| M2Error::ExternalFileError("Model has no external skin files".to_string()))?;
 
-        let id = skin_ids.get(index).ok_or_else(|| {
-            M2Error::ExternalFileError(format!("Skin index {} out of range", index))
-        })?;
+        let id = skin_ids
+            .get(index)
+            .ok_or_else(|| M2Error::ExternalFileError(format!("Skin index {} out of range", index)))?;
 
         resolver.load_skin_by_id(id)
     }
 
     /// Resolve an animation file path by index using a FileResolver
-    pub fn resolve_animation_path(
-        &self,
-        index: usize,
-        resolver: &dyn FileResolver,
-    ) -> Result<String> {
-        let anim_ids = self.animation_file_ids.as_ref().ok_or_else(|| {
-            M2Error::ExternalFileError("Model has no external animation files".to_string())
-        })?;
+    pub fn resolve_animation_path(&self, index: usize, resolver: &dyn FileResolver) -> Result<String> {
+        let anim_ids = self
+            .animation_file_ids
+            .as_ref()
+            .ok_or_else(|| M2Error::ExternalFileError("Model has no external animation files".to_string()))?;
 
-        let id = anim_ids.get(index).ok_or_else(|| {
-            M2Error::ExternalFileError(format!("Animation index {} out of range", index))
-        })?;
+        let id = anim_ids
+            .get(index)
+            .ok_or_else(|| M2Error::ExternalFileError(format!("Animation index {} out of range", index)))?;
 
         resolver.resolve_file_data_id(id)
     }
 
     /// Load an animation file by index using a FileResolver
-    pub fn load_animation_file(
-        &self,
-        index: usize,
-        resolver: &dyn FileResolver,
-    ) -> Result<Vec<u8>> {
-        let anim_ids = self.animation_file_ids.as_ref().ok_or_else(|| {
-            M2Error::ExternalFileError("Model has no external animation files".to_string())
-        })?;
+    pub fn load_animation_file(&self, index: usize, resolver: &dyn FileResolver) -> Result<Vec<u8>> {
+        let anim_ids = self
+            .animation_file_ids
+            .as_ref()
+            .ok_or_else(|| M2Error::ExternalFileError("Model has no external animation files".to_string()))?;
 
-        let id = anim_ids.get(index).ok_or_else(|| {
-            M2Error::ExternalFileError(format!("Animation index {} out of range", index))
-        })?;
+        let id = anim_ids
+            .get(index)
+            .ok_or_else(|| M2Error::ExternalFileError(format!("Animation index {} out of range", index)))?;
 
         resolver.load_animation_by_id(id)
     }
 
     /// Resolve a texture file path by index using a FileResolver
     /// Falls back to embedded texture names for pre-Legion models
-    pub fn resolve_texture_path(
-        &self,
-        index: usize,
-        resolver: &dyn FileResolver,
-    ) -> Result<String> {
+    pub fn resolve_texture_path(&self, index: usize, resolver: &dyn FileResolver) -> Result<String> {
         // Legion+ models use TXID chunk
         if let Some(texture_ids) = &self.texture_file_ids
             && let Some(id) = texture_ids.get(index)
@@ -5533,10 +5249,7 @@ impl M2Model {
             return Ok(filename.trim_end_matches('\0').to_string());
         }
 
-        Err(M2Error::ExternalFileError(format!(
-            "Texture index {} not found",
-            index
-        )))
+        Err(M2Error::ExternalFileError(format!("Texture index {} not found", index)))
     }
 
     /// Load a texture file by index using a FileResolver
@@ -5562,10 +5275,7 @@ impl M2Model {
             )));
         }
 
-        Err(M2Error::ExternalFileError(format!(
-            "Texture index {} not found",
-            index
-        )))
+        Err(M2Error::ExternalFileError(format!("Texture index {} not found", index)))
     }
 
     /// Get all skin file IDs
@@ -5575,9 +5285,7 @@ impl M2Model {
 
     /// Get all animation file IDs
     pub fn get_animation_file_ids(&self) -> Option<&[u32]> {
-        self.animation_file_ids
-            .as_ref()
-            .map(|ids| ids.ids.as_slice())
+        self.animation_file_ids.as_ref().map(|ids| ids.ids.as_slice())
     }
 
     /// Get all texture file IDs
@@ -5628,21 +5336,14 @@ impl M2Model {
     }
 
     /// Load bone data by index using a FileResolver
-    pub fn load_bone_data(
-        &self,
-        index: usize,
-        resolver: &dyn FileResolver,
-    ) -> Result<Option<BoneData>> {
+    pub fn load_bone_data(&self, index: usize, resolver: &dyn FileResolver) -> Result<Option<BoneData>> {
         match &self.bone_file_ids {
             Some(bfid) => {
                 if let Some(id) = bfid.get(index) {
                     let data = resolver.load_bone_by_id(&id)?;
                     Ok(Some(BoneData::parse(&data)?))
                 } else {
-                    Err(M2Error::ExternalFileError(format!(
-                        "Bone index {} out of range",
-                        index
-                    )))
+                    Err(M2Error::ExternalFileError(format!("Bone index {} out of range", index)))
                 }
             }
             None => Ok(None),
@@ -5708,16 +5409,12 @@ impl M2Model {
 
     /// Get recursive particle model IDs
     pub fn get_recursive_particle_ids(&self) -> Option<&[u32]> {
-        self.recursive_particle_ids
-            .as_ref()
-            .map(|ids| ids.model_ids.as_slice())
+        self.recursive_particle_ids.as_ref().map(|ids| ids.model_ids.as_slice())
     }
 
     /// Get geometry particle model IDs
     pub fn get_geometry_particle_ids(&self) -> Option<&[u32]> {
-        self.geometry_particle_ids
-            .as_ref()
-            .map(|ids| ids.model_ids.as_slice())
+        self.geometry_particle_ids.as_ref().map(|ids| ids.model_ids.as_slice())
     }
 
     /// Load particle models using a FileResolver
@@ -5742,18 +5439,12 @@ impl M2Model {
                                 Ok(format) => models.push(format.model().clone()),
                                 Err(e) => {
                                     // Log warning but continue loading other models
-                                    eprintln!(
-                                        "Warning: Failed to load recursive particle model {}: {:?}",
-                                        id, e
-                                    );
+                                    eprintln!("Warning: Failed to load recursive particle model {}: {:?}", id, e);
                                 }
                             }
                         }
                         Err(e) => {
-                            eprintln!(
-                                "Warning: Failed to load recursive particle model data {}: {:?}",
-                                id, e
-                            );
+                            eprintln!("Warning: Failed to load recursive particle model data {}: {:?}", id, e);
                         }
                     }
                 }
@@ -5772,18 +5463,12 @@ impl M2Model {
                             match parse_m2(&mut cursor) {
                                 Ok(format) => models.push(format.model().clone()),
                                 Err(e) => {
-                                    eprintln!(
-                                        "Warning: Failed to load geometry particle model {}: {:?}",
-                                        id, e
-                                    );
+                                    eprintln!("Warning: Failed to load geometry particle model {}: {:?}", id, e);
                                 }
                             }
                         }
                         Err(e) => {
-                            eprintln!(
-                                "Warning: Failed to load geometry particle model data {}: {:?}",
-                                id, e
-                            );
+                            eprintln!("Warning: Failed to load geometry particle model data {}: {:?}", id, e);
                         }
                     }
                 }
@@ -5890,9 +5575,7 @@ mod tests {
             }
             Err(M2Error::ParseError(msg)) => {
                 // Expected for incomplete implementation
-                assert!(
-                    msg.contains("TODO") || msg.contains("not yet") || msg.contains("incomplete")
-                );
+                assert!(msg.contains("TODO") || msg.contains("not yet") || msg.contains("incomplete"));
             }
             Err(other) => panic!("Unexpected error: {:?}", other),
         }
@@ -5977,10 +5660,7 @@ mod tests {
         let chunked_format = M2Format::Chunked(test_model.clone());
         assert_eq!(chunked_format.model().name.as_ref().unwrap(), "test");
         assert!(chunked_format.is_chunked());
-        assert_eq!(
-            chunked_format.model().skin_file_ids.as_ref().unwrap().len(),
-            3
-        );
+        assert_eq!(chunked_format.model().skin_file_ids.as_ref().unwrap().len(), 3);
     }
 
     #[test]
@@ -6050,18 +5730,9 @@ mod tests {
         assert_eq!(model.texture_file_count(), 2);
 
         // Test getter methods
-        assert_eq!(
-            model.get_skin_file_ids(),
-            Some([123456u32, 789012u32].as_slice())
-        );
-        assert_eq!(
-            model.get_animation_file_ids(),
-            Some([111111u32, 222222u32].as_slice())
-        );
-        assert_eq!(
-            model.get_texture_file_ids(),
-            Some([333333u32, 444444u32].as_slice())
-        );
+        assert_eq!(model.get_skin_file_ids(), Some([123456u32, 789012u32].as_slice()));
+        assert_eq!(model.get_animation_file_ids(), Some([111111u32, 222222u32].as_slice()));
+        assert_eq!(model.get_texture_file_ids(), Some([333333u32, 444444u32].as_slice()));
 
         // Create a mock resolver
         let mut resolver = ListfileResolver::new();
@@ -6154,9 +5825,7 @@ mod tests {
             flags: M2TextureFlags::empty(),
             filename: M2ArrayString {
                 array: M2Array::new(filename_data.len() as u32, 0),
-                string: FixedString {
-                    data: filename_data,
-                },
+                string: FixedString { data: filename_data },
             },
         };
 
@@ -6211,10 +5880,7 @@ mod tests {
         let resolver = ListfileResolver::new();
 
         // Test texture path resolution for legacy model
-        assert_eq!(
-            model.resolve_texture_path(0, &resolver).unwrap(),
-            texture_filename
-        );
+        assert_eq!(model.resolve_texture_path(0, &resolver).unwrap(), texture_filename);
 
         // Test texture loading for legacy model (should fail with descriptive error)
         match model.load_texture_file(0, &resolver) {
@@ -6405,11 +6071,7 @@ mod tests {
                 },
                 bone_weights: [255, 0, 0, 0],
                 bone_indices: [0, 0, 0, 0],
-                normal: C3Vector {
-                    x: 0.0,
-                    y: 1.0,
-                    z: 0.0,
-                },
+                normal: C3Vector { x: 0.0, y: 1.0, z: 0.0 },
                 tex_coords: C2Vector { x: 0.0, y: 0.0 },
                 tex_coords2: None,
             };
@@ -6435,33 +6097,13 @@ mod tests {
             model.vertices.len(),
             "Vertex count should match"
         );
-        assert_eq!(
-            read_model.header.version, model.header.version,
-            "Version should match"
-        );
+        assert_eq!(read_model.header.version, model.header.version, "Version should match");
 
         // Verify vertex data
-        for (i, (orig, read)) in model
-            .vertices
-            .iter()
-            .zip(read_model.vertices.iter())
-            .enumerate()
-        {
-            assert_eq!(
-                orig.position.x, read.position.x,
-                "Vertex {} X position should match",
-                i
-            );
-            assert_eq!(
-                orig.position.y, read.position.y,
-                "Vertex {} Y position should match",
-                i
-            );
-            assert_eq!(
-                orig.position.z, read.position.z,
-                "Vertex {} Z position should match",
-                i
-            );
+        for (i, (orig, read)) in model.vertices.iter().zip(read_model.vertices.iter()).enumerate() {
+            assert_eq!(orig.position.x, read.position.x, "Vertex {} X position should match", i);
+            assert_eq!(orig.position.y, read.position.y, "Vertex {} Y position should match", i);
+            assert_eq!(orig.position.z, read.position.z, "Vertex {} Z position should match", i);
         }
     }
 
@@ -6479,18 +6121,10 @@ mod tests {
 
         // Add a test vertex
         let vertex = M2Vertex {
-            position: C3Vector {
-                x: 1.0,
-                y: 2.0,
-                z: 3.0,
-            },
+            position: C3Vector { x: 1.0, y: 2.0, z: 3.0 },
             bone_weights: [255, 0, 0, 0],
             bone_indices: [0, 0, 0, 0],
-            normal: C3Vector {
-                x: 0.0,
-                y: 1.0,
-                z: 0.0,
-            },
+            normal: C3Vector { x: 0.0, y: 1.0, z: 0.0 },
             tex_coords: C2Vector { x: 0.5, y: 0.5 },
             tex_coords2: None,
         };
@@ -6511,10 +6145,7 @@ mod tests {
         // Write TBC model to bytes
         let mut buffer = Cursor::new(Vec::new());
         let write_result = tbc_model.write(&mut buffer);
-        assert!(
-            write_result.is_ok(),
-            "Write of converted model should succeed"
-        );
+        assert!(write_result.is_ok(), "Write of converted model should succeed");
 
         // Read back and verify
         buffer.set_position(0);
@@ -6548,18 +6179,10 @@ mod tests {
 
         // Add a test vertex with secondary texture coordinates
         let vertex = M2Vertex {
-            position: C3Vector {
-                x: 1.0,
-                y: 2.0,
-                z: 3.0,
-            },
+            position: C3Vector { x: 1.0, y: 2.0, z: 3.0 },
             bone_weights: [255, 0, 0, 0],
             bone_indices: [0, 0, 0, 0],
-            normal: C3Vector {
-                x: 0.0,
-                y: 1.0,
-                z: 0.0,
-            },
+            normal: C3Vector { x: 0.0, y: 1.0, z: 0.0 },
             tex_coords: C2Vector { x: 0.5, y: 0.5 },
             tex_coords2: Some(C2Vector { x: 0.25, y: 0.75 }),
         };
@@ -6620,11 +6243,7 @@ mod tests {
                 },
                 bone_weights: [255, 0, 0, 0],
                 bone_indices: [0, 0, 0, 0],
-                normal: C3Vector {
-                    x: 0.0,
-                    y: 1.0,
-                    z: 0.0,
-                },
+                normal: C3Vector { x: 0.0, y: 1.0, z: 0.0 },
                 tex_coords: C2Vector { x: 0.0, y: 0.0 },
                 tex_coords2: Some(C2Vector { x: 1.0, y: 1.0 }),
             };
@@ -6671,18 +6290,10 @@ mod tests {
         model.name = Some("WotLKToCata".to_string());
 
         let vertex = M2Vertex {
-            position: C3Vector {
-                x: 1.0,
-                y: 2.0,
-                z: 3.0,
-            },
+            position: C3Vector { x: 1.0, y: 2.0, z: 3.0 },
             bone_weights: [255, 0, 0, 0],
             bone_indices: [0, 0, 0, 0],
-            normal: C3Vector {
-                x: 0.0,
-                y: 1.0,
-                z: 0.0,
-            },
+            normal: C3Vector { x: 0.0, y: 1.0, z: 0.0 },
             tex_coords: C2Vector { x: 0.5, y: 0.5 },
             tex_coords2: None,
         };
@@ -6706,10 +6317,7 @@ mod tests {
         buffer.set_position(0);
         let read_model = M2Model::parse(&mut buffer).expect("Read failed");
 
-        assert_eq!(
-            read_model.header.version,
-            M2Version::Cataclysm.to_header_version()
-        );
+        assert_eq!(read_model.header.version, M2Version::Cataclysm.to_header_version());
         assert_eq!(read_model.vertices.len(), 1);
     }
 
@@ -6725,27 +6333,17 @@ mod tests {
         model.name = Some("WotLKToMoP".to_string());
 
         let vertex = M2Vertex {
-            position: C3Vector {
-                x: 1.0,
-                y: 2.0,
-                z: 3.0,
-            },
+            position: C3Vector { x: 1.0, y: 2.0, z: 3.0 },
             bone_weights: [255, 0, 0, 0],
             bone_indices: [0, 0, 0, 0],
-            normal: C3Vector {
-                x: 0.0,
-                y: 1.0,
-                z: 0.0,
-            },
+            normal: C3Vector { x: 0.0, y: 1.0, z: 0.0 },
             tex_coords: C2Vector { x: 0.5, y: 0.5 },
             tex_coords2: None,
         };
         model.vertices.push(vertex);
 
         // Convert to MoP
-        let converted = model
-            .convert(M2Version::MoP)
-            .expect("WotLK -> MoP conversion failed");
+        let converted = model.convert(M2Version::MoP).expect("WotLK -> MoP conversion failed");
 
         assert_eq!(converted.header.version, M2Version::MoP.to_header_version());
 
@@ -6756,10 +6354,7 @@ mod tests {
         buffer.set_position(0);
         let read_model = M2Model::parse(&mut buffer).expect("Read failed");
 
-        assert_eq!(
-            read_model.header.version,
-            M2Version::MoP.to_header_version()
-        );
+        assert_eq!(read_model.header.version, M2Version::MoP.to_header_version());
         assert_eq!(read_model.vertices.len(), 1);
     }
 
@@ -6775,18 +6370,10 @@ mod tests {
         model.name = Some("WotLKToVanilla".to_string());
 
         let vertex = M2Vertex {
-            position: C3Vector {
-                x: 1.0,
-                y: 2.0,
-                z: 3.0,
-            },
+            position: C3Vector { x: 1.0, y: 2.0, z: 3.0 },
             bone_weights: [255, 0, 0, 0],
             bone_indices: [0, 0, 0, 0],
-            normal: C3Vector {
-                x: 0.0,
-                y: 1.0,
-                z: 0.0,
-            },
+            normal: C3Vector { x: 0.0, y: 1.0, z: 0.0 },
             tex_coords: C2Vector { x: 0.5, y: 0.5 },
             tex_coords2: None,
         };
@@ -6797,10 +6384,7 @@ mod tests {
             .convert(M2Version::Vanilla)
             .expect("WotLK -> Vanilla conversion failed");
 
-        assert_eq!(
-            converted.header.version,
-            M2Version::Vanilla.to_header_version()
-        );
+        assert_eq!(converted.header.version, M2Version::Vanilla.to_header_version());
 
         // Write and re-read
         let mut buffer = Cursor::new(Vec::new());
@@ -6809,10 +6393,7 @@ mod tests {
         buffer.set_position(0);
         let read_model = M2Model::parse(&mut buffer).expect("Read failed");
 
-        assert_eq!(
-            read_model.header.version,
-            M2Version::Vanilla.to_header_version()
-        );
+        assert_eq!(read_model.header.version, M2Version::Vanilla.to_header_version());
         assert_eq!(read_model.vertices.len(), 1);
     }
 
@@ -6828,18 +6409,10 @@ mod tests {
         model.name = Some("CataToWotLK".to_string());
 
         let vertex = M2Vertex {
-            position: C3Vector {
-                x: 1.0,
-                y: 2.0,
-                z: 3.0,
-            },
+            position: C3Vector { x: 1.0, y: 2.0, z: 3.0 },
             bone_weights: [255, 0, 0, 0],
             bone_indices: [0, 0, 0, 0],
-            normal: C3Vector {
-                x: 0.0,
-                y: 1.0,
-                z: 0.0,
-            },
+            normal: C3Vector { x: 0.0, y: 1.0, z: 0.0 },
             tex_coords: C2Vector { x: 0.5, y: 0.5 },
             tex_coords2: Some(C2Vector { x: 0.25, y: 0.75 }),
         };
@@ -6850,10 +6423,7 @@ mod tests {
             .convert(M2Version::WotLK)
             .expect("Cataclysm -> WotLK conversion failed");
 
-        assert_eq!(
-            converted.header.version,
-            M2Version::WotLK.to_header_version()
-        );
+        assert_eq!(converted.header.version, M2Version::WotLK.to_header_version());
 
         // Write and re-read
         let mut buffer = Cursor::new(Vec::new());
@@ -6862,10 +6432,7 @@ mod tests {
         buffer.set_position(0);
         let read_model = M2Model::parse(&mut buffer).expect("Read failed");
 
-        assert_eq!(
-            read_model.header.version,
-            M2Version::WotLK.to_header_version()
-        );
+        assert_eq!(read_model.header.version, M2Version::WotLK.to_header_version());
         assert_eq!(read_model.vertices.len(), 1);
 
         // Note: tex_coords2 is present in ALL versions (48-byte vertex format)

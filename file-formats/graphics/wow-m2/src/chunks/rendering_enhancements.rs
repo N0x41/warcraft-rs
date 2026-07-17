@@ -4,20 +4,12 @@
 //! Legion and later expansions, including extended particle systems, waterfall
 //! effects, edge fading, model alpha calculations, and lighting details.
 
-use crate::chunks::animation::{M2AnimationBlock, M2AnimationTrack};
 use crate::chunks::infrastructure::ChunkReader;
 use crate::chunks::particle_emitter::M2ParticleEmitter;
 use crate::chunks::texture_animation::M2TextureAnimation;
-use crate::common::M2Parse;
 use crate::error::Result;
 use crate::io_ext::{ReadExt, WriteExt};
 use std::io::{Read, Seek, Write};
-
-/// Helper function to create empty animation blocks for compatibility
-fn create_empty_animation_block<T: M2Parse>() -> M2AnimationBlock<T> {
-    let track = M2AnimationTrack::default();
-    M2AnimationBlock::new(track)
-}
 
 /// Extended particle data for EXPT chunks (version 1)
 #[derive(Debug, Clone)]
@@ -139,20 +131,21 @@ pub struct EnhancedEmitter {
 impl EnhancedEmitter {
     /// Parse version 1 enhanced emitter
     pub fn parse<R: Read>(reader: &mut R) -> Result<Self> {
-    //    // For now, create minimal structure
-    //    // In a complete implementation, this would parse the full enhanced emitter format
-    //    let extended_properties = ExtendedEmitterProperties {
-    //        enhanced_blending_mode: reader.read_u8()?,
-    //        particle_sorting_mode: reader.read_u8()?,
-    //        texture_scaling_factor: reader.read_f32_le()?,
-    //        advanced_physics_enabled: reader.read_u8()? != 0,
-    //        collision_detection_enabled: reader.read_u8()? != 0,
-    //        wind_influence_factor: reader.read_f32_le()?,
-    //    };
+        // For now, create minimal structure
+        // In a complete implementation, this would parse the full enhanced emitter format
+        use crate::io_ext::ReadExt;
+
+        let extended_properties = ExtendedEmitterProperties {
+            enhanced_blending_mode: reader.read_u8()?,
+            particle_sorting_mode: reader.read_u8()?,
+            texture_scaling_factor: reader.read_f32_le()?,
+            advanced_physics_enabled: reader.read_u8()? != 0,
+            collision_detection_enabled: reader.read_u8()? != 0,
+            wind_influence_factor: reader.read_f32_le()?,
+        };
 
         // Create a minimal base emitter for compatibility
         // In a real implementation, this would be parsed from the chunk data
-        let empty_u16 = crate::common::M2Array::new(0, 0);
         let base_emitter = M2ParticleEmitter {
             id: 0,
             flags: crate::chunks::particle_emitter::M2ParticleFlags::empty(),
@@ -166,6 +159,7 @@ impl EnhancedEmitter {
             particle_color_index: None,
             particle_type: 0,
             head_or_tail: 0,
+            multi_tex_scale: None,
             priority_plane: 0,
             texture_dimensions_rows: 1,
             texture_dimensions_columns: 1,
@@ -183,12 +177,28 @@ impl EnhancedEmitter {
             emission_area_length: Default::default(),
             z_source: Default::default(),
 
-            color_track: crate::chunks::animation::FakeAnimationBlock { timestamps: empty_u16.clone(), values: empty_u16.clone() },
-            alpha_track: crate::chunks::animation::FakeAnimationBlock { timestamps: empty_u16.clone(), values: empty_u16.clone() },
-            scale_track: crate::chunks::animation::FakeAnimationBlock { timestamps: empty_u16.clone(), values: empty_u16.clone() },
+            // L'appel direct à M2Array::new(0, 0) permet au compilateur d'inférer le bon type (C3Vector, C2Vector, i16, etc.)
+            color_track: crate::chunks::animation::FakeAnimationBlock {
+                timestamps: crate::common::M2Array::new(0, 0),
+                values: crate::common::M2Array::new(0, 0),
+            },
+            alpha_track: crate::chunks::animation::FakeAnimationBlock {
+                timestamps: crate::common::M2Array::new(0, 0),
+                values: crate::common::M2Array::new(0, 0),
+            },
+            scale_track: crate::chunks::animation::FakeAnimationBlock {
+                timestamps: crate::common::M2Array::new(0, 0),
+                values: crate::common::M2Array::new(0, 0),
+            },
             scale_vary: crate::common::C2Vector { x: 1.0, y: 1.0 },
-            head_uv_anim: crate::chunks::animation::FakeAnimationBlock { timestamps: empty_u16.clone(), values: empty_u16.clone() },
-            tail_uv_anim: crate::chunks::animation::FakeAnimationBlock { timestamps: empty_u16.clone(), values: empty_u16.clone() },
+            head_uv_anim: crate::chunks::animation::FakeAnimationBlock {
+                timestamps: crate::common::M2Array::new(0, 0),
+                values: crate::common::M2Array::new(0, 0),
+            },
+            tail_uv_anim: crate::chunks::animation::FakeAnimationBlock {
+                timestamps: crate::common::M2Array::new(0, 0),
+                values: crate::common::M2Array::new(0, 0),
+            },
 
             tail_length: 0.0,
             twinkle_speed: 0.0,
@@ -380,9 +390,7 @@ impl ParentAnimationBlacklist {
             blacklisted_sequences.push(reader.read_u16_le()?);
         }
 
-        Ok(Self {
-            blacklisted_sequences,
-        })
+        Ok(Self { blacklisted_sequences })
     }
 
     /// Write PABC chunk
@@ -489,10 +497,7 @@ pub struct WaterfallEffect {
 
 impl WaterfallEffect {
     /// Parse waterfall effect chunk
-    pub fn parse<R: Read + std::io::Seek>(
-        reader: &mut ChunkReader<R>,
-        version: u8,
-    ) -> Result<Self> {
+    pub fn parse<R: Read + std::io::Seek>(reader: &mut ChunkReader<R>, version: u8) -> Result<Self> {
         let parameters = match version {
             1 => WaterfallParameters::parse_v1(reader)?,
             2 => WaterfallParameters::parse_v2(reader)?,
@@ -505,10 +510,7 @@ impl WaterfallEffect {
             }
         };
 
-        Ok(Self {
-            version,
-            parameters,
-        })
+        Ok(Self { version, parameters })
     }
 
     /// Write waterfall effect chunk
@@ -679,8 +681,7 @@ impl ModelAlphaData {
     pub fn parse<R: Read + std::io::Seek>(reader: &mut ChunkReader<R>) -> Result<Self> {
         let alpha_test_threshold = reader.read_f32_le()?;
         let blend_mode_value = reader.read_u8()?;
-        let blend_mode =
-            AlphaBlendMode::from_u8(blend_mode_value).unwrap_or(AlphaBlendMode::Normal);
+        let blend_mode = AlphaBlendMode::from_u8(blend_mode_value).unwrap_or(AlphaBlendMode::Normal);
 
         Ok(Self {
             alpha_test_threshold,
@@ -865,11 +866,7 @@ impl ExtendedTextureAnimation {
 
         // Parse extended properties
         let extended_properties = ExtendedAnimationProperties {
-            flow_direction: [
-                reader.read_f32_le()?,
-                reader.read_f32_le()?,
-                reader.read_f32_le()?,
-            ],
+            flow_direction: [reader.read_f32_le()?, reader.read_f32_le()?, reader.read_f32_le()?],
             speed_multiplier: reader.read_f32_le()?,
             turbulence_factor: reader.read_f32_le()?,
             animation_mode: ExtendedAnimationMode::from_u8(reader.read_u8()?)?,
@@ -1146,11 +1143,7 @@ impl DpivChunk {
         reader.seek_to_position(chunk_start + vertex_pos_offset as u64)?;
         let mut vertex_positions = Vec::with_capacity(vertex_pos_count as usize);
         for _ in 0..vertex_pos_count {
-            let pos = [
-                reader.read_f32_le()?,
-                reader.read_f32_le()?,
-                reader.read_f32_le()?,
-            ];
+            let pos = [reader.read_f32_le()?, reader.read_f32_le()?, reader.read_f32_le()?];
             vertex_positions.push(pos);
         }
 
@@ -1158,11 +1151,7 @@ impl DpivChunk {
         reader.seek_to_position(chunk_start + face_norm_offset as u64)?;
         let mut face_normals = Vec::with_capacity(face_norm_count as usize);
         for _ in 0..face_norm_count {
-            let normal = [
-                reader.read_f32_le()?,
-                reader.read_f32_le()?,
-                reader.read_f32_le()?,
-            ];
+            let normal = [reader.read_f32_le()?, reader.read_f32_le()?, reader.read_f32_le()?];
             face_normals.push(normal);
         }
 
@@ -1258,16 +1247,8 @@ impl ParentSequenceBounds {
 
         // Each sequence bound is 28 bytes (6 floats + 1 float)
         while !reader.is_at_end()? {
-            let min_bounds = [
-                reader.read_f32_le()?,
-                reader.read_f32_le()?,
-                reader.read_f32_le()?,
-            ];
-            let max_bounds = [
-                reader.read_f32_le()?,
-                reader.read_f32_le()?,
-                reader.read_f32_le()?,
-            ];
+            let min_bounds = [reader.read_f32_le()?, reader.read_f32_le()?, reader.read_f32_le()?];
+            let max_bounds = [reader.read_f32_le()?, reader.read_f32_le()?, reader.read_f32_le()?];
             let radius = reader.read_f32_le()?;
 
             sequence_bounds.push(SequenceBounds {
@@ -1388,21 +1369,13 @@ impl CollisionMeshData {
 
         let mut vertices = Vec::with_capacity(vertex_count as usize);
         for _ in 0..vertex_count {
-            vertices.push([
-                reader.read_f32_le()?,
-                reader.read_f32_le()?,
-                reader.read_f32_le()?,
-            ]);
+            vertices.push([reader.read_f32_le()?, reader.read_f32_le()?, reader.read_f32_le()?]);
         }
 
         let mut faces = Vec::with_capacity(face_count as usize);
         for _ in 0..face_count {
             faces.push(CollisionFace {
-                indices: [
-                    reader.read_u16_le()?,
-                    reader.read_u16_le()?,
-                    reader.read_u16_le()?,
-                ],
+                indices: [reader.read_u16_le()?, reader.read_u16_le()?, reader.read_u16_le()?],
                 material_index: reader.read_u16_le()?,
             });
         }
@@ -1478,11 +1451,7 @@ impl PhysicsFileDataChunk {
     /// Parse PFDC chunk
     pub fn parse<R: Read + std::io::Seek>(reader: &mut ChunkReader<R>) -> Result<Self> {
         let mass = reader.read_f32_le()?;
-        let center_of_mass = [
-            reader.read_f32_le()?,
-            reader.read_f32_le()?,
-            reader.read_f32_le()?,
-        ];
+        let center_of_mass = [reader.read_f32_le()?, reader.read_f32_le()?, reader.read_f32_le()?];
 
         let mut inertia_tensor = [0.0f32; 9];
         for item in &mut inertia_tensor {
@@ -1600,10 +1569,7 @@ mod tests {
     fn test_alpha_blend_mode_conversion() {
         assert_eq!(AlphaBlendMode::from_u8(0), Some(AlphaBlendMode::Normal));
         assert_eq!(AlphaBlendMode::from_u8(1), Some(AlphaBlendMode::Additive));
-        assert_eq!(
-            AlphaBlendMode::from_u8(2),
-            Some(AlphaBlendMode::Multiplicative)
-        );
+        assert_eq!(AlphaBlendMode::from_u8(2), Some(AlphaBlendMode::Multiplicative));
         assert_eq!(AlphaBlendMode::from_u8(3), Some(AlphaBlendMode::AlphaTest));
         assert_eq!(AlphaBlendMode::from_u8(99), None);
     }
@@ -1784,24 +1750,16 @@ mod tests {
         let txac = TextureAnimationChunk::parse(&mut chunk_reader).unwrap();
         assert_eq!(txac.texture_animations.len(), 1);
         assert_eq!(
-            txac.texture_animations[0]
-                .extended_properties
-                .animation_mode,
+            txac.texture_animations[0].extended_properties.animation_mode,
             ExtendedAnimationMode::FlowingLiquid
         );
-        assert_eq!(
-            txac.texture_animations[0]
-                .extended_properties
-                .speed_multiplier,
-            1.5
-        );
+        assert_eq!(txac.texture_animations[0].extended_properties.speed_multiplier, 1.5);
     }
 
     #[test]
     fn test_dboc_chunk() {
         let data = vec![
-            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E,
-            0x0F, 0x10,
+            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10,
         ]; // 16 bytes
 
         let header = ChunkHeader {
@@ -1825,10 +1783,7 @@ mod tests {
             ExtendedAnimationMode::from_u8(1).unwrap(),
             ExtendedAnimationMode::FlowingLiquid
         );
-        assert_eq!(
-            ExtendedAnimationMode::from_u8(4).unwrap(),
-            ExtendedAnimationMode::Wave
-        );
+        assert_eq!(ExtendedAnimationMode::from_u8(4).unwrap(), ExtendedAnimationMode::Wave);
         assert!(ExtendedAnimationMode::from_u8(99).is_err());
     }
 

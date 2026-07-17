@@ -62,6 +62,19 @@ impl M2Parse for u16 {
     }
 }
 
+impl M2Parse for i16 {
+    fn parse<R: std::io::Read + std::io::Seek>(reader: &mut R) -> crate::error::Result<Self> {
+        use crate::io_ext::ReadExt;
+        Ok(reader.read_i16_le()?)
+    }
+
+    fn write<W: std::io::Write>(&self, writer: &mut W) -> crate::error::Result<()> {
+        use crate::io_ext::WriteExt;
+        writer.write_i16_le(*self)?;
+        Ok(())
+    }
+}
+
 impl M2Parse for u32 {
     fn parse<R: Read + Seek>(reader: &mut R) -> Result<Self> {
         Ok(reader.read_u32_le()?)
@@ -194,11 +207,7 @@ where
 }
 
 /// Reads raw bytes from an M2Array reference, preserving data for sections we don't fully parse
-pub fn read_raw_bytes<R: Read + Seek>(
-    reader: &mut R,
-    array: &M2Array<u32>,
-    element_size: usize,
-) -> Result<Vec<u8>> {
+pub fn read_raw_bytes<R: Read + Seek>(reader: &mut R, array: &M2Array<u32>, element_size: usize) -> Result<Vec<u8>> {
     if array.is_empty() {
         return Ok(Vec::new());
     }
@@ -260,11 +269,7 @@ impl C3Vector {
 
     /// Create from a glam vector
     pub fn from_glam(v: glam::Vec3) -> Self {
-        Self {
-            x: v.x,
-            y: v.y,
-            z: v.z,
-        }
+        Self { x: v.x, y: v.y, z: v.z }
     }
 }
 

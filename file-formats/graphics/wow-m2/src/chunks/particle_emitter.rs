@@ -1,7 +1,7 @@
 use crate::io_ext::{ReadExt, WriteExt};
 use std::io::{Read, Seek, Write};
 
-use crate::chunks::animation::{M2AnimationBlock, FakeAnimationBlock};
+use crate::chunks::animation::{FakeAnimationBlock, M2AnimationBlock};
 //use crate::chunks::color_animation::M2Color;
 use crate::common::{C2Vector, C3Vector, M2Array};
 use crate::error::Result;
@@ -97,34 +97,34 @@ pub struct M2ParticleEmitter {
     pub position: C3Vector,
     /// The bone index this emitter is attached to.
     pub bone_index: u16,
-    
+
     /// Texture indices used by the particle.
     /// Cataclysm introduced multi-texturing via a bitfield, occupying these same 2 bytes.
-    pub texture_indices: [u16; 3], 
-    
+    pub texture_indices: [u16; 3],
+
     /// Geometry model filename. If given, this emitter spawns model particles.
     pub model_filename: M2Array<u8>,
-    
+
     /// Child emitters model filename. Introduced in WotLK (264).
     /// If given, child emitters are obtained from this model and emitted as a trail per particle.
-    pub child_emitter_filename: Option<M2Array<u8>>, 
-    
+    pub child_emitter_filename: Option<M2Array<u8>>,
+
     /// A blending type for the particle (e.g., 0: Opaque, 1: AlphaBlend, 2: Additive, etc.).
     pub blending_type: u8,
     /// The shape of the emitter (1 - Plane, 2 - Sphere, 3 - Spline, 4 - Bone).
     pub emitter_type: M2ParticleEmitterType,
-    
+
     /// Used in conjunction with ParticleColor.dbc to alter the default color.
     /// Introduced in late The Burning Crusade (262).
-    pub particle_color_index: Option<u16>, 
-    
+    pub particle_color_index: Option<u16>,
+
     /// Type of the particle.
     pub particle_type: u8,
     /// Determines billboard rendering behavior (0 - Head, 1 - Tail, 2 - Both).
     pub head_or_tail: u8,
-    
+
     /// The rendering priority plane.
-    pub priority_plane: i16, 
+    pub priority_plane: i16,
     /// Number of texture rows for tiled textures.
     pub texture_dimensions_rows: u16,
     /// Number of texture columns for tiled textures.
@@ -145,18 +145,18 @@ pub struct M2ParticleEmitter {
     pub gravity: M2AnimationBlock<f32>,
     /// Number of seconds each particle continues to be drawn after its creation.
     pub lifespan: M2AnimationBlock<f32>,
-    
+
     /// An individual particle's lifespan is added to by (lifespanVariation * random(-1, 1)).
     /// Introduced in WotLK (264).
-    pub lifespan_variation: Option<f32>, 
-    
+    pub lifespan_variation: Option<f32>,
+
     /// Emission rate of the particles (bursts or continuous).
     pub emission_rate: M2AnimationBlock<f32>,
-    
+
     /// Random variation added to the base emission rate value.
     /// Introduced in WotLK (264).
-    pub emission_rate_variation: Option<f32>, 
-    
+    pub emission_rate_variation: Option<f32>,
+
     /// For plane generators: width of the emission area. For sphere generators: maximum radius.
     pub emission_area_width: M2AnimationBlock<f32>,
     /// For plane generators: length of the emission area. For sphere generators: minimum radius.
@@ -173,14 +173,16 @@ pub struct M2ParticleEmitter {
     pub alpha_track: FakeAnimationBlock<i16>,
     /// Particle scale track.
     pub scale_track: FakeAnimationBlock<C2Vector>,
-    
+
     /// A percentage amount to randomly vary the scale of each particle.
-    pub scale_vary: C2Vector, 
-    
+    pub scale_vary: C2Vector,
+
     /// UV animation sequence for the head particle's life.
     pub head_uv_anim: FakeAnimationBlock<u16>,
     /// UV animation sequence for the tail particle's life.
     pub tail_uv_anim: FakeAnimationBlock<u16>,
+    /// Multi-texture scale (Cataclysm)
+    pub multi_tex_scale: Option<[i8; 2]>,
 
     // ==========================================
     // PHYSICAL & RENDER PARAMETERS
@@ -204,8 +206,8 @@ pub struct M2ParticleEmitter {
     // SPIN (Rotation)
     // ==========================================
     /// Spin value for Vanilla/TBC (0.0 for none, 1.0 for full 360 degrees rotation).
-    pub legacy_spin: Option<f32>, 
-    
+    pub legacy_spin: Option<f32>,
+
     /// Initial rotation of the particle quad (WotLK+).
     pub base_spin: Option<f32>,
     /// Variation of the initial rotation (WotLK+).
@@ -237,8 +239,8 @@ pub struct M2ParticleEmitter {
     pub follow_scale2: f32,
 
     /// Array of points for spline. Set only for spline particle emitters.
-    pub spline_points: M2Array<C3Vector>, 
-    
+    pub spline_points: M2Array<C3Vector>,
+
     /// Boolean track linking particles to animation sets where they are enabled.
     pub enabled_in: M2AnimationBlock<u8>,
 
@@ -270,7 +272,7 @@ impl M2ParticleEmitter {
         let flag_bits = reader.read_u32_le()?;
         let flags = M2ParticleFlags::from_bits_retain(flag_bits);
         let position = C3Vector::parse(reader)?;
-        
+
         let bone_index = reader.read_u16_le()?;
         let texture_index_raw = reader.read_u16_le()?;
 
@@ -279,10 +281,12 @@ impl M2ParticleEmitter {
             [
                 texture_index_raw & 0x1F,
                 (texture_index_raw >> 5) & 0x1F,
-                (texture_index_raw >> 10) & 0x1F
+                (texture_index_raw >> 10) & 0x1F,
             ]
-        } else { [texture_index_raw, 0, 0] };
-        
+        } else {
+            [texture_index_raw, 0, 0]
+        };
+
         let model_filename = M2Array::parse(reader)?;
         let child_emitter_filename = M2Array::parse(reader)?;
 
@@ -290,9 +294,13 @@ impl M2ParticleEmitter {
         let m2_version = M2Version::from_header_version(version);
         let fallback_model_filename = if let Some(v) = m2_version {
             if v >= M2Version::Legion {
-                Some(M2Array::parse(reader)?)
-            } else { None }
-        } else { None };
+                Some(M2Array::<u8>::parse(reader)?)
+            } else {
+                None
+            }
+        } else {
+            None
+        };
 
         let blending_type;
         let emitter_type;
@@ -303,10 +311,11 @@ impl M2ParticleEmitter {
             blending_type = reader.read_u8()?;
             emitter_type = M2ParticleEmitterType::from_u8(reader.read_u8()?).unwrap_or(M2ParticleEmitterType::Point);
             particle_color_index = Some(reader.read_u16_le()?);
-        } else { 
+        } else {
             // Vanilla, they are u16 ! (total 4 bytes)
             blending_type = reader.read_u16_le()? as u8;
-            emitter_type = M2ParticleEmitterType::from_u8(reader.read_u16_le()? as u8).unwrap_or(M2ParticleEmitterType::Point);
+            emitter_type =
+                M2ParticleEmitterType::from_u8(reader.read_u16_le()? as u8).unwrap_or(M2ParticleEmitterType::Point);
             particle_color_index = None;
         }
 
@@ -329,15 +338,23 @@ impl M2ParticleEmitter {
         // --- EXTENSIONS MODERNES (WoD, Legion, BfA) ---
         let texture_file_data_ids = if let Some(v) = m2_version {
             if v >= M2Version::Legion {
-                Some(M2Array::parse(reader)?)
-            } else { None }
-        } else { None };
+                Some(M2Array::<u32>::parse(reader)?)
+            } else {
+                None
+            }
+        } else {
+            None
+        };
 
         let enable_encryption = if let Some(v) = m2_version {
             if v >= M2Version::WoD {
                 Some(reader.read_u8()?)
-            } else { None }
-        } else { None };
+            } else {
+                None
+            }
+        } else {
+            None
+        };
 
         let (multi_texture_param0, multi_texture_param1) = if let Some(v) = m2_version {
             if v >= M2Version::BfA {
@@ -346,8 +363,12 @@ impl M2ParticleEmitter {
                 reader.read_exact(&mut p0)?;
                 reader.read_exact(&mut p1)?;
                 (Some(p0), Some(p1))
-            } else { (None, None) }
-        } else { (None, None) };
+            } else {
+                (None, None)
+            }
+        } else {
+            (None, None)
+        };
 
         // =========================================
         // COMMON BLOCK
@@ -382,7 +403,7 @@ impl M2ParticleEmitter {
         let emission_area_width = M2AnimationBlock::<f32>::parse(reader, version).unwrap_or_default();
         let emission_area_length = M2AnimationBlock::<f32>::parse(reader, version).unwrap_or_default();
         let z_source = M2AnimationBlock::<f32>::parse(reader, version).unwrap_or_default();
-    
+
         let color_track;
         let alpha_track;
         let scale_track;
@@ -392,10 +413,22 @@ impl M2ParticleEmitter {
 
         let empty_c2 = C2Vector { x: 1.0, y: 1.0 }; // Default scale
         let empty_u16 = M2Array::new(0, 0);
-        let empty_fblock_vec3 = FakeAnimationBlock { timestamps: empty_u16.clone(), values: M2Array::new(0, 0) };
-        let empty_fblock_i16 = FakeAnimationBlock { timestamps: empty_u16.clone(), values: M2Array::new(0, 0) };
-        let empty_fblock_vec2 = FakeAnimationBlock { timestamps: empty_u16.clone(), values: M2Array::new(0, 0) };
-        let empty_fblock_u16 = FakeAnimationBlock { timestamps: empty_u16.clone(), values: M2Array::new(0, 0) };
+        let empty_fblock_vec3 = FakeAnimationBlock {
+            timestamps: empty_u16.clone(),
+            values: M2Array::new(0, 0),
+        };
+        let empty_fblock_i16 = FakeAnimationBlock {
+            timestamps: empty_u16.clone(),
+            values: M2Array::new(0, 0),
+        };
+        let empty_fblock_vec2 = FakeAnimationBlock {
+            timestamps: empty_u16.clone(),
+            values: M2Array::new(0, 0),
+        };
+        let empty_fblock_u16 = FakeAnimationBlock {
+            timestamps: empty_u16.clone(),
+            values: M2Array::new(0, 0),
+        };
 
         if version >= 264 {
             // WotLK (Wrath)
@@ -410,7 +443,7 @@ impl M2ParticleEmitter {
             // We move cursor 48 bytes forward. Fail-safe.
             let mut buf = [0u8; 48];
             let _ = reader.read_exact(&mut buf);
-            
+
             color_track = empty_fblock_vec3;
             alpha_track = empty_fblock_i16;
             scale_track = empty_fblock_vec2;
@@ -439,13 +472,15 @@ impl M2ParticleEmitter {
         let spin_speed;
         let spin_speed_variation;
 
-        if version >= 264 { // WotLK
+        if version >= 264 {
+            // WotLK
             base_spin = reader.read_f32_le().ok();
             base_spin_variation = reader.read_f32_le().ok();
             spin_speed = reader.read_f32_le().ok();
             spin_speed_variation = reader.read_f32_le().ok();
             legacy_spin = None;
-        } else { // Vanilla & TBC
+        } else {
+            // Vanilla & TBC
             legacy_spin = reader.read_f32_le().ok();
             base_spin = None;
             base_spin_variation = None;
@@ -454,30 +489,35 @@ impl M2ParticleEmitter {
         }
 
         let empty_c3 = C3Vector { x: 0.0, y: 0.0, z: 0.0 };
-        
+
         let tumble_min = C3Vector::parse(reader).unwrap_or(empty_c3);
         let tumble_max = C3Vector::parse(reader).unwrap_or(empty_c3);
         let wind_vector = C3Vector::parse(reader).unwrap_or(empty_c3);
         let wind_time = reader.read_f32_le().unwrap_or(0.0);
-        
+
         let follow_speed1 = reader.read_f32_le().unwrap_or(0.0);
         let follow_scale1 = reader.read_f32_le().unwrap_or(0.0);
         let follow_speed2 = reader.read_f32_le().unwrap_or(0.0);
         let follow_scale2 = reader.read_f32_le().unwrap_or(0.0);
-        
+
         let spline_points = M2Array::<C3Vector>::parse(reader).unwrap_or(M2Array::new(0, 0));
         let enabled_in = M2AnimationBlock::<u8>::parse(reader, version).unwrap_or_default();
 
         // --- Legion+ ---
-        let (particle_initial_state, particle_initial_state_variation, particle_convergence_time) = if let Some(v) = m2_version {
-            if v >= M2Version::Legion {
-                (
-                    Some(reader.read_u32_le()?),
-                    Some(reader.read_f32_le()?),
-                    Some(reader.read_f32_le()?),
-                )
-            } else { (None, None, None) }
-        } else { (None, None, None) };
+        let (particle_initial_state, particle_initial_state_variation, particle_convergence_time) =
+            if let Some(v) = m2_version {
+                if v >= M2Version::Legion {
+                    (
+                        Some(reader.read_u32_le()?),
+                        Some(reader.read_f32_le()?),
+                        Some(reader.read_f32_le()?),
+                    )
+                } else {
+                    (None, None, None)
+                }
+            } else {
+                (None, None, None)
+            };
 
         Ok(Self {
             id,
@@ -541,21 +581,23 @@ impl M2ParticleEmitter {
             follow_scale2,
 
             spline_points,
-            enabled_in
+            enabled_in,
 
-            fallback_model_filename: None,
-            texture_file_data_ids: None,
-            enable_encryption: None,
-            multi_texture_param0: None,
-            multi_texture_param1: None,
-            particle_initial_state: None,
-            particle_initial_state_variation: None,
-            particle_convergence_time: None,
+            fallback_model_filename,
+            texture_file_data_ids,
+            enable_encryption,
+            multi_tex_scale,
+            multi_texture_param0,
+            multi_texture_param1,
+            particle_initial_state,
+            particle_initial_state_variation,
+            particle_convergence_time,
         })
     }
 
     /// Write a particle emitter to a writer based on the M2 version
-    pub fn write<W: Write>(&self, writer: &mut W, version: u32) -> Result<()> {writer.write_u32_le(self.id)?;
+    pub fn write<W: Write>(&self, writer: &mut W, version: u32) -> Result<()> {
+        writer.write_u32_le(self.id)?;
         writer.write_u32_le(self.flags.bits())?;
         self.position.write(writer)?;
         writer.write_u16_le(self.bone_index)?;
@@ -569,7 +611,7 @@ impl M2ParticleEmitter {
         writer.write_u16_le(texture_index_raw)?;
 
         self.model_filename.write(writer)?;
-        
+
         if let Some(ref child) = self.child_emitter_filename {
             child.write(writer)?;
         } else {
@@ -586,9 +628,15 @@ impl M2ParticleEmitter {
         }
 
         if version >= 272 {
-            // Write default scales if Cataclysm+ (since we didn't preserve multi_tex_scale perfectly)
-            writer.write_i8(0)?;
-            writer.write_i8(0)?;
+            // If we export for Cata+, we write scale values
+            if let Some(scales) = self.multi_tex_scale {
+                writer.write_i8(scales[0])?;
+                writer.write_i8(scales[1])?;
+            } else {
+                // Write default scales if Cataclysm+ (since we didn't preserve multi_tex_scale perfectly)
+                writer.write_i8(0)?;
+                writer.write_i8(0)?;
+            }
         } else {
             writer.write_u8(self.particle_type)?;
             writer.write_u8(self.head_or_tail)?;
