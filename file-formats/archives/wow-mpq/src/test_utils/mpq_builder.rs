@@ -3,7 +3,7 @@
 //! Replaces the functionality of mpq_tools.py
 
 use crate::{ArchiveBuilder, FormatVersion, compression};
-use rand::{Rng, SeedableRng, rngs::StdRng};
+use rand::{RngExt, SeedableRng, rngs::StdRng};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -203,8 +203,7 @@ impl TestArchiveConfig {
         let mut files = vec![
             TestFile {
                 name: "readme.txt".to_string(),
-                data: b"MPQ Archive Test Suite\n\nThis archive contains various test files."
-                    .to_vec(),
+                data: b"MPQ Archive Test Suite\n\nThis archive contains various test files.".to_vec(),
                 compression: None,
                 encrypted: false,
                 fix_key: false,
@@ -275,10 +274,7 @@ impl TestArchiveConfig {
 }
 
 /// Create a test MPQ archive
-pub fn create_test_archive(
-    output_path: &Path,
-    config: &TestArchiveConfig,
-) -> Result<PathBuf, crate::Error> {
+pub fn create_test_archive(output_path: &Path, config: &TestArchiveConfig) -> Result<PathBuf, crate::Error> {
     let mut builder = if config.include_listfile {
         // If we're manually including a listfile, don't auto-generate
         ArchiveBuilder::new().listfile_option(crate::ListfileOption::None)
@@ -454,14 +450,7 @@ mod tests {
         let result = create_test_archive(temp_dir.path(), &config).unwrap();
 
         assert!(result.exists());
-        assert!(
-            result
-                .file_name()
-                .unwrap()
-                .to_str()
-                .unwrap()
-                .contains("minimal")
-        );
+        assert!(result.file_name().unwrap().to_str().unwrap().contains("minimal"));
     }
 
     #[test]

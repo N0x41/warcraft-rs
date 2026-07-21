@@ -2,7 +2,7 @@
 //!
 //! Replaces the functionality of generate_test_data.py
 
-use rand::{Rng, SeedableRng, rngs::StdRng};
+use rand::{RngExt, SeedableRng, rngs::StdRng};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -255,10 +255,7 @@ impl TestDataConfig {
 }
 
 /// Generate test data with specified configuration
-pub fn generate_test_data(
-    base_path: &Path,
-    config: &TestDataConfig,
-) -> Result<GenerationResult, std::io::Error> {
+pub fn generate_test_data(base_path: &Path, config: &TestDataConfig) -> Result<GenerationResult, std::io::Error> {
     let output_dir = base_path.join(&config.name);
 
     // Clean up if exists
@@ -366,9 +363,7 @@ fn generate_text_content(size_kb: usize, compressibility: Compressibility) -> Ve
                     // Generate structured data (JSON-like or CSV-like)
                     if rng.random_bool(0.5) {
                         let id = rng.random_range(1..1000);
-                        let value: String = (0..10)
-                            .map(|_| (b'a' + rng.random::<u8>() % 26) as char)
-                            .collect();
+                        let value: String = (0..10).map(|_| (b'a' + rng.random::<u8>() % 26) as char).collect();
                         let json = format!("{{\"id\": {id}, \"value\": \"{value}\"}}\n");
                         content.extend_from_slice(json.as_bytes());
                     } else {
@@ -421,11 +416,6 @@ mod tests {
         let config = TestDataConfig::nested();
         let result = generate_test_data(temp_dir.path(), &config).unwrap();
 
-        assert!(
-            result
-                .base_path
-                .join("level1/level2/level3/level4/deep.txt")
-                .exists()
-        );
+        assert!(result.base_path.join("level1/level2/level3/level4/deep.txt").exists());
     }
 }
