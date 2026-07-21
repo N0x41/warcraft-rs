@@ -745,10 +745,10 @@ fn handle_tree(path: PathBuf, max_depth: usize, show_size: bool, show_refs: bool
     let texture_anim_count = model.raw_data.texture_animation_data.len();
     if texture_anim_count > 0 {
         let mut translation_u_count = 0;
-        let mut translation_v_count = 0;
+        let translation_v_count = 0;
         let mut rotation_count = 0;
         let mut scale_u_count = 0;
-        let mut scale_v_count = 0;
+        let scale_v_count = 0;
         let mut total_keyframes = 0;
 
         for anim in &model.raw_data.texture_animation_data {

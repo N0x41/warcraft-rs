@@ -206,6 +206,8 @@ mod tests {
     #[test]
     fn test_ribbon_emitter_parse_write_classic() {
         let ribbon = M2RibbonEmitter {
+            texture_slot: M2AnimationBlock::new(M2AnimationTrack::default()),
+            visibility: M2AnimationBlock::new(M2AnimationTrack::default()),
             bone_index: 1,
             position: C3Vector {
                 x: 1.0,
@@ -226,7 +228,7 @@ mod tests {
             texture_slice: None,
             variation: None,
             id: 0,
-            flags: 0,
+
         };
 
         // Test write
@@ -256,12 +258,14 @@ mod tests {
         assert_eq!(parsed.texture_slice, None);
         assert_eq!(parsed.variation, None);
         assert_eq!(parsed.id, 0);
-        assert_eq!(parsed.flags, 0);
+
     }
 
     #[test]
     fn test_ribbon_emitter_parse_write_mop() {
         let ribbon = M2RibbonEmitter {
+            texture_slot: M2AnimationBlock::new(M2AnimationTrack::default()),
+            visibility: M2AnimationBlock::new(M2AnimationTrack::default()),
             bone_index: 1,
             position: C3Vector {
                 x: 1.0,
@@ -282,7 +286,7 @@ mod tests {
             texture_slice: Some(0),
             variation: Some(0),
             id: 0,
-            flags: 0,
+
         };
 
         // Test write
@@ -312,13 +316,16 @@ mod tests {
         assert_eq!(parsed.texture_slice, Some(0));
         assert_eq!(parsed.variation, Some(0));
         assert_eq!(parsed.id, 0);
-        assert_eq!(parsed.flags, 0);
+
     }
 
     #[test]
     fn test_ribbon_emitter_convert() {
         // Create a Classic ribbon emitter
         let classic_ribbon = M2RibbonEmitter {
+            id: 0,
+            texture_slot: M2AnimationBlock::new(M2AnimationTrack::default()),
+            visibility: M2AnimationBlock::new(M2AnimationTrack::default()),
             bone_index: 1,
             position: C3Vector {
                 x: 1.0,
@@ -338,8 +345,8 @@ mod tests {
             texture_cols: 1,
             texture_slice: None,
             variation: None,
-            id: 0,
-            flags: 0,
+
+
         };
 
         // Convert to MoP

@@ -1030,7 +1030,7 @@ mod tests {
             create_test_sequence(4, 500),  // Walk
         ];
 
-        let manager = AnimationManager::new(vec![], sequences, vec![]);
+        let manager = AnimationManager::new(vec![], sequences, vec![], vec![]);
 
         // Should start with Stand animation
         assert_eq!(manager.current_animation_index(), Some(0));
@@ -1040,7 +1040,7 @@ mod tests {
     #[test]
     fn test_animation_update() {
         let sequences = vec![create_test_sequence(0, 1000)];
-        let mut manager = AnimationManager::new(vec![], sequences, vec![]);
+        let mut manager = AnimationManager::new(vec![], sequences, vec![], vec![]);
 
         // Advance time
         manager.update(500.0);
@@ -1054,7 +1054,7 @@ mod tests {
     #[test]
     fn test_set_animation() {
         let sequences = vec![create_test_sequence(0, 1000), create_test_sequence(4, 500)];
-        let mut manager = AnimationManager::new(vec![], sequences, vec![]);
+        let mut manager = AnimationManager::new(vec![], sequences, vec![], vec![]);
 
         manager.set_animation_id(4);
         assert_eq!(manager.current_animation_index(), Some(1));
@@ -1066,7 +1066,7 @@ mod tests {
         let sequences = vec![create_test_sequence(0, 1000)];
         let global_durations = vec![500, 1000];
 
-        let mut manager = AnimationManager::new(global_durations, sequences, vec![]);
+        let mut manager = AnimationManager::new(global_durations, sequences, vec![], vec![]);
 
         // Update global times
         manager.update(250.0);
@@ -1100,7 +1100,7 @@ mod tests {
         };
 
         let sequences = vec![create_test_sequence(0, 1000)];
-        let mut manager = AnimationManager::new(vec![], sequences, vec![bone]);
+        let mut manager = AnimationManager::new(vec![], sequences, vec![bone], vec![]);
 
         // At time 0
         let trans = manager.get_bone_translation(0);

@@ -819,7 +819,7 @@ mod tests {
     fn test_convex_hull_aabb() {
         // Simple frustum facing +Z
         let mut hull = ConvexHull::new();
-        hull.planes.push(Plane {
+        hull.push(Plane {
             normal: [0.0, 0.0, 1.0],
             distance: 0.0,
         }); // near plane at z=0

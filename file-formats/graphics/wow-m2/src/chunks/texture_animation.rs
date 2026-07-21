@@ -106,11 +106,11 @@ mod tests {
         write_empty_block(&mut data);
 
         let mut cursor = Cursor::new(data);
-        let tex_anim = M2TextureAnimation::parse(&mut cursor).unwrap();
+        let tex_anim = M2TextureAnimation::parse(&mut cursor, 272).unwrap();
 
         // Test write round-trip: output size should match input
         let mut output = Vec::new();
-        tex_anim.write(&mut output).unwrap();
+        tex_anim.write(&mut output, 272).unwrap();
         assert_eq!(output.len(), cursor.get_ref().len());
     }
 }

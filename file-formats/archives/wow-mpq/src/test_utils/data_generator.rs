@@ -2,7 +2,7 @@
 //!
 //! Replaces the functionality of generate_test_data.py
 
-use rand::{RngExt, SeedableRng, rngs::StdRng};
+use rand::{Rng, SeedableRng, rngs::StdRng};
 use std::fs;
 use std::path::{Path, PathBuf};
 

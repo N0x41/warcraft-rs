@@ -40,12 +40,8 @@ fn demo_txac_chunk() -> Result<()> {
     // Count of texture animations
     data.extend_from_slice(&1u32.to_le_bytes());
 
-    // Base texture animation data
-    data.extend_from_slice(&1u16.to_le_bytes()); // Animation type (Scroll)
-    data.extend_from_slice(&0u16.to_le_bytes()); // Padding
-
-    // Add minimal animation block data (5 animation blocks for M2TextureAnimation)
-    for _ in 0..5 {
+    // Add minimal animation block data (3 animation blocks for M2TextureAnimation: translation, rotation, scale)
+    for _ in 0..3 {
         data.extend_from_slice(&0u16.to_le_bytes()); // Interpolation type
         data.extend_from_slice(&(-1i16).to_le_bytes()); // Global sequence
         data.extend_from_slice(&0u32.to_le_bytes()); // Timestamps count
@@ -75,29 +71,14 @@ fn demo_txac_chunk() -> Result<()> {
     let txac = TextureAnimationChunk::parse(&mut chunk_reader)?;
 
     println!("TXAC chunk parsed successfully!");
-    println!(
-        "  Texture animations count: {}",
-        txac.texture_animations.len()
-    );
+    println!("  Texture animations count: {}", txac.texture_animations.len());
     if let Some(anim) = txac.texture_animations.first() {
         println!("  First animation:");
-        println!("    Base type: {:?}", anim.base_animation.animation_type);
-        println!(
-            "    Flow direction: {:?}",
-            anim.extended_properties.flow_direction
-        );
-        println!(
-            "    Speed multiplier: {}",
-            anim.extended_properties.speed_multiplier
-        );
-        println!(
-            "    Animation mode: {:?}",
-            anim.extended_properties.animation_mode
-        );
-        println!(
-            "    Loop behavior: {:?}",
-            anim.extended_properties.loop_behavior
-        );
+
+        println!("    Flow direction: {:?}", anim.extended_properties.flow_direction);
+        println!("    Speed multiplier: {}", anim.extended_properties.speed_multiplier);
+        println!("    Animation mode: {:?}", anim.extended_properties.animation_mode);
+        println!("    Loop behavior: {:?}", anim.extended_properties.loop_behavior);
         println!("    Blend mode: {:?}", anim.extended_properties.blend_mode);
     }
 
@@ -125,10 +106,7 @@ fn demo_pgd1_chunk() -> Result<()> {
     let pgd1 = ParticleGeosetData::parse(&mut chunk_reader)?;
 
     println!("PGD1 chunk parsed successfully!");
-    println!(
-        "  Particle emitter count: {}",
-        pgd1.geoset_assignments.len()
-    );
+    println!("  Particle emitter count: {}", pgd1.geoset_assignments.len());
     for (i, assignment) in pgd1.geoset_assignments.iter().enumerate() {
         println!("    Particle emitter {}: geoset {}", i, assignment.geoset);
     }
@@ -144,8 +122,7 @@ fn demo_unknown_chunks() -> Result<()> {
 
     // Demo DBOC chunk (16 bytes observed in some files)
     let dboc_data = vec![
-        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
-        0x10,
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10,
     ];
 
     let dboc_header = ChunkHeader {

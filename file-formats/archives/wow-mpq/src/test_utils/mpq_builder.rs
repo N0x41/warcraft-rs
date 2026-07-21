@@ -3,7 +3,7 @@
 //! Replaces the functionality of mpq_tools.py
 
 use crate::{ArchiveBuilder, FormatVersion, compression};
-use rand::{RngExt, SeedableRng, rngs::StdRng};
+use rand::{Rng, SeedableRng, rngs::StdRng};
 use std::fs;
 use std::path::{Path, PathBuf};
 

@@ -1714,12 +1714,9 @@ mod tests {
         // Count of texture animations
         data.extend_from_slice(&1u32.to_le_bytes());
 
-        // Base texture animation data (simplified)
-        data.extend_from_slice(&1u16.to_le_bytes()); // Animation type (Scroll)
-        data.extend_from_slice(&0u16.to_le_bytes()); // Padding
-
         // Add minimal animation block data (Legion+ version, no interpolation_ranges)
-        for _ in 0..5 {
+        // M2TextureAnimation has 3 blocks: translation, rotation, scale
+        for _ in 0..3 {
             // Each animation block: interpolation_type, global_sequence, timestamps, values
             data.extend_from_slice(&0u16.to_le_bytes()); // Interpolation type
             data.extend_from_slice(&(-1i16).to_le_bytes()); // Global sequence
