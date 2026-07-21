@@ -753,11 +753,11 @@ fn handle_tree(path: PathBuf, max_depth: usize, show_size: bool, show_refs: bool
 
         for anim in &model.raw_data.texture_animation_data {
             match anim.track_type {
-                wow_m2::model::TextureTrackType::TranslationU => translation_u_count += 1,
-                wow_m2::model::TextureTrackType::TranslationV => translation_v_count += 1,
+                wow_m2::model::TextureTrackType::Translation => translation_u_count += 1,
+                // wow_m2::model::TextureTrackType::TranslationV => translation_v_count += 1, // Usually bundled in Translation
                 wow_m2::model::TextureTrackType::Rotation => rotation_count += 1,
-                wow_m2::model::TextureTrackType::ScaleU => scale_u_count += 1,
-                wow_m2::model::TextureTrackType::ScaleV => scale_v_count += 1,
+                wow_m2::model::TextureTrackType::Scale => scale_u_count += 1,
+                // wow_m2::model::TextureTrackType::ScaleV => scale_v_count += 1, // Usually bundled in Scale
             }
             total_keyframes += anim.timestamps.len() / 4;
         }

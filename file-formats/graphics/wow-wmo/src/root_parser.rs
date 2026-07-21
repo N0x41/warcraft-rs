@@ -72,8 +72,7 @@ pub struct WmoRoot {
     pub doodad_sets: Vec<ModsEntry>,
     /// Doodad names (MODN)
     pub doodad_names: Vec<String>,
-    /// Doodad definitions (MODD)
-    pub doodad_defs: Vec<ModdEntry>,
+
     /// Fog definitions (MFOG)
     pub fogs: Vec<MfogEntry>,
     /// Convex volume planes (MCVP - Cataclysm+)
