@@ -7,10 +7,10 @@ fn bench_encryption_table_access(c: &mut Criterion) {
         b.iter(|| {
             // Access various parts of the encryption table
             let sum = ENCRYPTION_TABLE[0]
-                + ENCRYPTION_TABLE[0x100]
-                + ENCRYPTION_TABLE[0x200]
-                + ENCRYPTION_TABLE[0x300]
-                + ENCRYPTION_TABLE[0x400];
+                .wrapping_add(ENCRYPTION_TABLE[0x100])
+                .wrapping_add(ENCRYPTION_TABLE[0x200])
+                .wrapping_add(ENCRYPTION_TABLE[0x300])
+                .wrapping_add(ENCRYPTION_TABLE[0x400]);
             black_box(sum);
         });
     });
