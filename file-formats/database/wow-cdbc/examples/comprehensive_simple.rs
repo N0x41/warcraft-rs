@@ -139,12 +139,7 @@ fn parse_with_lazy_loading() -> Result<(), Box<dyn std::error::Error>> {
     let string_block = std::sync::Arc::new(record_set.string_block().clone());
     let start = Instant::now();
 
-    let lazy_parser = LazyDbcParser::new(
-        parser.data(),
-        parser.header(),
-        parser.schema(),
-        string_block,
-    );
+    let lazy_parser = LazyDbcParser::new(parser.data(), parser.header(), parser.schema(), string_block);
 
     // Iterate over records on-demand
     println!("   Processing records lazily...");

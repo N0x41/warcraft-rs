@@ -79,14 +79,8 @@ pub(crate) fn decompress(data: &[u8], expected_size: usize) -> Result<Vec<u8>> {
                 Err(xz_err) => {
                     log::error!("LZMA decompression failed: {e:?}");
                     log::error!("XZ decompression also failed: {xz_err:?}");
-                    log::debug!(
-                        "First 16 bytes of data: {:02X?}",
-                        &data[..16.min(data.len())]
-                    );
-                    Err(decompression_error(
-                        "LZMA/XZ",
-                        format!("LZMA: {e:?}, XZ: {xz_err:?}"),
-                    ))
+                    log::debug!("First 16 bytes of data: {:02X?}", &data[..16.min(data.len())]);
+                    Err(decompression_error("LZMA/XZ", format!("LZMA: {e:?}, XZ: {xz_err:?}")))
                 }
             }
         }

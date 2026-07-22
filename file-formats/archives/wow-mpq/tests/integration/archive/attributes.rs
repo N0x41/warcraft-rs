@@ -172,10 +172,7 @@ fn test_archive_load_attributes() {
     archive.load_attributes().unwrap();
 
     if let Some(attrs) = archive.attributes() {
-        println!(
-            "Archive has attributes with flags: {:08X}",
-            attrs.flags.as_u32()
-        );
+        println!("Archive has attributes with flags: {:08X}", attrs.flags.as_u32());
 
         // Get attributes for first file
         if let Some(file_attrs) = attrs.get_file_attributes(0) {

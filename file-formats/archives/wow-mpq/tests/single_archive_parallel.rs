@@ -25,10 +25,7 @@ fn create_large_test_archive() -> (TempDir, std::path::PathBuf) {
     // Add some larger files
     for i in 0..10 {
         let large_content = format!("Large file {i} with lots of data\n").repeat(1000);
-        builder = builder.add_file_data(
-            large_content.into_bytes(),
-            &format!("test/large_{i:02}.dat"),
-        );
+        builder = builder.add_file_data(large_content.into_bytes(), &format!("test/large_{i:02}.dat"));
     }
 
     builder.build(&path).unwrap();
@@ -45,11 +42,7 @@ fn test_concurrent_reads_same_files() {
     let mut handles = vec![];
 
     // All threads try to read the same files
-    let target_files = vec![
-        "test/file_050.txt",
-        "test/large_05.dat",
-        "test/file_099.txt",
-    ];
+    let target_files = vec!["test/file_050.txt", "test/large_05.dat", "test/file_099.txt"];
 
     for thread_id in 0..num_threads {
         let archive = Arc::clone(&archive);
@@ -70,11 +63,7 @@ fn test_concurrent_reads_same_files() {
                 assert!(files.contains(&filename.as_str()));
             }
 
-            println!(
-                "Thread {} successfully read {} files",
-                thread_id,
-                results.len()
-            );
+            println!("Thread {} successfully read {} files", thread_id, results.len());
             results
         });
 
@@ -129,12 +118,7 @@ fn test_concurrent_reads_different_files() {
                 assert!(!data.is_empty());
             }
 
-            println!(
-                "Thread {} extracted files {} to {}",
-                thread_id,
-                start,
-                start + 9
-            );
+            println!("Thread {} extracted files {} to {}", thread_id, start, start + 9);
             results
         });
 
@@ -154,9 +138,7 @@ fn test_pattern_matching_parallel() {
     let archive = ParallelArchive::open(&archive_path).unwrap();
 
     // Extract all files containing "5" in the name
-    let results = archive
-        .extract_matching_parallel(|name| name.contains("5"))
-        .unwrap();
+    let results = archive.extract_matching_parallel(|name| name.contains("5")).unwrap();
 
     // Should match file_005, file_015, ..., file_095, file_050-059, large_05
     assert!(results.len() > 10);
@@ -195,20 +177,12 @@ fn test_custom_processing() {
     let (_temp, archive_path) = create_large_test_archive();
     let archive = ParallelArchive::open(&archive_path).unwrap();
 
-    let files = vec![
-        "test/large_00.dat",
-        "test/large_01.dat",
-        "test/large_02.dat",
-    ];
+    let files = vec!["test/large_00.dat", "test/large_01.dat", "test/large_02.dat"];
 
     // Process files to get their sizes and first few bytes
     let results = archive
         .process_files_parallel(&files, |filename, data| {
-            Ok((
-                filename.to_string(),
-                data.len(),
-                data[..10.min(data.len())].to_vec(),
-            ))
+            Ok((filename.to_string(), data.len(), data[..10.min(data.len())].to_vec()))
         })
         .unwrap();
 
@@ -314,10 +288,7 @@ fn test_stress_many_concurrent_operations() {
                 _ => {
                     // Single file
                     let file = format!("test/file_{:03}.txt", op_id % 100);
-                    vec![(
-                        file.clone(),
-                        archive.read_file_with_new_handle(&file).unwrap(),
-                    )]
+                    vec![(file.clone(), archive.read_file_with_new_handle(&file).unwrap())]
                 }
             }
         });
@@ -364,9 +335,7 @@ fn test_large_scale_extraction_with_config() {
     let temp = TempDir::new().unwrap();
     let path = temp.path().join("large_test.mpq");
 
-    let mut builder = ArchiveBuilder::new()
-        .block_size(7)
-        .default_compression(flags::ZLIB);
+    let mut builder = ArchiveBuilder::new().block_size(7).default_compression(flags::ZLIB);
 
     // Create 2000+ files to simulate large-scale extraction scenario
     for i in 0..2000 {
@@ -382,10 +351,7 @@ fn test_large_scale_extraction_with_config() {
         .collect();
 
     // Test with small batch size (should trigger batched mode)
-    let config = ParallelConfig::new()
-        .batch_size(25)
-        .threads(4)
-        .skip_errors(false);
+    let config = ParallelConfig::new().batch_size(25).threads(4).skip_errors(false);
 
     let results = extract_with_config(&path, &files, config).unwrap();
     assert_eq!(results.len(), 2000);
@@ -414,9 +380,7 @@ fn test_very_large_scale_extraction_performance() {
     let temp = TempDir::new().unwrap();
     let path = temp.path().join("massive_test.mpq");
 
-    let mut builder = ArchiveBuilder::new()
-        .block_size(7)
-        .default_compression(flags::ZLIB);
+    let mut builder = ArchiveBuilder::new().block_size(7).default_compression(flags::ZLIB);
 
     // Create 5000 files to test performance characteristics without timeout
     for i in 0..5000 {
@@ -449,11 +413,7 @@ fn test_very_large_scale_extraction_performance() {
     );
 
     // Verify reasonable performance (should not take more than 30 seconds)
-    assert!(
-        elapsed.as_secs() < 30,
-        "Extraction took too long: {:?}",
-        elapsed
-    );
+    assert!(elapsed.as_secs() < 30, "Extraction took too long: {:?}", elapsed);
 
     // Count successful extractions
     let successful = results.iter().filter(|(_, result)| result.is_ok()).count();

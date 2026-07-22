@@ -51,11 +51,7 @@ impl M2Model {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn parse_embedded_skin(
-        &self,
-        original_m2_data: &[u8],
-        skin_index: usize,
-    ) -> Result<SkinFile> {
+    pub fn parse_embedded_skin(&self, original_m2_data: &[u8], skin_index: usize) -> Result<SkinFile> {
         // Check if this is a pre-WotLK model
         if self.header.version > 260 {
             return Err(M2Error::ParseError(format!(
@@ -105,8 +101,7 @@ impl M2Model {
         }
 
         // Read the ModelView structure
-        let model_view_data =
-            &original_m2_data[model_view_offset..model_view_offset + model_view_size];
+        let model_view_data = &original_m2_data[model_view_offset..model_view_offset + model_view_size];
 
         // Parse ModelView fields as M2Arrays (count + offset pairs)
         // Each M2Array is 8 bytes: count (u32) + offset (u32)
@@ -315,24 +310,20 @@ impl M2Model {
         // Copy actual data from the original M2 file with corrected mapping:
         // Copy indices data (from ofsIndex in ModelView - smaller array goes to indices)
         if n_index > 0 {
-            let src_indices =
-                &original_m2_data[ofs_index as usize..(ofs_index as usize + triangles_size)];
-            skin_buffer[indices_buffer_offset..(indices_buffer_offset + triangles_size)]
-                .copy_from_slice(src_indices);
+            let src_indices = &original_m2_data[ofs_index as usize..(ofs_index as usize + triangles_size)];
+            skin_buffer[indices_buffer_offset..(indices_buffer_offset + triangles_size)].copy_from_slice(src_indices);
         }
 
         // Copy triangles data (from ofsTris in ModelView - larger array goes to triangles)
         if n_tris > 0 {
-            let src_triangles =
-                &original_m2_data[ofs_tris as usize..(ofs_tris as usize + indices_size)];
+            let src_triangles = &original_m2_data[ofs_tris as usize..(ofs_tris as usize + indices_size)];
             skin_buffer[triangles_buffer_offset..(triangles_buffer_offset + indices_size)]
                 .copy_from_slice(src_triangles);
         }
 
         // Copy submesh data (from ofsSub in ModelView)
         if n_sub > 0 {
-            let src_submeshes =
-                &original_m2_data[ofs_sub as usize..(ofs_sub as usize + original_submeshes_size)];
+            let src_submeshes = &original_m2_data[ofs_sub as usize..(ofs_sub as usize + original_submeshes_size)];
 
             // Copy submesh data directly without padding - the parse_with_version method
             // will handle the different structure sizes correctly
@@ -342,10 +333,8 @@ impl M2Model {
 
         // Copy batches data (from ofsBatches in ModelView)
         if n_batches > 0 {
-            let src_batches =
-                &original_m2_data[ofs_batches as usize..(ofs_batches as usize + batches_size)];
-            skin_buffer[batches_buffer_offset..(batches_buffer_offset + batches_size)]
-                .copy_from_slice(src_batches);
+            let src_batches = &original_m2_data[ofs_batches as usize..(ofs_batches as usize + batches_size)];
+            skin_buffer[batches_buffer_offset..(batches_buffer_offset + batches_size)].copy_from_slice(src_batches);
         }
 
         // Create a cursor with our complete skin buffer
@@ -450,9 +439,7 @@ pub fn extract_embedded_skin_bytes(m2_data: &[u8], skin_index: usize) -> Result<
     }
 
     // Read the offset to the skin data
-    cursor.seek(SeekFrom::Start(
-        views_offset as u64 + (skin_index as u64 * 4),
-    ))?;
+    cursor.seek(SeekFrom::Start(views_offset as u64 + (skin_index as u64 * 4)))?;
     let skin_offset = cursor.read_u32_le()? as usize;
 
     // We don't know the exact size, but we can estimate based on typical skin sizes
@@ -538,13 +525,9 @@ mod tests {
             let mut submesh_cursor = std::io::Cursor::new(&mut m2_data[submesh_pos..]);
             submesh_cursor.write_all(&(i as u16).to_le_bytes()).unwrap(); // id
             submesh_cursor.write_all(&0u16.to_le_bytes()).unwrap(); // level
-            submesh_cursor
-                .write_all(&(i as u16 * 5).to_le_bytes())
-                .unwrap(); // vertex_start
+            submesh_cursor.write_all(&(i as u16 * 5).to_le_bytes()).unwrap(); // vertex_start
             submesh_cursor.write_all(&5u16.to_le_bytes()).unwrap(); // vertex_count
-            submesh_cursor
-                .write_all(&(i as u16 * 3).to_le_bytes())
-                .unwrap(); // triangle_start
+            submesh_cursor.write_all(&(i as u16 * 3).to_le_bytes()).unwrap(); // triangle_start
             submesh_cursor.write_all(&3u16.to_le_bytes()).unwrap(); // triangle_count
             submesh_cursor.write_all(&0u16.to_le_bytes()).unwrap(); // bone_start
             submesh_cursor.write_all(&0u16.to_le_bytes()).unwrap(); // bone_count
@@ -561,11 +544,7 @@ mod tests {
 
         // Parse the embedded skin
         let result = model.parse_embedded_skin(&m2_data, 0);
-        assert!(
-            result.is_ok(),
-            "Failed to parse embedded skin: {:?}",
-            result.err()
-        );
+        assert!(result.is_ok(), "Failed to parse embedded skin: {:?}", result.err());
 
         let skin = result.unwrap();
         // After fix: corrected field mapping understanding

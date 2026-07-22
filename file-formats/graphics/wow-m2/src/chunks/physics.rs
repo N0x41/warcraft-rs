@@ -145,8 +145,7 @@ impl M2PhysicsShape {
     /// Parse a physics shape from a reader
     pub fn parse<R: Read>(reader: &mut R) -> Result<Self> {
         let shape_type_raw = reader.read_u8()?;
-        let shape_type =
-            M2PhysicsShapeType::from_u8(shape_type_raw).unwrap_or(M2PhysicsShapeType::None);
+        let shape_type = M2PhysicsShapeType::from_u8(shape_type_raw).unwrap_or(M2PhysicsShapeType::None);
 
         reader.read_u8()?; // Skip 1 byte of padding
 
@@ -266,11 +265,7 @@ impl M2PhysicsData {
             }
         }
 
-        Ok(Self {
-            shapes,
-            bodies,
-            joints,
-        })
+        Ok(Self { shapes, bodies, joints })
     }
 
     /// Write physics data to a writer based on the M2 version
@@ -370,16 +365,8 @@ mod tests {
             shape_type: M2PhysicsShapeType::Sphere,
             bone_index: 1,
             flags: M2PhysicsFlags::GENERAL_COLLISION,
-            position: C3Vector {
-                x: 1.0,
-                y: 2.0,
-                z: 3.0,
-            },
-            orientation: C3Vector {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-            },
+            position: C3Vector { x: 1.0, y: 2.0, z: 3.0 },
+            orientation: C3Vector { x: 0.0, y: 0.0, z: 0.0 },
             dimensions: [1.0, 0.0, 0.0, 0.0, 0.0], // Sphere radius is first dimension
         };
 
@@ -404,36 +391,16 @@ mod tests {
             body1: 0,
             body2: 1,
             joint_type: 2, // 2 = hinge joint
-            position: C3Vector {
-                x: 1.0,
-                y: 2.0,
-                z: 3.0,
-            },
-            orientation: C3Vector {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-            },
+            position: C3Vector { x: 1.0, y: 2.0, z: 3.0 },
+            orientation: C3Vector { x: 0.0, y: 0.0, z: 0.0 },
             lower_limits: C3Vector {
                 x: -1.0,
                 y: -1.0,
                 z: -1.0,
             },
-            upper_limits: C3Vector {
-                x: 1.0,
-                y: 1.0,
-                z: 1.0,
-            },
-            spring_coefficients: C3Vector {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-            },
-            damping_coefficients: C3Vector {
-                x: 0.5,
-                y: 0.5,
-                z: 0.5,
-            },
+            upper_limits: C3Vector { x: 1.0, y: 1.0, z: 1.0 },
+            spring_coefficients: C3Vector { x: 0.0, y: 0.0, z: 0.0 },
+            damping_coefficients: C3Vector { x: 0.5, y: 0.5, z: 0.5 },
         };
 
         let mut data = Vec::new();

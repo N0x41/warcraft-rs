@@ -754,10 +754,7 @@ mod tests {
 
         // Convert Classic to Cataclysm
         let cataclysm_header = classic_header.convert(M2Version::Cataclysm).unwrap();
-        assert_eq!(
-            cataclysm_header.version,
-            M2Version::Cataclysm.to_header_version()
-        );
+        assert_eq!(cataclysm_header.version, M2Version::Cataclysm.to_header_version());
         assert!(cataclysm_header.texture_combiner_combos.is_some());
         assert_eq!(cataclysm_header.texture_transforms, None);
 
@@ -769,10 +766,7 @@ mod tests {
 
         // Convert Legion back to Classic
         let classic_header_2 = legion_header.convert(M2Version::Vanilla).unwrap();
-        assert_eq!(
-            classic_header_2.version,
-            M2Version::Vanilla.to_header_version()
-        );
+        assert_eq!(classic_header_2.version, M2Version::Vanilla.to_header_version());
         assert_eq!(classic_header_2.texture_combiner_combos, None);
         assert_eq!(classic_header_2.texture_transforms, None);
     }

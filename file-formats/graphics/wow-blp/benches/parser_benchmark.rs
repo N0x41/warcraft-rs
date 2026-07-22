@@ -15,17 +15,11 @@ fn create_test_image(size: u32) -> ImageBuffer<Rgba<u8>, Vec<u8>> {
 }
 
 fn bench_image_creation(c: &mut Criterion) {
-    c.bench_function("create_test_image_256", |b| {
-        b.iter(|| create_test_image(256))
-    });
+    c.bench_function("create_test_image_256", |b| b.iter(|| create_test_image(256)));
 
-    c.bench_function("create_test_image_512", |b| {
-        b.iter(|| create_test_image(512))
-    });
+    c.bench_function("create_test_image_512", |b| b.iter(|| create_test_image(512)));
 
-    c.bench_function("create_test_image_1024", |b| {
-        b.iter(|| create_test_image(1024))
-    });
+    c.bench_function("create_test_image_1024", |b| b.iter(|| create_test_image(1024)));
 }
 
 fn bench_image_sizes(c: &mut Criterion) {

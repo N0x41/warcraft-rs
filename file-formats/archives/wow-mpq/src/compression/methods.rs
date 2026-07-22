@@ -85,18 +85,9 @@ mod tests {
     #[test]
     fn test_compression_method_from_flags() {
         assert_eq!(CompressionMethod::from_flags(0), CompressionMethod::None);
-        assert_eq!(
-            CompressionMethod::from_flags(flags::ZLIB),
-            CompressionMethod::Zlib
-        );
-        assert_eq!(
-            CompressionMethod::from_flags(flags::BZIP2),
-            CompressionMethod::BZip2
-        );
-        assert_eq!(
-            CompressionMethod::from_flags(flags::LZMA),
-            CompressionMethod::Lzma
-        );
+        assert_eq!(CompressionMethod::from_flags(flags::ZLIB), CompressionMethod::Zlib);
+        assert_eq!(CompressionMethod::from_flags(flags::BZIP2), CompressionMethod::BZip2);
+        assert_eq!(CompressionMethod::from_flags(flags::LZMA), CompressionMethod::Lzma);
 
         // Multiple compression
         let multi = flags::ZLIB | flags::PKWARE;

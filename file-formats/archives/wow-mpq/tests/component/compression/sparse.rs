@@ -34,8 +34,7 @@ fn test_sparse_decompression() {
     compressed.push(0x82); // 0x80 | (3-1)
     compressed.extend_from_slice(b"End");
 
-    let decompressed =
-        decompress(&compressed, flags::SPARSE, expected.len()).expect("Decompression failed");
+    let decompressed = decompress(&compressed, flags::SPARSE, expected.len()).expect("Decompression failed");
 
     assert_eq!(decompressed, expected);
 }
@@ -72,10 +71,7 @@ fn test_sparse_all_zeros() {
     if !compressed.is_empty() && compressed[0] == flags::SPARSE {
         // Should compress to just a few bytes (method byte + control bytes + end marker)
         assert!(compressed.len() < 20);
-        println!(
-            "Sparse compression of 1000 zeros: {} bytes",
-            compressed.len()
-        );
+        println!("Sparse compression of 1000 zeros: {} bytes", compressed.len());
     }
 
     // Test round trip

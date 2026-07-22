@@ -95,8 +95,7 @@ impl M2Texture {
     /// Parse a texture from a reader based on the M2 version
     pub fn parse<R: Read + Seek>(reader: &mut R, _version: u32) -> Result<Self> {
         let texture_type_raw = reader.read_u32_le()?;
-        let texture_type =
-            M2TextureType::from_u32(texture_type_raw).unwrap_or(M2TextureType::Unknown);
+        let texture_type = M2TextureType::from_u32(texture_type_raw).unwrap_or(M2TextureType::Unknown);
 
         let flags = M2TextureFlags::from_bits_retain(reader.read_u32_le()?);
         let filename = M2ArrayString::parse(reader)?;
@@ -162,14 +161,10 @@ mod tests {
         cursor
             .seek(SeekFrom::Start((filename_str.len() + dummy.len()) as u64))
             .unwrap();
-        let texture =
-            M2Texture::parse(&mut cursor, M2Version::Vanilla.to_header_version()).unwrap();
+        let texture = M2Texture::parse(&mut cursor, M2Version::Vanilla.to_header_version()).unwrap();
 
         assert_eq!(texture.texture_type, M2TextureType::Body);
-        assert_eq!(
-            texture.flags,
-            M2TextureFlags::WRAP_X | M2TextureFlags::WRAP_Y
-        );
+        assert_eq!(texture.flags, M2TextureFlags::WRAP_X | M2TextureFlags::WRAP_Y);
         assert_eq!(texture.filename.array.count, 5);
         assert_eq!(texture.filename.array.offset, 3);
     }
@@ -217,9 +212,6 @@ mod tests {
         assert_eq!(converted.texture_type, texture.texture_type);
         assert_eq!(converted.flags, texture.flags);
         assert_eq!(converted.filename.array.count, texture.filename.array.count);
-        assert_eq!(
-            converted.filename.array.offset,
-            texture.filename.array.offset
-        );
+        assert_eq!(converted.filename.array.offset, texture.filename.array.offset);
     }
 }

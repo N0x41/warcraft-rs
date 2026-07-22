@@ -53,19 +53,13 @@ impl PerformanceMetrics {
     pub fn print_summary(&self) {
         println!("=== {} ===", self.test_name);
         println!("Files extracted: {}", self.files_extracted);
-        println!(
-            "Total data: {:.2} MB",
-            self.total_bytes as f64 / (1024.0 * 1024.0)
-        );
+        println!("Total data: {:.2} MB", self.total_bytes as f64 / (1024.0 * 1024.0));
         println!("Duration: {}ms", self.duration_ms);
         println!(
             "Throughput: {:.1} files/sec, {:.2} MB/sec",
             self.files_per_second, self.mb_per_second
         );
-        println!(
-            "Threads: {}, Batch size: {:?}",
-            self.threads_used, self.batch_size
-        );
+        println!("Threads: {}, Batch size: {:?}", self.threads_used, self.batch_size);
         println!("Efficiency: {:.1} files/sec/thread", self.efficiency_score);
         println!();
     }
@@ -123,8 +117,7 @@ fn create_test_archive(
 fn test_threading_scalability() -> Result<Vec<PerformanceMetrics>> {
     println!("🧵 Testing Threading Scalability...");
 
-    let (_temp_dir, archive_path, total_bytes) =
-        create_test_archive("threading_test", 1000, 100, 0.5)?;
+    let (_temp_dir, archive_path, total_bytes) = create_test_archive("threading_test", 1000, 100, 0.5)?;
 
     let files: Vec<String> = {
         let mut archive = Archive::open(&archive_path)?;
@@ -142,11 +135,7 @@ fn test_threading_scalability() -> Result<Vec<PerformanceMetrics>> {
         let extraction_results = extract_with_config(&archive_path, &file_refs, config)?;
         let duration = start.elapsed();
 
-        assert_eq!(
-            extraction_results.len(),
-            files.len(),
-            "Not all files extracted"
-        );
+        assert_eq!(extraction_results.len(), files.len(), "Not all files extracted");
 
         let metrics = PerformanceMetrics::new(
             format!("Threading Scalability - {} threads", threads),
@@ -186,11 +175,7 @@ fn test_batch_size_optimization() -> Result<Vec<PerformanceMetrics>> {
         let extraction_results = extract_with_config(&archive_path, &file_refs, config)?;
         let duration = start.elapsed();
 
-        assert_eq!(
-            extraction_results.len(),
-            files.len(),
-            "Not all files extracted"
-        );
+        assert_eq!(extraction_results.len(), files.len(), "Not all files extracted");
 
         let metrics = PerformanceMetrics::new(
             format!("Batch Size Optimization - {} batch", batch_size),
@@ -261,11 +246,7 @@ fn test_archive_size_scaling() -> Result<Vec<PerformanceMetrics>> {
         let parallel_results = extract_with_config(&archive_path, &file_refs, config)?;
         let par_duration = start.elapsed();
 
-        assert_eq!(
-            parallel_results.len(),
-            files.len(),
-            "Not all files extracted"
-        );
+        assert_eq!(parallel_results.len(), files.len(), "Not all files extracted");
 
         let par_metrics = PerformanceMetrics::new(
             format!("{} Archive - Parallel", name),
@@ -299,10 +280,7 @@ fn test_no_hanging_stress() -> Result<PerformanceMetrics> {
     };
     let file_refs: Vec<&str> = files.iter().map(|s| s.as_str()).collect();
 
-    let config = ParallelConfig::new()
-        .threads(12)
-        .batch_size(100)
-        .skip_errors(false);
+    let config = ParallelConfig::new().threads(12).batch_size(100).skip_errors(false);
 
     let start = Instant::now();
     let results = extract_with_config(&archive_path, &file_refs, config)?;
@@ -337,12 +315,7 @@ fn test_individual_vs_bulk() -> Result<Vec<PerformanceMetrics>> {
 
     let files: Vec<String> = {
         let mut archive = Archive::open(&archive_path)?;
-        archive
-            .list()?
-            .into_iter()
-            .take(50)
-            .map(|e| e.name)
-            .collect()
+        archive.list()?.into_iter().take(50).map(|e| e.name).collect()
     };
     let file_refs: Vec<&str> = files.iter().map(|s| s.as_str()).collect();
 
@@ -496,9 +469,7 @@ fn generate_performance_report(all_metrics: &[PerformanceMetrics]) {
 
     // Production readiness assessment
     println!("\n✅ PRODUCTION READINESS:");
-    let stress_test = all_metrics
-        .iter()
-        .find(|m| m.test_name.contains("Stress Test"));
+    let stress_test = all_metrics.iter().find(|m| m.test_name.contains("Stress Test"));
 
     if let Some(stress) = stress_test {
         println!(
@@ -513,12 +484,8 @@ fn generate_performance_report(all_metrics: &[PerformanceMetrics]) {
     }
 
     // Bulk extraction improvement
-    let individual = all_metrics
-        .iter()
-        .find(|m| m.test_name.contains("Individual"));
-    let parallel = all_metrics
-        .iter()
-        .find(|m| m.test_name.contains("Parallel Bulk"));
+    let individual = all_metrics.iter().find(|m| m.test_name.contains("Individual"));
+    let parallel = all_metrics.iter().find(|m| m.test_name.contains("Parallel Bulk"));
 
     if let (Some(ind), Some(par)) = (individual, parallel) {
         let improvement = par.files_per_second / ind.files_per_second;
@@ -529,13 +496,9 @@ fn generate_performance_report(all_metrics: &[PerformanceMetrics]) {
     }
 
     println!("\n🎯 CONCLUSION:");
-    println!(
-        "  The MPQ extraction system is production-ready with excellent performance characteristics."
-    );
+    println!("  The MPQ extraction system is production-ready with excellent performance characteristics.");
     println!("  Intelligent batching prevents resource exhaustion and hanging issues.");
-    println!(
-        "  System scales efficiently with multiple threads and handles large archives gracefully."
-    );
+    println!("  System scales efficiently with multiple threads and handles large archives gracefully.");
 }
 
 fn main() -> Result<()> {

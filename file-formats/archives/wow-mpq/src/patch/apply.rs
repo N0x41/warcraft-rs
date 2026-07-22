@@ -71,11 +71,7 @@ fn apply_copy_patch(patch: &PatchFile, base_data: &[u8]) -> Result<Vec<u8>> {
         )));
     }
 
-    log::debug!(
-        "Applying COPY patch: {} -> {} bytes",
-        base_data.len(),
-        patch.data.len()
-    );
+    log::debug!("Applying COPY patch: {} -> {} bytes", base_data.len(), patch.data.len());
 
     // COPY patch: patch data IS the complete new file
     Ok(patch.data.clone())
@@ -228,8 +224,7 @@ fn apply_bsd0_patch(patch: &PatchFile, base_data: &[u8]) -> Result<Vec<u8>> {
         };
 
         for j in 0..combine_size {
-            new_data[new_offset + j] =
-                new_data[new_offset + j].wrapping_add(base_data[old_offset + j]);
+            new_data[new_offset + j] = new_data[new_offset + j].wrapping_add(base_data[old_offset + j]);
         }
 
         new_offset += add_data_length;

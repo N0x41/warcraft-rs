@@ -71,7 +71,7 @@ pub struct ResolvedBone {
 }
 
 /// Resolved particle emitter animation data
-/// 
+///
 /// Contains all interpolated tracks required to simulate a particle emitter
 /// over the lifetime of a specific animation sequence.
 #[derive(Debug, Clone)]
@@ -141,7 +141,7 @@ impl AnimationManager {
         global_sequence_durations: Vec<u32>,
         sequences: Vec<AnimSequence>,
         bones: Vec<ResolvedBone>,
-        particle_emitters: Vec<ResolvedParticleEmitter>
+        particle_emitters: Vec<ResolvedParticleEmitter>,
     ) -> Self {
         let global_sequence_times = vec![0.0; global_sequence_durations.len()];
 
@@ -167,7 +167,7 @@ impl AnimationManager {
             blend_factor: 1.0,
             rng,
             texture_weights: Vec::new(),
-            texture_transforms: Vec::new()
+            texture_transforms: Vec::new(),
         }
     }
 
@@ -184,7 +184,7 @@ impl AnimationManager {
             blend_factor: 1.0,
             rng: LcgRng::default(),
             texture_weights: Vec::new(),
-            texture_transforms: Vec::new()
+            texture_transforms: Vec::new(),
         }
     }
 
@@ -254,8 +254,7 @@ impl AnimationManager {
             let blend_time = next_seq.blend_time as f64;
 
             if blend_time > 0.0 && time_left < blend_time {
-                self.next_animation.animation_time =
-                    (blend_time - time_left) % next_seq.duration as f64;
+                self.next_animation.animation_time = (blend_time - time_left) % next_seq.duration as f64;
                 self.blend_factor = (time_left / blend_time) as f32;
             } else {
                 self.blend_factor = 1.0;
@@ -314,8 +313,7 @@ impl AnimationManager {
         self.next_animation.animation_index = Some(next_index);
         self.next_animation.animation_time = 0.0;
         self.next_animation.main_variation_index = main_idx;
-        self.next_animation.repeat_times =
-            self.sequences[next_index].calculate_repeats(&mut self.rng);
+        self.next_animation.repeat_times = self.sequences[next_index].calculate_repeats(&mut self.rng);
     }
 
     /// Resolve animation alias chain
@@ -347,8 +345,7 @@ impl AnimationManager {
 
         if let Some(idx) = index {
             self.current_animation = AnimationState::new(Some(idx));
-            self.current_animation.repeat_times =
-                self.sequences[idx].calculate_repeats(&mut self.rng);
+            self.current_animation.repeat_times = self.sequences[idx].calculate_repeats(&mut self.rng);
             self.next_animation = AnimationState::none();
             self.blend_factor = 1.0;
         }
@@ -358,8 +355,7 @@ impl AnimationManager {
     pub fn set_animation_index(&mut self, index: usize) {
         if index < self.sequences.len() {
             self.current_animation = AnimationState::new(Some(index));
-            self.current_animation.repeat_times =
-                self.sequences[index].calculate_repeats(&mut self.rng);
+            self.current_animation.repeat_times = self.sequences[index].calculate_repeats(&mut self.rng);
             self.next_animation = AnimationState::none();
             self.blend_factor = 1.0;
         }
@@ -396,11 +392,7 @@ impl AnimationManager {
     }
 
     /// Get interpolated value with a custom default
-    pub fn get_current_value_with_default<T: Lerp + Clone>(
-        &self,
-        track: &ResolvedTrack<T>,
-        default: T,
-    ) -> T {
+    pub fn get_current_value_with_default<T: Lerp + Clone>(&self, track: &ResolvedTrack<T>, default: T) -> T {
         let Some(current_idx) = self.current_animation.animation_index else {
             return default;
         };
@@ -462,18 +454,17 @@ impl AnimationManager {
     }
 
     /// Get interpolated particle emitter parameters for the current animation state.
-    /// 
+    ///
     /// This seamlessly handles animation blending, global sequences, and track evaluation.
-    /// 
+    ///
     /// # Arguments
     /// * `emitter_index` - The index of the emitter to evaluate
     /// * `default_params` - Base parameters to fallback to if a track is missing
     pub fn get_emitter_params(
-        &self, 
-        emitter_index: usize, 
-        default_params: &crate::particles::EmitterParams
+        &self,
+        emitter_index: usize,
+        default_params: &crate::particles::EmitterParams,
     ) -> crate::particles::EmitterParams {
-        
         let Some(resolved) = self.particle_emitters.get(emitter_index) else {
             return default_params.clone(); // Fallback if not resolved
         };
@@ -486,20 +477,27 @@ impl AnimationManager {
         params.enabled = enabled_val > 0.5;
 
         // 2. Evaluate Core physics
-        params.emission_speed = self.get_current_value_with_default(&resolved.emission_speed, default_params.emission_speed);
-        params.speed_variation = self.get_current_value_with_default(&resolved.speed_variation, default_params.speed_variation);
-        params.vertical_range = self.get_current_value_with_default(&resolved.vertical_range, default_params.vertical_range);
-        params.horizontal_range = self.get_current_value_with_default(&resolved.horizontal_range, default_params.horizontal_range);
-        
+        params.emission_speed =
+            self.get_current_value_with_default(&resolved.emission_speed, default_params.emission_speed);
+        params.speed_variation =
+            self.get_current_value_with_default(&resolved.speed_variation, default_params.speed_variation);
+        params.vertical_range =
+            self.get_current_value_with_default(&resolved.vertical_range, default_params.vertical_range);
+        params.horizontal_range =
+            self.get_current_value_with_default(&resolved.horizontal_range, default_params.horizontal_range);
+
         // WoW M2 gravity is typically a 1D float track applied to the Z axis
         let gravity_z = self.get_current_value_with_default(&resolved.gravity, default_params.gravity[2]);
         params.gravity = [0.0, 0.0, gravity_z];
 
         // 3. Evaluate Lifecycle & Volume
         params.lifespan = self.get_current_value_with_default(&resolved.lifespan, default_params.lifespan);
-        params.emission_rate = self.get_current_value_with_default(&resolved.emission_rate, default_params.emission_rate);
-        params.emission_area_length = self.get_current_value_with_default(&resolved.emission_area_length, default_params.emission_area_length);
-        params.emission_area_width = self.get_current_value_with_default(&resolved.emission_area_width, default_params.emission_area_width);
+        params.emission_rate =
+            self.get_current_value_with_default(&resolved.emission_rate, default_params.emission_rate);
+        params.emission_area_length =
+            self.get_current_value_with_default(&resolved.emission_area_length, default_params.emission_area_length);
+        params.emission_area_width =
+            self.get_current_value_with_default(&resolved.emission_area_width, default_params.emission_area_width);
 
         params
     }
@@ -592,7 +590,7 @@ impl AnimationManagerBuilder {
         // --- TEXTURE TRANSFORMS (UVs) EXTRACTION ---
         // Extracted from texture_animations which contains translation tracks
         let mut texture_transforms = Vec::with_capacity(model.texture_animations.len());
-        
+
         for anim in &model.texture_animations {
             match Self::resolve_c3vector_block(&anim.translation, &mut cursor, num_sequences) {
                 Ok(resolved) => texture_transforms.push(resolved),
@@ -606,8 +604,7 @@ impl AnimationManagerBuilder {
 
         for bone in &model.bones {
             // Resolve translation track
-            let translation =
-                Self::resolve_vec3_track(&bone.translation, &mut cursor, num_sequences)?;
+            let translation = Self::resolve_vec3_track(&bone.translation, &mut cursor, num_sequences)?;
 
             // Resolve rotation track (quaternion)
             let rotation = Self::resolve_quat_track(&bone.rotation, &mut cursor, num_sequences)?;
@@ -627,13 +624,13 @@ impl AnimationManagerBuilder {
         }
 
         let mut particle_emitters = Vec::with_capacity(model.particle_emitters.len());
-        
+
         for (idx, emitter) in model.particle_emitters.iter().enumerate() {
             particle_emitters.push(ResolvedParticleEmitter {
                 emitter_index: idx,
                 // Fallback to empty track if the parser doesn't expose an 'enabled' track
-                enabled: ResolvedTrack::empty(), 
-                
+                enabled: ResolvedTrack::empty(),
+
                 // Use the exact field names provided by the M2ParticleEmitter struct
                 emission_speed: Self::resolve_f32_track(&emitter.emission_speed, &mut cursor, num_sequences)?,
                 speed_variation: Self::resolve_f32_track(&emitter.speed_variation, &mut cursor, num_sequences)?,
@@ -642,7 +639,11 @@ impl AnimationManagerBuilder {
                 gravity: Self::resolve_f32_track(&emitter.gravity, &mut cursor, num_sequences)?,
                 lifespan: Self::resolve_f32_track(&emitter.lifespan, &mut cursor, num_sequences)?,
                 emission_rate: Self::resolve_f32_track(&emitter.emission_rate, &mut cursor, num_sequences)?,
-                emission_area_length: Self::resolve_f32_track(&emitter.emission_area_length, &mut cursor, num_sequences)?,
+                emission_area_length: Self::resolve_f32_track(
+                    &emitter.emission_area_length,
+                    &mut cursor,
+                    num_sequences,
+                )?,
                 emission_area_width: Self::resolve_f32_track(&emitter.emission_area_width, &mut cursor, num_sequences)?,
             });
         }
@@ -670,10 +671,7 @@ impl AnimationManagerBuilder {
         let (timestamps_flat, values_flat, ranges) = track.resolve_data(reader)?;
 
         // Convert C3Vector to Vec3
-        let values_vec3: Vec<Vec3> = values_flat
-            .into_iter()
-            .map(|v| Vec3::new(v.x, v.y, v.z))
-            .collect();
+        let values_vec3: Vec<Vec3> = values_flat.into_iter().map(|v| Vec3::new(v.x, v.y, v.z)).collect();
 
         // Convert global_sequence: 0xFFFF means no global sequence, map to -1
         let global_sequence = if track.base.global_sequence == 0xFFFF {
@@ -693,12 +691,8 @@ impl AnimationManagerBuilder {
         }
 
         // Split by animation sequence using ranges
-        let (timestamps, values) = Self::split_by_ranges(
-            timestamps_flat,
-            values_vec3,
-            ranges.as_deref(),
-            num_sequences,
-        );
+        let (timestamps, values) =
+            Self::split_by_ranges(timestamps_flat, values_vec3, ranges.as_deref(), num_sequences);
 
         Ok(ResolvedTrack {
             interpolation_type: track.base.interpolation_type as u16,
@@ -822,8 +816,8 @@ impl AnimationManagerBuilder {
     }
 
     /// Resolve an f32 (float) animation track from M2 data
-    /// 
-    /// This resolves standard scalar tracks commonly used by particle emitters 
+    ///
+    /// This resolves standard scalar tracks commonly used by particle emitters
     /// (e.g., emission rate, speed, gravity, lifespan) and other numeric animations.
     ///
     /// # Arguments
@@ -835,7 +829,6 @@ impl AnimationManagerBuilder {
         reader: &mut R,
         num_sequences: usize,
     ) -> crate::Result<ResolvedTrack<f32>> {
-        
         // Ensure M2TrackFloatExt is implemented in your m2_track_resolver module
         // exactly like M2TrackVec3Ext!
         use crate::chunks::m2_track_resolver::M2TrackFloatExt;
@@ -865,12 +858,8 @@ impl AnimationManagerBuilder {
         }
 
         // Split the flat data arrays into sequence-specific chunks based on the provided ranges
-        let (timestamps, values) = Self::split_by_ranges(
-            timestamps_flat,
-            values_flat,
-            ranges.as_deref(),
-            num_sequences,
-        );
+        let (timestamps, values) =
+            Self::split_by_ranges(timestamps_flat, values_flat, ranges.as_deref(), num_sequences);
 
         Ok(ResolvedTrack {
             interpolation_type: block.track.interpolation_type as u16,
@@ -921,12 +910,8 @@ impl AnimationManagerBuilder {
         }
 
         // Split by animation sequence using ranges
-        let (timestamps, values) = Self::split_by_ranges(
-            timestamps_flat,
-            values_quat,
-            ranges.as_deref(),
-            num_sequences,
-        );
+        let (timestamps, values) =
+            Self::split_by_ranges(timestamps_flat, values_quat, ranges.as_deref(), num_sequences);
 
         Ok(ResolvedTrack {
             interpolation_type: track.base.interpolation_type as u16,

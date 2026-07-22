@@ -61,10 +61,7 @@ fn main() {
     };
 
     println!("Parsed model version: {}", model.header.version);
-    println!(
-        "Embedded skins count: {}",
-        model.raw_data.embedded_skins.len()
-    );
+    println!("Embedded skins count: {}", model.raw_data.embedded_skins.len());
     println!(
         "Bone animation data entries: {}",
         model.raw_data.bone_animation_data.len()
@@ -85,12 +82,7 @@ fn main() {
     if model.header.playable_animation_lookup.is_some() {
         println!(
             "Playable animation lookup: {} entries",
-            model
-                .header
-                .playable_animation_lookup
-                .as_ref()
-                .unwrap()
-                .count
+            model.header.playable_animation_lookup.as_ref().unwrap().count
         );
     }
 
@@ -126,10 +118,7 @@ fn main() {
     let mut cursor2 = Cursor::new(&output);
     match wow_m2::M2Model::parse(&mut cursor2) {
         Ok(reparsed) => {
-            println!(
-                "SUCCESS! Reparsed model version: {}",
-                reparsed.header.version
-            );
+            println!("SUCCESS! Reparsed model version: {}", reparsed.header.version);
             println!(
                 "Reparsed embedded skins count: {}",
                 reparsed.raw_data.embedded_skins.len()

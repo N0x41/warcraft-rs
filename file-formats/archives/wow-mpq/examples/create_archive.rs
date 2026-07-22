@@ -8,9 +8,7 @@
 //! - Different MPQ versions
 
 use std::fs;
-use wow_mpq::{
-    Archive, ArchiveBuilder, AttributesOption, FormatVersion, ListfileOption, compression::flags,
-};
+use wow_mpq::{Archive, ArchiveBuilder, AttributesOption, FormatVersion, ListfileOption, compression::flags};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Example 1: Simple archive creation
@@ -42,10 +40,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\nCreating customized archive...");
 
     // Create external listfile
-    fs::write(
-        "custom_list.txt",
-        "(listfile)\r\nreadme.txt\r\nsecret.dat\r\n",
-    )?;
+    fs::write("custom_list.txt", "(listfile)\r\nreadme.txt\r\nsecret.dat\r\n")?;
 
     ArchiveBuilder::new()
         .version(FormatVersion::V3)
@@ -113,10 +108,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\nCreating archives in different MPQ versions...");
 
     let test_data = vec![
-        (
-            "version_test.txt",
-            b"Same content in all versions".as_slice(),
-        ),
+        ("version_test.txt", b"Same content in all versions".as_slice()),
         ("data/test.bin", &[0x01, 0x02, 0x03, 0x04]),
     ];
 

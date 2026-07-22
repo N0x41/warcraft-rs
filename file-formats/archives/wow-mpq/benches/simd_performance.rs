@@ -98,9 +98,7 @@ fn bench_jenkins_batch_performance(c: &mut Criterion) {
                 b.iter(|| {
                     let mut results = Vec::with_capacity(filenames.len());
                     for filename in filenames {
-                        results.push(wow_mpq::simd::scalar::jenkins_hash_scalar(black_box(
-                            filename,
-                        )));
+                        results.push(wow_mpq::simd::scalar::jenkins_hash_scalar(black_box(filename)));
                     }
                     results
                 })
@@ -165,25 +163,19 @@ fn bench_realistic_workload(c: &mut Criterion) {
                     // Hash computation
                     let mut hash_results = Vec::with_capacity(bytes.len());
                     for filename in *bytes {
-                        hash_results.push(wow_mpq::simd::scalar::hash_string_scalar(
-                            black_box(filename),
-                            0,
-                        ));
+                        hash_results.push(wow_mpq::simd::scalar::hash_string_scalar(black_box(filename), 0));
                     }
 
                     // Jenkins hash
                     let mut jenkins_results = Vec::with_capacity(refs.len());
                     for filename in *refs {
-                        jenkins_results.push(wow_mpq::simd::scalar::jenkins_hash_scalar(
-                            black_box(filename),
-                        ));
+                        jenkins_results.push(wow_mpq::simd::scalar::jenkins_hash_scalar(black_box(filename)));
                     }
 
                     // CRC32
                     let mut crc_results = Vec::with_capacity(bytes.len());
                     for filename in *bytes {
-                        crc_results
-                            .push(wow_mpq::simd::scalar::crc32_scalar(black_box(filename), 0));
+                        crc_results.push(wow_mpq::simd::scalar::crc32_scalar(black_box(filename), 0));
                     }
 
                     (hash_results, jenkins_results, crc_results)
@@ -253,10 +245,7 @@ fn generate_medium_archive_filenames() -> Vec<String> {
         for subcategory in &subcategories {
             for i in 0..100 {
                 for ext in &extensions {
-                    filenames.push(format!(
-                        "{}\\{}\\File_{:04}{}",
-                        category, subcategory, i, ext
-                    ));
+                    filenames.push(format!("{}\\{}\\File_{:04}{}", category, subcategory, i, ext));
                 }
             }
         }
@@ -278,24 +267,14 @@ fn generate_large_archive_filenames() -> Vec<String> {
         "Darnassus",
         "ThunderBluff",
     ];
-    let types = [
-        "Terrain",
-        "Buildings",
-        "Creatures",
-        "Effects",
-        "Textures",
-        "Audio",
-    ];
+    let types = ["Terrain", "Buildings", "Creatures", "Effects", "Textures", "Audio"];
     let formats = [".adt", ".m2", ".wmo", ".blp", ".ogg", ".mp3"];
 
     for zone in &zones {
         for typ in &types {
             for i in 0..500 {
                 for format in &formats {
-                    filenames.push(format!(
-                        "World\\Maps\\{}\\{}\\{}_{:06}{}",
-                        zone, typ, typ, i, format
-                    ));
+                    filenames.push(format!("World\\Maps\\{}\\{}\\{}_{:06}{}", zone, typ, typ, i, format));
                 }
             }
         }

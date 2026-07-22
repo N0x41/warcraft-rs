@@ -374,13 +374,10 @@ impl LodData {
     pub fn select_lod(&self, distance: f32) -> Option<&LodLevel> {
         // Find the first LOD level where the distance is less than or equal to the threshold
         // LOD levels should be sorted by distance (closest first)
-        self.levels
-            .iter()
-            .find(|lod| distance <= lod.distance)
-            .or_else(|| {
-                // If no level matches, use the last (most distant) level
-                self.levels.last()
-            })
+        self.levels.iter().find(|lod| distance <= lod.distance).or_else(|| {
+            // If no level matches, use the last (most distant) level
+            self.levels.last()
+        })
     }
 
     /// Get the number of LOD levels
@@ -410,9 +407,9 @@ impl PhysicsData {
 
         // Read main PHYS chunk header
         let mut magic = [0u8; 4];
-        cursor.read_exact(&mut magic).map_err(|e| {
-            crate::error::M2Error::ParseError(format!("Failed to read PHYS magic: {}", e))
-        })?;
+        cursor
+            .read_exact(&mut magic)
+            .map_err(|e| crate::error::M2Error::ParseError(format!("Failed to read PHYS magic: {}", e)))?;
 
         if &magic != b"PHYS" {
             return Err(crate::error::M2Error::ParseError(format!(
@@ -421,9 +418,9 @@ impl PhysicsData {
             )));
         }
 
-        let _chunk_size = cursor.read_u32_le().map_err(|e| {
-            crate::error::M2Error::ParseError(format!("Failed to read PHYS chunk size: {}", e))
-        })?;
+        let _chunk_size = cursor
+            .read_u32_le()
+            .map_err(|e| crate::error::M2Error::ParseError(format!("Failed to read PHYS chunk size: {}", e)))?;
 
         // Basic physics data - for now, parse minimal structure
         // TODO: Implement full chunked parsing for BODY, SHAP, JOIN chunks
@@ -480,13 +477,13 @@ impl SkeletonData {
             }
 
             let mut magic = [0u8; 4];
-            cursor.read_exact(&mut magic).map_err(|e| {
-                crate::error::M2Error::ParseError(format!("Failed to read chunk magic: {}", e))
-            })?;
+            cursor
+                .read_exact(&mut magic)
+                .map_err(|e| crate::error::M2Error::ParseError(format!("Failed to read chunk magic: {}", e)))?;
 
-            let chunk_size = cursor.read_u32_le().map_err(|e| {
-                crate::error::M2Error::ParseError(format!("Failed to read chunk size: {}", e))
-            })?;
+            let chunk_size = cursor
+                .read_u32_le()
+                .map_err(|e| crate::error::M2Error::ParseError(format!("Failed to read chunk size: {}", e)))?;
 
             match &magic {
                 b"SKB1" => {
@@ -505,8 +502,7 @@ impl SkeletonData {
                                 parent_index: if i == 0 { -1 } else { (i - 1) as i16 },
                                 children: Vec::new(),
                                 local_transform: [
-                                    1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0,
-                                    0.0, 0.0, 0.0, 1.0,
+                                    1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
                                 ], // Identity matrix
                             };
                             bone_hierarchy.push(bone_node);
@@ -539,17 +535,15 @@ impl BoneData {
 
         if data.len() < 12 {
             // Minimum: header(4) + bone_count(4) + bone_id(2) + matrix(64)
-            return Err(crate::error::M2Error::ParseError(
-                "BONE file too small".to_string(),
-            ));
+            return Err(crate::error::M2Error::ParseError("BONE file too small".to_string()));
         }
 
         let mut cursor = Cursor::new(data);
 
         // Read .bone file header
-        let version = cursor.read_u32_le().map_err(|e| {
-            crate::error::M2Error::ParseError(format!("Failed to read .bone version: {}", e))
-        })?;
+        let version = cursor
+            .read_u32_le()
+            .map_err(|e| crate::error::M2Error::ParseError(format!("Failed to read .bone version: {}", e)))?;
 
         // Version should be 1 according to wowdev.wiki
         if version != 1 {
@@ -560,9 +554,9 @@ impl BoneData {
         }
 
         // Read bone ID array count
-        let bone_count = cursor.read_u32_le().map_err(|e| {
-            crate::error::M2Error::ParseError(format!("Failed to read bone count: {}", e))
-        })?;
+        let bone_count = cursor
+            .read_u32_le()
+            .map_err(|e| crate::error::M2Error::ParseError(format!("Failed to read bone count: {}", e)))?;
 
         if bone_count == 0 || bone_count > 1024 {
             // Reasonable limit
@@ -573,9 +567,9 @@ impl BoneData {
         }
 
         // Read first bone ID (we'll process just the first bone for now)
-        let bone_index = cursor.read_u16_le().map_err(|e| {
-            crate::error::M2Error::ParseError(format!("Failed to read bone ID: {}", e))
-        })?;
+        let bone_index = cursor
+            .read_u16_le()
+            .map_err(|e| crate::error::M2Error::ParseError(format!("Failed to read bone ID: {}", e)))?;
 
         // Skip remaining bone IDs for now
         cursor.set_position(cursor.position() + (bone_count as u64 - 1) * 2);
@@ -885,12 +879,7 @@ mod tests {
 
         let result = PhysicsData::parse(&data);
         assert!(result.is_err());
-        assert!(
-            result
-                .unwrap_err()
-                .to_string()
-                .contains("Invalid PHYS magic")
-        );
+        assert!(result.unwrap_err().to_string().contains("Invalid PHYS magic"));
     }
 
     #[test]
@@ -950,11 +939,10 @@ mod tests {
             0x01, 0x00, 0x00, 0x00, // Bone count: 1
             0x05, 0x00, // Bone ID: 5
             // 64 bytes for bone offset matrix (identity matrix as floats)
-            0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x80, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F,
+            0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x3F,
         ];
 
         let result = BoneData::parse(&data).unwrap();
@@ -962,10 +950,7 @@ mod tests {
         assert_eq!(result.translation_track.timestamps.len(), 2);
         assert_eq!(result.rotation_track.timestamps.len(), 2);
         assert_eq!(result.scale_track.timestamps.len(), 2);
-        assert_eq!(
-            result.translation_track.interpolation,
-            InterpolationType::Linear
-        );
+        assert_eq!(result.translation_track.interpolation, InterpolationType::Linear);
     }
 
     #[test]

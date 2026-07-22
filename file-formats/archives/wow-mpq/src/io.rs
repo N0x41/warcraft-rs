@@ -8,9 +8,7 @@ use crate::Result;
 use std::io::{Read, Seek, SeekFrom};
 
 #[cfg(feature = "async")]
-pub use async_reader::{
-    AsyncArchiveReader, AsyncConfig, AsyncDecompressionMonitor, AsyncMetrics, AsyncOperationStats,
-};
+pub use async_reader::{AsyncArchiveReader, AsyncConfig, AsyncDecompressionMonitor, AsyncMetrics, AsyncOperationStats};
 
 pub use memory_map::{MemoryMapConfig, MemoryMapStats};
 

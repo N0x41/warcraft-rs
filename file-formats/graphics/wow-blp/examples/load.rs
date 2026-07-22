@@ -16,10 +16,7 @@ fn main() {
         Ok(blp_file) => {
             println!("✓ Loaded BLP file: {blp_filename}");
             println!("  Version: {:?}", blp_file.header.version);
-            println!(
-                "  Dimensions: {}x{}",
-                blp_file.header.width, blp_file.header.height
-            );
+            println!("  Dimensions: {}x{}", blp_file.header.width, blp_file.header.height);
             println!("  Mipmaps: {}", blp_file.image_count());
 
             match blp_to_image(&blp_file, 0) {

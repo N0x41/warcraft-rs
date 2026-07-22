@@ -82,12 +82,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         // Check if they're sequential (0,1,2,3...) which would indicate bad data
                         let sequential = (0..12).map(|i| i as u16).collect::<Vec<_>>();
                         if indices[..12] == sequential {
-                            println!(
-                                "  ❌ ERROR: Indices are sequential - geometry will be broken!"
-                            );
-                            println!(
-                                "     This indicates the embedded skin data is not being parsed correctly."
-                            );
+                            println!("  ❌ ERROR: Indices are sequential - geometry will be broken!");
+                            println!("     This indicates the embedded skin data is not being parsed correctly.");
                         } else {
                             println!("  ✅ Indices contain proper triangle data (non-sequential)");
 
@@ -96,10 +92,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                             for idx in &indices[..indices.len().min(30)] {
                                 unique_verts.insert(*idx);
                             }
-                            println!(
-                                "     First 30 indices reference {} unique vertices",
-                                unique_verts.len()
-                            );
+                            println!("     First 30 indices reference {} unique vertices", unique_verts.len());
 
                             // Check for reasonable vertex index range
                             let max_idx = indices.iter().max().copied().unwrap_or(0);
@@ -119,10 +112,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                     // Check triangles array (vertex references)
                     if triangles.len() >= 12 {
-                        println!(
-                            "\n  Triangles/Vertex refs (first 12): {:?}",
-                            &triangles[..12]
-                        );
+                        println!("\n  Triangles/Vertex refs (first 12): {:?}", &triangles[..12]);
                     }
 
                     // Display submesh details with triangle validation
@@ -155,12 +145,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
 
                     // Calculate triangle statistics (use u32 to avoid overflow)
-                    let total_triangles: u32 =
-                        submeshes.iter().map(|s| s.triangle_count as u32 / 3).sum();
-                    println!(
-                        "\n  Total triangles across all submeshes: {}",
-                        total_triangles
-                    );
+                    let total_triangles: u32 = submeshes.iter().map(|s| s.triangle_count as u32 / 3).sum();
+                    println!("\n  Total triangles across all submeshes: {}", total_triangles);
 
                     // Analyze LOD distribution
                     let mut lod_counts = [0u32; 4];
@@ -187,10 +173,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("\n=== Batch Processing ===");
         match model.parse_all_embedded_skins(&m2_data) {
             Ok(all_skins) => {
-                println!(
-                    "Successfully parsed all {} embedded skins at once",
-                    all_skins.len()
-                );
+                println!("Successfully parsed all {} embedded skins at once", all_skins.len());
 
                 // Calculate total statistics
                 let total_indices: usize = all_skins.iter().map(|s| s.indices().len()).sum();
@@ -220,10 +203,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 model.header.num_skin_profiles.unwrap_or(0)
             );
             println!("Skin files would be named:");
-            let base_name = Path::new(m2_path)
-                .file_stem()
-                .unwrap_or_default()
-                .to_string_lossy();
+            let base_name = Path::new(m2_path).file_stem().unwrap_or_default().to_string_lossy();
             for i in 0..model.header.num_skin_profiles.unwrap_or(0) {
                 println!("  {}{:02}.skin", base_name, i);
             }
@@ -234,10 +214,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Additional model statistics relevant to skins
     println!("\n=== Related Model Data ===");
-    println!(
-        "Vertices: {} (shared by all skin profiles)",
-        model.vertices.len()
-    );
+    println!("Vertices: {} (shared by all skin profiles)", model.vertices.len());
     println!("Bones: {} (for vertex weighting)", model.bones.len());
     println!("Materials: {} (for rendering)", model.materials.len());
     println!("Textures: {} (for material mapping)", model.textures.len());

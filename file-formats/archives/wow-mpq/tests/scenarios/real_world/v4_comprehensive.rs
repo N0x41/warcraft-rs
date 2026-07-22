@@ -28,13 +28,7 @@ fn test_v4_comprehensive() {
         .generate_crcs(true) // Enable CRC generation
         .compress_tables(true) // Enable table compression
         .add_file(&file1_path, "files/test1.txt")
-        .add_file_with_options(
-            &file2_path,
-            "files/test2.bin",
-            compression::flags::BZIP2,
-            false,
-            0,
-        )
+        .add_file_with_options(&file2_path, "files/test2.bin", compression::flags::BZIP2, false, 0)
         .add_file_data(b"Direct data content".to_vec(), "direct.txt")
         .add_file_data_with_encryption(
             b"Encrypted content".to_vec(),
@@ -185,11 +179,7 @@ fn test_v4_large_file_support() {
         if let Some(file_info) = archive.find_file(&filename).unwrap() {
             println!(
                 "  {}: size={}, compressed_size={}, flags=0x{:08X}, pos=0x{:X}",
-                filename,
-                file_info.file_size,
-                file_info.compressed_size,
-                file_info.flags,
-                file_info.file_pos
+                filename, file_info.file_size, file_info.compressed_size, file_info.flags, file_info.file_pos
             );
         } else {
             println!("  {filename}: NOT FOUND");

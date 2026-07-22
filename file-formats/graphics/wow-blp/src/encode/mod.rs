@@ -24,17 +24,13 @@ pub fn save_blp<Q>(image: &BlpImage, path: Q) -> Result<(), Error>
 where
     Q: AsRef<Path>,
 {
-    let BlpWithMipmaps {
-        blp_bytes,
-        blp_mipmaps,
-    } = encode_blp_with_external(image)?;
+    let BlpWithMipmaps { blp_bytes, blp_mipmaps } = encode_blp_with_external(image)?;
     std::fs::write(&path, blp_bytes).map_err(|e| Error::FileSystem(path.as_ref().to_owned(), e))?;
     if !blp_mipmaps.is_empty() {
         for (i, image) in blp_mipmaps.iter().enumerate() {
-            let mipmap_path = make_mipmap_path(&path, i)
-                .ok_or_else(|| Error::FileNameInvalid(path.as_ref().to_owned()))?;
-            std::fs::write(&mipmap_path, image)
-                .map_err(|e| Error::FileSystem(mipmap_path.to_owned(), e))?;
+            let mipmap_path =
+                make_mipmap_path(&path, i).ok_or_else(|| Error::FileNameInvalid(path.as_ref().to_owned()))?;
+            std::fs::write(&mipmap_path, image).map_err(|e| Error::FileSystem(mipmap_path.to_owned(), e))?;
         }
     }
     Ok(())
@@ -93,10 +89,7 @@ fn encode_header(header: &BlpHeader, output: &mut Vec<u8>) -> Result<(), Error> 
     }
     push_le_u32(header.height, output);
 
-    if let BlpFlags::Old {
-        extra, has_mipmaps, ..
-    } = header.flags
-    {
+    if let BlpFlags::Old { extra, has_mipmaps, .. } = header.flags {
         push_le_u32(extra, output);
         push_le_u32(has_mipmaps, output);
     }
@@ -160,11 +153,7 @@ fn encode_jpeg(
                 .collect();
             pairs.sort_unstable_by(|a, b| a.0.partial_cmp(&b.0).expect("number cmp"));
 
-            trace!(
-                "Mipmaps ordered: {:?}, images count: {}",
-                pairs,
-                content.images.len()
-            );
+            trace!("Mipmaps ordered: {:?}, images count: {}", pairs, content.images.len());
             for (i, ((offset, size), image)) in zip(pairs, content.images.iter()).enumerate() {
                 trace!("Writing mipmap {i}");
                 let padding = (if offset as usize >= output.len() {
@@ -225,11 +214,7 @@ where
                 .collect();
             pairs.sort_unstable_by(|a, b| a.0.partial_cmp(&b.0).expect("number cmp"));
 
-            trace!(
-                "Mipmaps ordered: {:?}, images count: {}",
-                pairs,
-                images.len()
-            );
+            trace!("Mipmaps ordered: {:?}, images count: {}", pairs, images.len());
             for (i, ((offset, size), image)) in zip(pairs, images.iter()).enumerate() {
                 trace!("Writing mipmap {i}");
                 let padding = (if offset as usize >= output.len() {
@@ -303,14 +288,9 @@ fn encode_raw3_image(image: &Raw3Image, output: &mut Vec<u8>) {
     }
 }
 
-fn encode_dxtn(
-    header: &BlpHeader,
-    images: &[DxtnImage],
-    output: &mut Vec<u8>,
-) -> Result<(), Error> {
+fn encode_dxtn(header: &BlpHeader, images: &[DxtnImage], output: &mut Vec<u8>) -> Result<(), Error> {
     trace!("Header: {header:?}");
-    let (offsets, sizes) = if let MipmapLocator::Internal { offsets, sizes } = header.mipmap_locator
-    {
+    let (offsets, sizes) = if let MipmapLocator::Internal { offsets, sizes } = header.mipmap_locator {
         (offsets, sizes)
     } else {
         return Err(Error::ExternalMipmapsNotSupported(BlpVersion::Blp2));
@@ -322,11 +302,7 @@ fn encode_dxtn(
         .collect();
     pairs.sort_unstable_by(|a, b| a.0.partial_cmp(&b.0).expect("number cmp"));
 
-    trace!(
-        "Mipmaps ordered: {:?}, images count: {}",
-        pairs,
-        images.len()
-    );
+    trace!("Mipmaps ordered: {:?}, images count: {}", pairs, images.len());
 
     for (i, ((offset, size), image)) in zip(pairs, images.iter()).enumerate() {
         trace!("Writing mipmap {i}");

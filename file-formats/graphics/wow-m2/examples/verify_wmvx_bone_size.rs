@@ -10,7 +10,8 @@ fn main() -> anyhow::Result<()> {
     println!("  BC+ (v260+): 88 bytes per bone");
     println!("\nOur parser assumes: 88 bytes for ALL versions ❌");
 
-    let model_path = "/home/danielsreichenbach/Repos/github.com/wowemulation-dev/blender-wow-addon/sample_data/1.12.1/m2/Rabbit.m2";
+    let model_path =
+        "/home/danielsreichenbach/Repos/github.com/wowemulation-dev/blender-wow-addon/sample_data/1.12.1/m2/Rabbit.m2";
     let data = fs::read(model_path)?;
     let mut cursor = Cursor::new(&data);
 
@@ -52,10 +53,7 @@ fn main() -> anyhow::Result<()> {
         let pivot_y = read_f32(&mut cursor)?;
         let pivot_z = read_f32(&mut cursor)?;
 
-        println!(
-            "    pivot: ({:.3}, {:.3}, {:.3})",
-            pivot_x, pivot_y, pivot_z
-        );
+        println!("    pivot: ({:.3}, {:.3}, {:.3})", pivot_x, pivot_y, pivot_z);
 
         if pivot_x.is_nan() || pivot_y.is_nan() || pivot_z.is_nan() {
             println!("      ⚠️  Contains NaN!");
@@ -77,10 +75,7 @@ fn main() -> anyhow::Result<()> {
         let bc_bones_count = read_u32(&mut bc_cursor)?;
         let bc_bones_offset = read_u32(&mut bc_cursor)?;
 
-        println!(
-            "  Bones: {} at offset 0x{:X}",
-            bc_bones_count, bc_bones_offset
-        );
+        println!("  Bones: {} at offset 0x{:X}", bc_bones_count, bc_bones_offset);
 
         println!("\n🧪 Testing 88-byte bone size (BC+):");
 
@@ -105,10 +100,7 @@ fn main() -> anyhow::Result<()> {
             let pivot_y = read_f32(&mut bc_cursor)?;
             let pivot_z = read_f32(&mut bc_cursor)?;
 
-            println!(
-                "    pivot: ({:.3}, {:.3}, {:.3})",
-                pivot_x, pivot_y, pivot_z
-            );
+            println!("    pivot: ({:.3}, {:.3}, {:.3})", pivot_x, pivot_y, pivot_z);
         }
     }
 

@@ -9,10 +9,7 @@ use tempfile::TempDir;
 use wow_mpq::{Archive, ArchiveBuilder, PatchChain, compression::flags};
 
 /// Create test archives for benchmarking
-fn create_test_archives(
-    count: usize,
-    files_per_archive: usize,
-) -> (TempDir, Vec<std::path::PathBuf>) {
+fn create_test_archives(count: usize, files_per_archive: usize) -> (TempDir, Vec<std::path::PathBuf>) {
     let temp_dir = TempDir::new().unwrap();
     let mut paths = Vec::new();
 
@@ -24,9 +21,7 @@ fn create_test_archives(
 
         // Add files to each archive
         for j in 0..files_per_archive {
-            let content =
-                format!("Archive {i} File {j} Content with some padding to make it larger")
-                    .repeat(100); // Make files reasonably sized
+            let content = format!("Archive {i} File {j} Content with some padding to make it larger").repeat(100); // Make files reasonably sized
             builder = builder.add_file_data(content.into_bytes(), &format!("file_{j:03}.txt"));
         }
 
@@ -67,19 +62,13 @@ fn bench_multi_archive_extraction(c: &mut Criterion) {
         );
 
         // Parallel version
-        group.bench_with_input(
-            BenchmarkId::new("parallel", count),
-            &archives_subset,
-            |b, archives| {
-                b.iter(|| {
-                    use wow_mpq::parallel::extract_from_multiple_archives;
-                    let results =
-                        extract_from_multiple_archives(black_box(archives), "file_005.txt")
-                            .unwrap();
-                    black_box(results)
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("parallel", count), &archives_subset, |b, archives| {
+            b.iter(|| {
+                use wow_mpq::parallel::extract_from_multiple_archives;
+                let results = extract_from_multiple_archives(black_box(archives), "file_005.txt").unwrap();
+                black_box(results)
+            });
+        });
     }
 
     group.finish();
@@ -116,8 +105,7 @@ fn bench_multi_archive_search(c: &mut Criterion) {
     group.bench_function("parallel", |b| {
         b.iter(|| {
             use wow_mpq::parallel::search_in_multiple_archives;
-            let results =
-                search_in_multiple_archives(black_box(&archives), search_pattern).unwrap();
+            let results = search_in_multiple_archives(black_box(&archives), search_pattern).unwrap();
             black_box(results)
         });
     });
@@ -130,12 +118,7 @@ fn bench_multi_file_multi_archive(c: &mut Criterion) {
     let mut group = c.benchmark_group("parallel/multi_file_multi_archive");
 
     let (_temp_dir, archives) = create_test_archives(4, 20);
-    let files_to_extract = vec![
-        "file_001.txt",
-        "file_005.txt",
-        "file_010.txt",
-        "file_015.txt",
-    ];
+    let files_to_extract = vec!["file_001.txt", "file_005.txt", "file_010.txt", "file_015.txt"];
 
     let total_operations = archives.len() * files_to_extract.len();
     group.throughput(Throughput::Elements(total_operations as u64));
@@ -161,9 +144,7 @@ fn bench_multi_file_multi_archive(c: &mut Criterion) {
     group.bench_function("parallel", |b| {
         b.iter(|| {
             use wow_mpq::parallel::extract_multiple_from_multiple_archives;
-            let results =
-                extract_multiple_from_multiple_archives(black_box(&archives), &files_to_extract)
-                    .unwrap();
+            let results = extract_multiple_from_multiple_archives(black_box(&archives), &files_to_extract).unwrap();
             black_box(results)
         });
     });
@@ -196,10 +177,8 @@ fn bench_custom_processing(c: &mut Criterion) {
     group.bench_function("parallel_count", |b| {
         b.iter(|| {
             use wow_mpq::parallel::process_archives_parallel;
-            let counts = process_archives_parallel(black_box(&archives), |mut archive| {
-                Ok(archive.list()?.len())
-            })
-            .unwrap();
+            let counts =
+                process_archives_parallel(black_box(&archives), |mut archive| Ok(archive.list()?.len())).unwrap();
             black_box(counts)
         });
     });
@@ -224,32 +203,23 @@ fn bench_patch_chain_loading(c: &mut Criterion) {
         group.throughput(Throughput::Elements(count as u64));
 
         // Sequential loading
-        group.bench_with_input(
-            BenchmarkId::new("sequential", count),
-            &archives,
-            |b, archives| {
-                b.iter(|| {
-                    let mut chain = PatchChain::new();
-                    for (path, priority) in archives {
-                        chain.add_archive(black_box(path), *priority).unwrap();
-                    }
-                    black_box(chain)
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("sequential", count), &archives, |b, archives| {
+            b.iter(|| {
+                let mut chain = PatchChain::new();
+                for (path, priority) in archives {
+                    chain.add_archive(black_box(path), *priority).unwrap();
+                }
+                black_box(chain)
+            });
+        });
 
         // Parallel loading
-        group.bench_with_input(
-            BenchmarkId::new("parallel", count),
-            &archives,
-            |b, archives| {
-                b.iter(|| {
-                    let chain =
-                        PatchChain::from_archives_parallel(black_box(archives.clone())).unwrap();
-                    black_box(chain)
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("parallel", count), &archives, |b, archives| {
+            b.iter(|| {
+                let chain = PatchChain::from_archives_parallel(black_box(archives.clone())).unwrap();
+                black_box(chain)
+            });
+        });
     }
 
     group.finish();
@@ -335,15 +305,10 @@ fn bench_scalability(c: &mut Criterion) {
                     use rayon::ThreadPoolBuilder;
                     use wow_mpq::parallel::extract_from_multiple_archives;
 
-                    let pool = ThreadPoolBuilder::new()
-                        .num_threads(num_threads)
-                        .build()
-                        .unwrap();
+                    let pool = ThreadPoolBuilder::new().num_threads(num_threads).build().unwrap();
 
                     pool.install(|| {
-                        let results =
-                            extract_from_multiple_archives(black_box(&archives), file_name)
-                                .unwrap();
+                        let results = extract_from_multiple_archives(black_box(&archives), file_name).unwrap();
                         black_box(results)
                     })
                 });

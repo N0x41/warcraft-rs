@@ -157,13 +157,9 @@ mod tests {
         data.extend_from_slice(&M2BlendMode::ALPHA.bits().to_le_bytes());
 
         let mut cursor = Cursor::new(data);
-        let material =
-            M2Material::parse(&mut cursor, M2Version::Vanilla.to_header_version()).unwrap();
+        let material = M2Material::parse(&mut cursor, M2Version::Vanilla.to_header_version()).unwrap();
 
-        assert_eq!(
-            material.flags,
-            M2RenderFlags::DEPTH_TEST | M2RenderFlags::DEPTH_WRITE
-        );
+        assert_eq!(material.flags, M2RenderFlags::DEPTH_TEST | M2RenderFlags::DEPTH_WRITE);
         assert_eq!(material.blend_mode, M2BlendMode::ALPHA);
     }
 

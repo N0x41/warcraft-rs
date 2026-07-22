@@ -93,11 +93,7 @@ fn test_no_hanging() -> Result<()> {
         successful_extractions,
         files.len()
     );
-    assert_eq!(
-        successful_extractions,
-        files.len(),
-        "Some extractions failed"
-    );
+    assert_eq!(successful_extractions, files.len(), "Some extractions failed");
 
     println!("🎯 RESULT: No hanging detected - system handles large extractions gracefully");
     Ok(())
@@ -112,12 +108,7 @@ fn test_resource_usage() -> Result<()> {
     // Get subset of files to test different configurations
     let files: Vec<String> = {
         let mut archive = Archive::open(&archive_path)?;
-        archive
-            .list()?
-            .into_iter()
-            .take(5000)
-            .map(|e| e.name)
-            .collect()
+        archive.list()?.into_iter().take(5000).map(|e| e.name).collect()
     };
     let file_refs: Vec<&str> = files.iter().map(|s| s.as_str()).collect();
 
@@ -129,10 +120,7 @@ fn test_resource_usage() -> Result<()> {
     ];
 
     for (name, threads, batch_size) in test_configs {
-        println!(
-            "  Testing {}: {} threads, {} batch size",
-            name, threads, batch_size
-        );
+        println!("  Testing {}: {} threads, {} batch size", name, threads, batch_size);
 
         let config = ParallelConfig::new()
             .threads(threads)
@@ -150,12 +138,7 @@ fn test_resource_usage() -> Result<()> {
             files_per_sec
         );
 
-        assert_eq!(
-            results.len(),
-            files.len(),
-            "File count mismatch in {}",
-            name
-        );
+        assert_eq!(results.len(), files.len(), "File count mismatch in {}", name);
         assert!(
             duration < Duration::from_secs(120),
             "Configuration {} took too long",
@@ -196,10 +179,7 @@ fn test_edge_cases() -> Result<()> {
     );
 
     assert_eq!(results.len(), all_files.len());
-    assert!(
-        duration < Duration::from_secs(600),
-        "Full extraction took too long"
-    );
+    assert!(duration < Duration::from_secs(600), "Full extraction took too long");
 
     // Test 2: Very small batch sizes (high overhead)
     println!("  Test 2: Small batch sizes (high overhead test)");

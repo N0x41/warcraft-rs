@@ -78,10 +78,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Display unified access
         println!("\n=== Unified Access ===");
         println!("Indices (format-agnostic): {}", skin_file.indices().len());
-        println!(
-            "Submeshes (format-agnostic): {}",
-            skin_file.submeshes().len()
-        );
+        println!("Submeshes (format-agnostic): {}", skin_file.submeshes().len());
     }
 
     // Load and detect ANIM format if provided
@@ -134,10 +131,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if args.len() == 2 {
         println!("• Try loading with SKIN/ANIM files to see format detection in action");
-        println!(
-            "  Example: {} {} model00.skin model0-0.anim",
-            args[0], m2_path
-        );
+        println!("  Example: {} {} model00.skin model0-0.anim", args[0], m2_path);
     }
 
     Ok(())

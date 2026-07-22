@@ -3,7 +3,7 @@
 //! Replaces the functionality of mpq_tools.py
 
 use crate::{ArchiveBuilder, FormatVersion, compression};
-use rand::{Rng, SeedableRng, rngs::StdRng};
+use rand::{Rng, SeedableRng, rngs::StdRng, RngCore};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -358,7 +358,7 @@ fn generate_compressible_data(size: usize) -> Vec<u8> {
 fn generate_random_data(size: usize) -> Vec<u8> {
     let mut rng = StdRng::seed_from_u64(42);
     let mut data = vec![0u8; size];
-    rng.fill(&mut data[..]);
+    rng.fill_bytes(&mut data[..]);
     data
 }
 

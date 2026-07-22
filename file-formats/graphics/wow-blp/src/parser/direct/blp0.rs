@@ -30,11 +30,7 @@ where
     Ok(())
 }
 
-fn parse_raw1_image(
-    blp_header: &BlpHeader,
-    mimpmap_number: usize,
-    input: &[u8],
-) -> ParseResult<Raw1Image> {
+fn parse_raw1_image(blp_header: &BlpHeader, mimpmap_number: usize, input: &[u8]) -> ParseResult<Raw1Image> {
     let mut reader = Cursor::new(input);
 
     let n = blp_header.mipmap_pixels(mimpmap_number);

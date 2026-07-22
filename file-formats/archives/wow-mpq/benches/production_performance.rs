@@ -23,13 +23,7 @@ pub struct PerformanceMetrics {
 }
 
 impl PerformanceMetrics {
-    pub fn new(
-        files: usize,
-        bytes: u64,
-        duration: Duration,
-        threads: usize,
-        batch_size: Option<usize>,
-    ) -> Self {
+    pub fn new(files: usize, bytes: u64, duration: Duration, threads: usize, batch_size: Option<usize>) -> Self {
         let duration_ms = duration.as_millis() as u64;
         let duration_sec = duration.as_secs_f64();
 
@@ -122,12 +116,7 @@ fn bench_throughput_scaling(c: &mut Criterion) {
         // Generate file list for extraction (extract all files)
         let files: Vec<String> = {
             let mut archive = Archive::open(&archive_path).unwrap();
-            archive
-                .list()
-                .unwrap()
-                .into_iter()
-                .map(|e| e.name)
-                .collect()
+            archive.list().unwrap().into_iter().map(|e| e.name).collect()
         };
         let file_refs: Vec<&str> = files.iter().map(|s| s.as_str()).collect();
 
@@ -168,8 +157,7 @@ fn bench_throughput_scaling(c: &mut Criterion) {
             |b, (path, files, _bytes)| {
                 let config = ParallelConfig::new().batch_size(50);
                 b.iter(|| {
-                    let results =
-                        extract_with_config(black_box(path), files, config.clone()).unwrap();
+                    let results = extract_with_config(black_box(path), files, config.clone()).unwrap();
                     black_box(results)
                 });
             },
@@ -186,17 +174,11 @@ fn bench_threading_scalability(c: &mut Criterion) {
     group.measurement_time(Duration::from_secs(20));
 
     // Create a substantial test archive
-    let (_temp_dir, archive_path, total_bytes) =
-        create_test_archive_realistic("threading_test", 2000, 100, 0.6);
+    let (_temp_dir, archive_path, total_bytes) = create_test_archive_realistic("threading_test", 2000, 100, 0.6);
 
     let files: Vec<String> = {
         let mut archive = Archive::open(&archive_path).unwrap();
-        archive
-            .list()
-            .unwrap()
-            .into_iter()
-            .map(|e| e.name)
-            .collect()
+        archive.list().unwrap().into_iter().map(|e| e.name).collect()
     };
     let file_refs: Vec<&str> = files.iter().map(|s| s.as_str()).collect();
 
@@ -206,20 +188,14 @@ fn bench_threading_scalability(c: &mut Criterion) {
     let thread_counts = vec![1, 2, 4, 8, 12, 16];
 
     for &threads in &thread_counts {
-        group.bench_with_input(
-            BenchmarkId::from_parameter(threads),
-            &threads,
-            |b, &num_threads| {
-                let config = ParallelConfig::new().threads(num_threads).batch_size(25);
+        group.bench_with_input(BenchmarkId::from_parameter(threads), &threads, |b, &num_threads| {
+            let config = ParallelConfig::new().threads(num_threads).batch_size(25);
 
-                b.iter(|| {
-                    let results =
-                        extract_with_config(black_box(&archive_path), &file_refs, config.clone())
-                            .unwrap();
-                    black_box(results)
-                });
-            },
-        );
+            b.iter(|| {
+                let results = extract_with_config(black_box(&archive_path), &file_refs, config.clone()).unwrap();
+                black_box(results)
+            });
+        });
     }
 
     group.finish();
@@ -234,12 +210,7 @@ fn bench_batch_size_optimization(c: &mut Criterion) {
 
     let files: Vec<String> = {
         let mut archive = Archive::open(&archive_path).unwrap();
-        archive
-            .list()
-            .unwrap()
-            .into_iter()
-            .map(|e| e.name)
-            .collect()
+        archive.list().unwrap().into_iter().map(|e| e.name).collect()
     };
     let file_refs: Vec<&str> = files.iter().map(|s| s.as_str()).collect();
 
@@ -247,20 +218,14 @@ fn bench_batch_size_optimization(c: &mut Criterion) {
     let batch_sizes = vec![1, 5, 10, 25, 50, 100, 200];
 
     for &batch_size in &batch_sizes {
-        group.bench_with_input(
-            BenchmarkId::from_parameter(batch_size),
-            &batch_size,
-            |b, &size| {
-                let config = ParallelConfig::new().batch_size(size).threads(8);
+        group.bench_with_input(BenchmarkId::from_parameter(batch_size), &batch_size, |b, &size| {
+            let config = ParallelConfig::new().batch_size(size).threads(8);
 
-                b.iter(|| {
-                    let results =
-                        extract_with_config(black_box(&archive_path), &file_refs, config.clone())
-                            .unwrap();
-                    black_box(results)
-                });
-            },
-        );
+            b.iter(|| {
+                let results = extract_with_config(black_box(&archive_path), &file_refs, config.clone()).unwrap();
+                black_box(results)
+            });
+        });
     }
 
     group.finish();
@@ -273,17 +238,11 @@ fn bench_resource_utilization(c: &mut Criterion) {
     group.measurement_time(Duration::from_secs(25));
 
     // Create a large archive to stress resource usage
-    let (_temp_dir, archive_path, total_bytes) =
-        create_test_archive_realistic("resource_test", 10000, 120, 0.7);
+    let (_temp_dir, archive_path, total_bytes) = create_test_archive_realistic("resource_test", 10000, 120, 0.7);
 
     let files: Vec<String> = {
         let mut archive = Archive::open(&archive_path).unwrap();
-        archive
-            .list()
-            .unwrap()
-            .into_iter()
-            .map(|e| e.name)
-            .collect()
+        archive.list().unwrap().into_iter().map(|e| e.name).collect()
     };
     let file_refs: Vec<&str> = files.iter().map(|s| s.as_str()).collect();
 
@@ -294,8 +253,7 @@ fn bench_resource_utilization(c: &mut Criterion) {
         let config = ParallelConfig::new().threads(8).batch_size(75);
 
         b.iter(|| {
-            let results =
-                extract_with_config(black_box(&archive_path), &file_refs, config.clone()).unwrap();
+            let results = extract_with_config(black_box(&archive_path), &file_refs, config.clone()).unwrap();
             black_box(results)
         });
     });
@@ -305,8 +263,7 @@ fn bench_resource_utilization(c: &mut Criterion) {
         let config = ParallelConfig::new().threads(16).batch_size(10);
 
         b.iter(|| {
-            let results =
-                extract_with_config(black_box(&archive_path), &file_refs, config.clone()).unwrap();
+            let results = extract_with_config(black_box(&archive_path), &file_refs, config.clone()).unwrap();
             black_box(results)
         });
     });
@@ -355,28 +312,19 @@ fn bench_realistic_wow_archive(c: &mut Criterion) {
                                 .step_by(file_count / sample_size)
                                 .map(|e| e.name)
                                 .collect();
-                            let file_refs: Vec<&str> =
-                                sample_files.iter().map(|s| s.as_str()).collect();
+                            let file_refs: Vec<&str> = sample_files.iter().map(|s| s.as_str()).collect();
 
-                            let archive_name =
-                                mpq_path.file_stem().unwrap_or_default().to_string_lossy();
+                            let archive_name = mpq_path.file_stem().unwrap_or_default().to_string_lossy();
 
                             group.bench_with_input(
                                 BenchmarkId::new("wow_archive", &*archive_name),
                                 &(&mpq_path, &file_refs),
                                 |b, (path, files)| {
-                                    let config = ParallelConfig::new()
-                                        .threads(8)
-                                        .batch_size(40)
-                                        .skip_errors(true);
+                                    let config = ParallelConfig::new().threads(8).batch_size(40).skip_errors(true);
 
                                     b.iter(|| {
-                                        let results = extract_with_config(
-                                            black_box(path),
-                                            files,
-                                            config.clone(),
-                                        )
-                                        .unwrap();
+                                        let results =
+                                            extract_with_config(black_box(path), files, config.clone()).unwrap();
                                         black_box(results)
                                     });
                                 },
@@ -410,27 +358,18 @@ fn bench_stress_no_hanging(c: &mut Criterion) {
 
     let files: Vec<String> = {
         let mut archive = Archive::open(&archive_path).unwrap();
-        archive
-            .list()
-            .unwrap()
-            .into_iter()
-            .map(|e| e.name)
-            .collect()
+        archive.list().unwrap().into_iter().map(|e| e.name).collect()
     };
     let file_refs: Vec<&str> = files.iter().map(|s| s.as_str()).collect();
 
     group.throughput(Throughput::Bytes(total_bytes));
 
     group.bench_function("large_extraction_no_hang", |b| {
-        let config = ParallelConfig::new()
-            .threads(12)
-            .batch_size(100)
-            .skip_errors(false);
+        let config = ParallelConfig::new().threads(12).batch_size(100).skip_errors(false);
 
         b.iter(|| {
             let start = Instant::now();
-            let results =
-                extract_with_config(black_box(&archive_path), &file_refs, config.clone()).unwrap();
+            let results = extract_with_config(black_box(&archive_path), &file_refs, config.clone()).unwrap();
             let duration = start.elapsed();
 
             // Validate we didn't hang (should complete in reasonable time)
@@ -457,13 +396,7 @@ fn bench_individual_vs_bulk(c: &mut Criterion) {
 
     let files: Vec<String> = {
         let mut archive = Archive::open(&archive_path).unwrap();
-        archive
-            .list()
-            .unwrap()
-            .into_iter()
-            .take(100)
-            .map(|e| e.name)
-            .collect()
+        archive.list().unwrap().into_iter().take(100).map(|e| e.name).collect()
     };
     let file_refs: Vec<&str> = files.iter().map(|s| s.as_str()).collect();
 
@@ -497,9 +430,7 @@ fn bench_individual_vs_bulk(c: &mut Criterion) {
     group.bench_function("parallel_bulk", |b| {
         let archive = ParallelArchive::open(&archive_path).unwrap();
         b.iter(|| {
-            let results = archive
-                .extract_files_parallel(black_box(&file_refs))
-                .unwrap();
+            let results = archive.extract_files_parallel(black_box(&file_refs)).unwrap();
             black_box(results)
         });
     });

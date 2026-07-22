@@ -128,8 +128,7 @@ impl M2Skinner {
 
         // Calculate inverse bind matrices from bind pose
         for (index, bone) in bones.iter().enumerate() {
-            bone_transforms[index].inverse_bind_matrix =
-                Self::calculate_bind_matrix(&bone.pivot).inverse();
+            bone_transforms[index].inverse_bind_matrix = Self::calculate_bind_matrix(&bone.pivot).inverse();
         }
 
         Self {
@@ -175,8 +174,7 @@ impl M2Skinner {
                 let scale = Vec3::ONE;
 
                 // Calculate local transformation matrix
-                let local_matrix =
-                    Mat4::from_scale_rotation_translation(scale, rotation, translation);
+                let local_matrix = Mat4::from_scale_rotation_translation(scale, rotation, translation);
                 self.bone_transforms[index].local_matrix = local_matrix;
             }
         }
@@ -237,10 +235,7 @@ impl M2Skinner {
     ///
     /// Returns a vector of transformed vertex positions
     pub fn skin_vertices(&self, vertices: &[M2Vertex]) -> Vec<C3Vector> {
-        vertices
-            .iter()
-            .map(|vertex| self.skin_single_vertex(vertex))
-            .collect()
+        vertices.iter().map(|vertex| self.skin_single_vertex(vertex)).collect()
     }
 
     /// Transform a single vertex using bone weights and transformations
@@ -404,16 +399,8 @@ impl M2Skinner {
     /// # Returns
     ///
     /// Returns the combined transformation matrix
-    pub fn create_transform_matrix(
-        translation: &C3Vector,
-        rotation: &Quaternion,
-        scale: &C3Vector,
-    ) -> Mat4 {
-        Mat4::from_scale_rotation_translation(
-            scale.to_glam(),
-            rotation.to_glam(),
-            translation.to_glam(),
-        )
+    pub fn create_transform_matrix(translation: &C3Vector, rotation: &Quaternion, scale: &C3Vector) -> Mat4 {
+        Mat4::from_scale_rotation_translation(scale.to_glam(), rotation.to_glam(), translation.to_glam())
     }
 }
 
@@ -443,11 +430,7 @@ mod tests {
             position: pos,
             bone_weights: weights,
             bone_indices: indices,
-            normal: C3Vector {
-                x: 0.0,
-                y: 1.0,
-                z: 0.0,
-            },
+            normal: C3Vector { x: 0.0, y: 1.0, z: 0.0 },
             tex_coords: crate::common::C2Vector { x: 0.0, y: 0.0 },
             tex_coords2: None,
         }
@@ -456,24 +439,8 @@ mod tests {
     #[test]
     fn test_skinner_creation() {
         let bones = vec![
-            create_test_bone(
-                0,
-                -1,
-                C3Vector {
-                    x: 0.0,
-                    y: 0.0,
-                    z: 0.0,
-                },
-            ),
-            create_test_bone(
-                1,
-                0,
-                C3Vector {
-                    x: 1.0,
-                    y: 0.0,
-                    z: 0.0,
-                },
-            ),
+            create_test_bone(0, -1, C3Vector { x: 0.0, y: 0.0, z: 0.0 }),
+            create_test_bone(1, 0, C3Vector { x: 1.0, y: 0.0, z: 0.0 }),
         ];
 
         let skinner = M2Skinner::new(&bones, SkinningOptions::default());
@@ -484,15 +451,7 @@ mod tests {
 
     #[test]
     fn test_bind_pose_calculation() {
-        let bones = vec![create_test_bone(
-            0,
-            -1,
-            C3Vector {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-            },
-        )];
+        let bones = vec![create_test_bone(0, -1, C3Vector { x: 0.0, y: 0.0, z: 0.0 })];
 
         let mut skinner = M2Skinner::new(&bones, SkinningOptions::default());
         skinner.calculate_bind_pose();
@@ -504,25 +463,13 @@ mod tests {
 
     #[test]
     fn test_single_bone_skinning() {
-        let bones = vec![create_test_bone(
-            0,
-            -1,
-            C3Vector {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-            },
-        )];
+        let bones = vec![create_test_bone(0, -1, C3Vector { x: 0.0, y: 0.0, z: 0.0 })];
 
         let mut skinner = M2Skinner::new(&bones, SkinningOptions::default());
         skinner.calculate_bind_pose();
 
         let vertex = create_test_vertex(
-            C3Vector {
-                x: 1.0,
-                y: 2.0,
-                z: 3.0,
-            },
+            C3Vector { x: 1.0, y: 2.0, z: 3.0 },
             [255, 0, 0, 0], // Full weight on bone 0
             [0, 0, 0, 0],
         );
@@ -538,35 +485,15 @@ mod tests {
     #[test]
     fn test_multi_bone_skinning() {
         let bones = vec![
-            create_test_bone(
-                0,
-                -1,
-                C3Vector {
-                    x: 0.0,
-                    y: 0.0,
-                    z: 0.0,
-                },
-            ),
-            create_test_bone(
-                1,
-                -1,
-                C3Vector {
-                    x: 2.0,
-                    y: 0.0,
-                    z: 0.0,
-                },
-            ),
+            create_test_bone(0, -1, C3Vector { x: 0.0, y: 0.0, z: 0.0 }),
+            create_test_bone(1, -1, C3Vector { x: 2.0, y: 0.0, z: 0.0 }),
         ];
 
         let mut skinner = M2Skinner::new(&bones, SkinningOptions::default());
         skinner.calculate_bind_pose();
 
         let vertex = create_test_vertex(
-            C3Vector {
-                x: 1.0,
-                y: 0.0,
-                z: 0.0,
-            },
+            C3Vector { x: 1.0, y: 0.0, z: 0.0 },
             [128, 127, 0, 0], // Equal weight on bones 0 and 1
             [0, 1, 0, 0],
         );
@@ -582,25 +509,13 @@ mod tests {
     fn test_weight_normalization() {
         let weights = [100, 100, 55, 0]; // Should normalize to roughly [0.4, 0.4, 0.2, 0.0]
 
-        let bones = vec![create_test_bone(
-            0,
-            -1,
-            C3Vector {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-            },
-        )];
+        let bones = vec![create_test_bone(0, -1, C3Vector { x: 0.0, y: 0.0, z: 0.0 })];
         let skinner = M2Skinner::new(&bones, SkinningOptions::default());
 
         let normalized = skinner.normalize_bone_weights(&weights);
 
         let total: f32 = normalized.iter().sum();
-        assert!(
-            (total - 1.0).abs() < 0.001,
-            "Weights should sum to 1.0, got {}",
-            total
-        );
+        assert!((total - 1.0).abs() < 0.001, "Weights should sum to 1.0, got {}", total);
 
         assert!(normalized[0] > 0.35 && normalized[0] < 0.45);
         assert!(normalized[1] > 0.35 && normalized[1] < 0.45);
@@ -610,25 +525,13 @@ mod tests {
 
     #[test]
     fn test_invalid_bone_indices() {
-        let bones = vec![create_test_bone(
-            0,
-            -1,
-            C3Vector {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-            },
-        )];
+        let bones = vec![create_test_bone(0, -1, C3Vector { x: 0.0, y: 0.0, z: 0.0 })];
 
         let mut skinner = M2Skinner::new(&bones, SkinningOptions::default());
         skinner.calculate_bind_pose();
 
         let vertex = create_test_vertex(
-            C3Vector {
-                x: 1.0,
-                y: 2.0,
-                z: 3.0,
-            },
+            C3Vector { x: 1.0, y: 2.0, z: 3.0 },
             [255, 0, 0, 0],
             [99, 0, 0, 0], // Invalid bone index 99
         );
@@ -643,25 +546,13 @@ mod tests {
 
     #[test]
     fn test_zero_weights() {
-        let bones = vec![create_test_bone(
-            0,
-            -1,
-            C3Vector {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-            },
-        )];
+        let bones = vec![create_test_bone(0, -1, C3Vector { x: 0.0, y: 0.0, z: 0.0 })];
 
         let mut skinner = M2Skinner::new(&bones, SkinningOptions::default());
         skinner.calculate_bind_pose();
 
         let vertex = create_test_vertex(
-            C3Vector {
-                x: 1.0,
-                y: 2.0,
-                z: 3.0,
-            },
+            C3Vector { x: 1.0, y: 2.0, z: 3.0 },
             [0, 0, 0, 0], // All zero weights
             [0, 0, 0, 0],
         );
@@ -677,33 +568,9 @@ mod tests {
     #[test]
     fn test_bone_hierarchy() {
         let bones = vec![
-            create_test_bone(
-                0,
-                -1,
-                C3Vector {
-                    x: 0.0,
-                    y: 0.0,
-                    z: 0.0,
-                },
-            ), // Root
-            create_test_bone(
-                1,
-                0,
-                C3Vector {
-                    x: 1.0,
-                    y: 0.0,
-                    z: 0.0,
-                },
-            ), // Child of 0
-            create_test_bone(
-                2,
-                1,
-                C3Vector {
-                    x: 0.0,
-                    y: 1.0,
-                    z: 0.0,
-                },
-            ), // Child of 1
+            create_test_bone(0, -1, C3Vector { x: 0.0, y: 0.0, z: 0.0 }), // Root
+            create_test_bone(1, 0, C3Vector { x: 1.0, y: 0.0, z: 0.0 }),  // Child of 0
+            create_test_bone(2, 1, C3Vector { x: 0.0, y: 1.0, z: 0.0 }),  // Child of 1
         ];
 
         let mut skinner = M2Skinner::new(&bones, SkinningOptions::default());

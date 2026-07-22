@@ -98,8 +98,8 @@ impl M2TextureTransform {
         let id = reader.read_u32_le()?;
 
         let transform_type_raw = reader.read_u16_le()?;
-        let transform_type = M2TextureTransformType::from_u16(transform_type_raw)
-            .unwrap_or(M2TextureTransformType::None);
+        let transform_type =
+            M2TextureTransformType::from_u16(transform_type_raw).unwrap_or(M2TextureTransformType::None);
 
         // Skip 2 bytes of padding
         reader.read_u16_le()?;
@@ -178,10 +178,7 @@ mod tests {
 
     #[test]
     fn test_texture_transform_type() {
-        assert_eq!(
-            M2TextureTransformType::from_u16(0),
-            Some(M2TextureTransformType::None)
-        );
+        assert_eq!(M2TextureTransformType::from_u16(0), Some(M2TextureTransformType::None));
         assert_eq!(
             M2TextureTransformType::from_u16(1),
             Some(M2TextureTransformType::Scroll)
@@ -190,10 +187,7 @@ mod tests {
             M2TextureTransformType::from_u16(2),
             Some(M2TextureTransformType::Rotate)
         );
-        assert_eq!(
-            M2TextureTransformType::from_u16(3),
-            Some(M2TextureTransformType::Scale)
-        );
+        assert_eq!(M2TextureTransformType::from_u16(3), Some(M2TextureTransformType::Scale));
         assert_eq!(
             M2TextureTransformType::from_u16(4),
             Some(M2TextureTransformType::Matrix)

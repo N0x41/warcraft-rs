@@ -12,11 +12,7 @@ fn test_zlib_compression_format() {
 
     // Should have compression byte prefix if compression was beneficial
     if compressed != test_data {
-        assert_eq!(
-            compressed[0],
-            flags::ZLIB,
-            "First byte should be ZLIB compression flag"
-        );
+        assert_eq!(compressed[0], flags::ZLIB, "First byte should be ZLIB compression flag");
 
         // The rest should be valid zlib data
         let zlib_data = &compressed[1..];
@@ -140,10 +136,7 @@ fn test_compression_size_validation() {
     // If compression helped, it should have the method byte
     if compressed.len() < test_data.len() {
         assert_eq!(compressed[0], flags::ZLIB);
-        assert!(
-            compressed.len() < test_data.len(),
-            "Compressed size should be smaller"
-        );
+        assert!(compressed.len() < test_data.len(), "Compressed size should be smaller");
     } else {
         // If compression didn't help, we get back the original
         assert_eq!(compressed, test_data);

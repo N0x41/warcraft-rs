@@ -1,7 +1,7 @@
 use std::io::{Read, Seek, Write};
 
-use crate::chunks::animation::M2AnimationBlock;
 use crate::chunks::C4Quaternion;
+use crate::chunks::animation::M2AnimationBlock;
 use crate::common::C3Vector;
 use crate::error::Result;
 use crate::version::M2Version;
@@ -39,9 +39,9 @@ impl M2TextureAnimationType {
 #[derive(Debug, Clone, Default)]
 pub struct M2TextureAnimation {
     /// Translation animation (3D Vector)
-    pub translation: M2AnimationBlock<C3Vector>, 
+    pub translation: M2AnimationBlock<C3Vector>,
     /// Rotation animation (Quaternion)
-    pub rotation: M2AnimationBlock<C4Quaternion>, 
+    pub rotation: M2AnimationBlock<C4Quaternion>,
     /// Scale animation (3D Vector)
     pub scale: M2AnimationBlock<C3Vector>,
 }

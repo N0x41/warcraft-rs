@@ -19,10 +19,7 @@ fn analyze_views_array(m2_data: &[u8], model: &M2Model) {
 
     // Read the views array data
     let mut cursor = Cursor::new(m2_data);
-    if cursor
-        .seek(SeekFrom::Start(model.header.views.offset as u64))
-        .is_ok()
-    {
+    if cursor.seek(SeekFrom::Start(model.header.views.offset as u64)).is_ok() {
         println!("\nViews array content:");
         for i in 0..model.header.views.count.min(10) {
             let mut bytes = [0u8; 4];
@@ -37,22 +34,11 @@ fn analyze_views_array(m2_data: &[u8], model: &M2Model) {
                     if test_cursor.seek(SeekFrom::Start(value as u64)).is_ok() {
                         let mut test_bytes = [0u8; 8];
                         if test_cursor.read_exact(&mut test_bytes).is_ok() {
-                            let count = u32::from_le_bytes([
-                                test_bytes[0],
-                                test_bytes[1],
-                                test_bytes[2],
-                                test_bytes[3],
-                            ]);
-                            let offset = u32::from_le_bytes([
-                                test_bytes[4],
-                                test_bytes[5],
-                                test_bytes[6],
-                                test_bytes[7],
-                            ]);
-                            println!(
-                                "    -> At 0x{:08X}: count={}, offset=0x{:08X}",
-                                value, count, offset
-                            );
+                            let count =
+                                u32::from_le_bytes([test_bytes[0], test_bytes[1], test_bytes[2], test_bytes[3]]);
+                            let offset =
+                                u32::from_le_bytes([test_bytes[4], test_bytes[5], test_bytes[6], test_bytes[7]]);
+                            println!("    -> At 0x{:08X}: count={}, offset=0x{:08X}", value, count, offset);
                         }
                     }
                 }
@@ -105,10 +91,7 @@ fn analyze_skin_data_locations(m2_data: &[u8], _model: &M2Model) {
 
             if triangles_count > 0 && triangles_count < 100000 {
                 println!("Potential skin header at 0x{:08X}:", offset);
-                println!(
-                    "  Indices: count={}, offset=0x{:08X}",
-                    indices_count, indices_offset
-                );
+                println!("  Indices: count={}, offset=0x{:08X}", indices_count, indices_offset);
                 println!("  Triangles: count={}", triangles_count);
             }
         }

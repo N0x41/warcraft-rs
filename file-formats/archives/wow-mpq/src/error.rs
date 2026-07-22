@@ -282,15 +282,9 @@ mod tests {
     #[test]
     fn test_memory_mapping_errors() {
         let err = Error::unsupported_feature("Memory mapping not available");
-        assert_eq!(
-            err.to_string(),
-            "Unsupported feature: Memory mapping not available"
-        );
+        assert_eq!(err.to_string(), "Unsupported feature: Memory mapping not available");
 
         let err = Error::invalid_bounds("Read beyond file end");
-        assert_eq!(
-            err.to_string(),
-            "Invalid bounds access: Read beyond file end"
-        );
+        assert_eq!(err.to_string(), "Invalid bounds access: Read beyond file end");
     }
 }

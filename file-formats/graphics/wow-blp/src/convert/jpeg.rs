@@ -2,16 +2,12 @@ use super::error::Error;
 use super::mipmap::generate_mipmaps;
 use crate::types::jpeg::MAX_JPEG_HEADER;
 use crate::types::*;
-use ::image::{
-    DynamicImage, ImageFormat, ImageReader, Rgb, RgbImage, RgbaImage, imageops::FilterType,
-};
+use ::image::{DynamicImage, ImageFormat, ImageReader, Rgb, RgbImage, RgbaImage, imageops::FilterType};
 use log::*;
 use std::io::Cursor;
 
 pub fn jpeg_to_image(image: &BlpJpeg, mipmap_level: usize) -> Result<DynamicImage, Error> {
-    let raw_jpeg = image
-        .full_jpeg(mipmap_level)
-        .ok_or(Error::MissingImage(mipmap_level))?;
+    let raw_jpeg = image.full_jpeg(mipmap_level).ok_or(Error::MissingImage(mipmap_level))?;
     let jpeg = ImageReader::with_format(Cursor::new(raw_jpeg), ImageFormat::Jpeg).decode()?;
     let mut rgba = jpeg.into_rgba8();
     switch_red_blue(&mut rgba);
@@ -145,8 +141,7 @@ mod tests {
         assert_eq!(header2, result2);
         assert_eq!(images2[0], vec![42]);
 
-        let mut images3: Vec<Vec<u8>> =
-            vec![vec![42; MAX_JPEG_HEADER + 1], vec![42; MAX_JPEG_HEADER + 1]];
+        let mut images3: Vec<Vec<u8>> = vec![vec![42; MAX_JPEG_HEADER + 1], vec![42; MAX_JPEG_HEADER + 1]];
         let result3: Vec<u8> = vec![42; MAX_JPEG_HEADER];
         let header3 = fetch_common_header(&mut images3);
         assert_eq!(header3, result3);

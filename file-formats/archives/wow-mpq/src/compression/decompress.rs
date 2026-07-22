@@ -6,9 +6,7 @@
 
 use super::algorithms;
 use super::methods::{CompressionMethod, flags};
-use crate::security::{
-    DecompressionMonitor, SecurityLimits, SessionTracker, validate_decompression_operation,
-};
+use crate::security::{DecompressionMonitor, SecurityLimits, SessionTracker, validate_decompression_operation};
 use crate::{Error, Result};
 
 /// Decompress data using the specified compression method with security monitoring
@@ -53,14 +51,7 @@ pub fn decompress(data: &[u8], method: u8, decompressed_size: usize) -> Result<V
     let session_tracker = SessionTracker::new();
     let limits = SecurityLimits::default();
 
-    decompress_secure(
-        data,
-        method,
-        decompressed_size,
-        None,
-        &session_tracker,
-        &limits,
-    )
+    decompress_secure(data, method, decompressed_size, None, &session_tracker, &limits)
 }
 
 /// Internal decompression with monitoring support
@@ -96,46 +87,30 @@ fn decompress_with_monitor(
             monitor.check_progress(data.len() as u64)?;
             Ok(data.to_vec())
         }
-        CompressionMethod::Zlib => {
-            decompress_algorithm_with_monitor(data, decompressed_size, monitor, |d, s| {
-                algorithms::zlib::decompress(d, s)
-            })
-        }
-        CompressionMethod::BZip2 => {
-            decompress_algorithm_with_monitor(data, decompressed_size, monitor, |d, s| {
-                algorithms::bzip2::decompress(d, s)
-            })
-        }
-        CompressionMethod::Lzma => {
-            decompress_algorithm_with_monitor(data, decompressed_size, monitor, |d, s| {
-                algorithms::lzma::decompress(d, s)
-            })
-        }
-        CompressionMethod::Sparse => {
-            decompress_algorithm_with_monitor(data, decompressed_size, monitor, |d, s| {
-                algorithms::sparse::decompress(d, s)
-            })
-        }
-        CompressionMethod::Implode => {
-            decompress_algorithm_with_monitor(data, decompressed_size, monitor, |d, s| {
-                algorithms::implode::decompress(d, s)
-            })
-        }
-        CompressionMethod::PKWare => {
-            decompress_algorithm_with_monitor(data, decompressed_size, monitor, |d, s| {
-                algorithms::pkware::decompress(d, s)
-            })
-        }
-        CompressionMethod::Huffman => {
-            decompress_algorithm_with_monitor(data, decompressed_size, monitor, |d, s| {
-                algorithms::huffman::decompress(d, s)
-            })
-        }
-        CompressionMethod::AdpcmMono => {
-            decompress_algorithm_with_monitor(data, decompressed_size, monitor, |d, s| {
-                algorithms::adpcm::decompress_mono(d, s)
-            })
-        }
+        CompressionMethod::Zlib => decompress_algorithm_with_monitor(data, decompressed_size, monitor, |d, s| {
+            algorithms::zlib::decompress(d, s)
+        }),
+        CompressionMethod::BZip2 => decompress_algorithm_with_monitor(data, decompressed_size, monitor, |d, s| {
+            algorithms::bzip2::decompress(d, s)
+        }),
+        CompressionMethod::Lzma => decompress_algorithm_with_monitor(data, decompressed_size, monitor, |d, s| {
+            algorithms::lzma::decompress(d, s)
+        }),
+        CompressionMethod::Sparse => decompress_algorithm_with_monitor(data, decompressed_size, monitor, |d, s| {
+            algorithms::sparse::decompress(d, s)
+        }),
+        CompressionMethod::Implode => decompress_algorithm_with_monitor(data, decompressed_size, monitor, |d, s| {
+            algorithms::implode::decompress(d, s)
+        }),
+        CompressionMethod::PKWare => decompress_algorithm_with_monitor(data, decompressed_size, monitor, |d, s| {
+            algorithms::pkware::decompress(d, s)
+        }),
+        CompressionMethod::Huffman => decompress_algorithm_with_monitor(data, decompressed_size, monitor, |d, s| {
+            algorithms::huffman::decompress(d, s)
+        }),
+        CompressionMethod::AdpcmMono => decompress_algorithm_with_monitor(data, decompressed_size, monitor, |d, s| {
+            algorithms::adpcm::decompress_mono(d, s)
+        }),
         CompressionMethod::AdpcmStereo => {
             decompress_algorithm_with_monitor(data, decompressed_size, monitor, |d, s| {
                 algorithms::adpcm::decompress_stereo(d, s)
@@ -365,8 +340,7 @@ mod tests {
 
         // Test zlib
         let compressed = algorithms::zlib::compress(original).expect("Compression failed");
-        let result =
-            decompress(&compressed, flags::ZLIB, original.len()).expect("Decompression failed");
+        let result = decompress(&compressed, flags::ZLIB, original.len()).expect("Decompression failed");
         assert_eq!(result, original);
     }
 
@@ -377,15 +351,8 @@ mod tests {
         let limits = SecurityLimits::default();
 
         // Test uncompressed with security monitoring
-        let result = decompress_secure(
-            original,
-            0,
-            original.len(),
-            Some("test.txt"),
-            &session,
-            &limits,
-        )
-        .expect("Secure decompression failed");
+        let result = decompress_secure(original, 0, original.len(), Some("test.txt"), &session, &limits)
+            .expect("Secure decompression failed");
         assert_eq!(result, original);
 
         // Verify session tracking
@@ -440,14 +407,7 @@ mod tests {
         // Second decompression should exceed session limit
         // (100 already recorded + 100 new = 200 > 150 limit)
         let second_data = vec![0u8; 100];
-        let result = decompress_secure(
-            &second_data,
-            0,
-            second_data.len(),
-            Some("file2.txt"),
-            &session,
-            &limits,
-        );
+        let result = decompress_secure(&second_data, 0, second_data.len(), Some("file2.txt"), &session, &limits);
 
         // Should fail due to session limit check during validation
         assert!(result.is_err());

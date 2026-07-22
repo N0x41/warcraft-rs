@@ -3,11 +3,7 @@ use super::mipmap::generate_mipmaps;
 use crate::types::*;
 use ::image::{DynamicImage, RgbaImage, imageops::FilterType};
 
-pub fn raw3_to_image(
-    header: &BlpHeader,
-    image: &BlpRaw3,
-    mipmap_level: usize,
-) -> Result<DynamicImage, Error> {
+pub fn raw3_to_image(header: &BlpHeader, image: &BlpRaw3, mipmap_level: usize) -> Result<DynamicImage, Error> {
     if mipmap_level >= image.images.len() {
         return Err(Error::MissingImage(mipmap_level));
     }
@@ -34,11 +30,7 @@ pub fn raw3_to_image(
     Ok(DynamicImage::ImageRgba8(res_image))
 }
 
-pub fn image_to_raw3(
-    image: DynamicImage,
-    make_mipmaps: bool,
-    mipmap_filter: FilterType,
-) -> Result<BlpRaw3, Error> {
+pub fn image_to_raw3(image: DynamicImage, make_mipmaps: bool, mipmap_filter: FilterType) -> Result<BlpRaw3, Error> {
     let raw_images = if make_mipmaps {
         generate_mipmaps(image, mipmap_filter)?.into_iter()
     } else {

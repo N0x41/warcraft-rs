@@ -153,8 +153,7 @@ mod tests {
 
         // Test parse
         let mut cursor = Cursor::new(data);
-        let parsed =
-            M2Attachment::parse(&mut cursor, M2Version::Vanilla.to_header_version()).unwrap();
+        let parsed = M2Attachment::parse(&mut cursor, M2Version::Vanilla.to_header_version()).unwrap();
 
         assert_eq!(parsed.id, 1);
         assert_eq!(parsed.bone_index, 2);
@@ -167,18 +166,9 @@ mod tests {
 
     #[test]
     fn test_attachment_types() {
-        assert_eq!(
-            M2AttachmentType::from_u16(0),
-            Some(M2AttachmentType::Shoulder)
-        );
-        assert_eq!(
-            M2AttachmentType::from_u16(13),
-            Some(M2AttachmentType::WeaponMain)
-        );
-        assert_eq!(
-            M2AttachmentType::from_u16(14),
-            Some(M2AttachmentType::WeaponOff)
-        );
+        assert_eq!(M2AttachmentType::from_u16(0), Some(M2AttachmentType::Shoulder));
+        assert_eq!(M2AttachmentType::from_u16(13), Some(M2AttachmentType::WeaponMain));
+        assert_eq!(M2AttachmentType::from_u16(14), Some(M2AttachmentType::WeaponOff));
         assert_eq!(M2AttachmentType::from_u16(20), None);
     }
 }

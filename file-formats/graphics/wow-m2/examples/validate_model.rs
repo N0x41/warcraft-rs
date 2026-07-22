@@ -40,9 +40,7 @@ fn validate_model(model: &M2Model) -> Vec<String> {
             // Check bone weights sum to 1.0 (with some tolerance)
             let weight_sum: u8 = vertex.bone_weights.iter().sum();
             if weight_sum != 255 && weight_sum != 0 {
-                issues.push(format!(
-                    "Vertex {i}: bone weights don't sum to 1.0 (sum={weight_sum})"
-                ));
+                issues.push(format!("Vertex {i}: bone weights don't sum to 1.0 (sum={weight_sum})"));
             }
 
             // Check bone indices are valid
@@ -89,10 +87,7 @@ fn validate_model(model: &M2Model) -> Vec<String> {
     for (i, bone) in model.bones.iter().enumerate() {
         if bone.parent_bone != -1 {
             if bone.parent_bone < 0 || bone.parent_bone as usize >= model.bones.len() {
-                issues.push(format!(
-                    "Bone {}: invalid parent bone index {}",
-                    i, bone.parent_bone
-                ));
+                issues.push(format!("Bone {}: invalid parent bone index {}", i, bone.parent_bone));
             } else if bone.parent_bone as usize == i {
                 issues.push(format!("Bone {i}: references itself as parent"));
             }

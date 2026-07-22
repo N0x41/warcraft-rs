@@ -305,10 +305,7 @@ mod tests {
         // Test case insensitivity
         let hash1 = jenkins_one_at_a_time("File.txt");
         let hash2 = jenkins_one_at_a_time("FILE.TXT");
-        assert_eq!(
-            hash1, hash2,
-            "Jenkins one-at-a-time should be case-insensitive"
-        );
+        assert_eq!(hash1, hash2, "Jenkins one-at-a-time should be case-insensitive");
 
         // Test path normalization
         let hash1 = jenkins_one_at_a_time("path/to/file");
@@ -318,10 +315,7 @@ mod tests {
         // Test that different files produce different hashes
         let hash1 = jenkins_one_at_a_time("file1.txt");
         let hash2 = jenkins_one_at_a_time("file2.txt");
-        assert_ne!(
-            hash1, hash2,
-            "Different files should produce different hashes"
-        );
+        assert_ne!(hash1, hash2, "Different files should produce different hashes");
     }
 
     #[test]

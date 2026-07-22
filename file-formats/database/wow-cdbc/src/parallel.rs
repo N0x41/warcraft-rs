@@ -13,14 +13,10 @@ pub fn parse_records_parallel(
     string_block: Arc<StringBlock>,
 ) -> Result<RecordSet> {
     // Create a vector to hold the records
-    let records: Arc<Mutex<Vec<Option<Record>>>> =
-        Arc::new(Mutex::new(vec![None; header.record_count as usize]));
+    let records: Arc<Mutex<Vec<Option<Record>>>> = Arc::new(Mutex::new(vec![None; header.record_count as usize]));
 
     // Define the chunk size based on the number of records
-    let chunk_size = std::cmp::max(
-        1,
-        header.record_count as usize / rayon::current_num_threads(),
-    );
+    let chunk_size = std::cmp::max(1, header.record_count as usize / rayon::current_num_threads());
 
     // Process in parallel
     (0..header.record_count as usize)
@@ -31,8 +27,7 @@ pub fn parse_records_parallel(
 
             for &index in chunk {
                 // Seek to the position of the record
-                let record_position =
-                    DbcHeader::SIZE as u64 + (index as u64 * header.record_size as u64);
+                let record_position = DbcHeader::SIZE as u64 + (index as u64 * header.record_size as u64);
                 cursor.seek(SeekFrom::Start(record_position))?;
 
                 // Parse the record
@@ -50,12 +45,7 @@ pub fn parse_records_parallel(
         })?;
 
     // Convert from Vec<Option<Record>> to Vec<Record>
-    let records = records
-        .lock()
-        .unwrap()
-        .iter()
-        .map(|r| r.clone().unwrap())
-        .collect();
+    let records = records.lock().unwrap().iter().map(|r| r.clone().unwrap()).collect();
 
     Ok(RecordSet::new(
         records,
@@ -65,11 +55,7 @@ pub fn parse_records_parallel(
 }
 
 /// Parse a record with a schema in parallel
-fn parse_record_with_schema<R: Read + Seek>(
-    cursor: &mut R,
-    schema: &Schema,
-    _header: &DbcHeader,
-) -> Result<Record> {
+fn parse_record_with_schema<R: Read + Seek>(cursor: &mut R, schema: &Schema, _header: &DbcHeader) -> Result<Record> {
     let mut values = Vec::with_capacity(schema.fields.len());
 
     for field in &schema.fields {

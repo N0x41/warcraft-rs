@@ -38,10 +38,7 @@ fn create_test_archive(path: &str) -> Result<(), Box<dyn Error>> {
     let file_types = [
         ("docs/readme.txt", b"Documentation for the project".to_vec()),
         ("docs/license.txt", b"MIT License".to_vec()),
-        (
-            "src/main.cpp",
-            b"#include <iostream>\nint main() { }".to_vec(),
-        ),
+        ("src/main.cpp", b"#include <iostream>\nint main() { }".to_vec()),
         ("assets/texture.tga", vec![0xAA; 1024]), // Binary data
         ("data/config.ini", b"[Settings]\nvalue=42".to_vec()),
     ];
@@ -66,10 +63,7 @@ fn bulk_modify_archive(path: &str) -> Result<(), Box<dyn Error>> {
     let text_files = [
         ("docs/changelog.txt", "Version 1.0 - Initial release"),
         ("docs/api.txt", "API Documentation"),
-        (
-            "src/utils.cpp",
-            "#include \"utils.h\"\n// Utility functions",
-        ),
+        ("src/utils.cpp", "#include \"utils.h\"\n// Utility functions"),
     ];
 
     for (name, content) in &text_files {
@@ -87,9 +81,7 @@ fn bulk_modify_archive(path: &str) -> Result<(), Box<dyn Error>> {
     ];
 
     for (name, content) in &sensitive_files {
-        let options = AddFileOptions::new()
-            .compression(CompressionMethod::Zlib)
-            .encrypt();
+        let options = AddFileOptions::new().compression(CompressionMethod::Zlib).encrypt();
 
         archive.add_file_data(content.as_bytes(), name, options)?;
         println!("  🔒 Added encrypted: {name}");
@@ -154,10 +146,7 @@ fn list_archive_details(path: &str) -> Result<(), Box<dyn Error>> {
 
     println!("\nTotal files: {}", files.len());
     println!("\nFile listing:");
-    println!(
-        "{:<30} {:>10} {:>10} {:>10}",
-        "Name", "Size", "Compressed", "Encrypted"
-    );
+    println!("{:<30} {:>10} {:>10} {:>10}", "Name", "Size", "Compressed", "Encrypted");
     println!("{:-<60}", "");
 
     for entry in files {

@@ -13,13 +13,9 @@ fn generate_test_audio(samples: usize) -> Vec<u8> {
         let sample_rate = 44100.0;
 
         // Mix of sine waves for more realistic audio
-        let sample = (2.0 * std::f32::consts::PI * frequency * t * samples as f32 / sample_rate)
-            .sin()
-            * 8000.0
-            + (4.0 * std::f32::consts::PI * frequency * t * samples as f32 / sample_rate).sin()
-                * 2000.0
-            + (8.0 * std::f32::consts::PI * frequency * t * samples as f32 / sample_rate).sin()
-                * 500.0;
+        let sample = (2.0 * std::f32::consts::PI * frequency * t * samples as f32 / sample_rate).sin() * 8000.0
+            + (4.0 * std::f32::consts::PI * frequency * t * samples as f32 / sample_rate).sin() * 2000.0
+            + (8.0 * std::f32::consts::PI * frequency * t * samples as f32 / sample_rate).sin() * 500.0;
 
         let sample_i16 = sample as i16;
         data.push((sample_i16 & 0xFF) as u8);
@@ -40,8 +36,7 @@ fn extract_samples(data: &[u8]) -> Vec<i16> {
 fn calculate_snr(original: &[i16], decoded: &[i16]) -> f32 {
     assert_eq!(original.len(), decoded.len());
 
-    let signal_power: f64 =
-        original.iter().map(|&s| (s as f64).powi(2)).sum::<f64>() / original.len() as f64;
+    let signal_power: f64 = original.iter().map(|&s| (s as f64).powi(2)).sum::<f64>() / original.len() as f64;
 
     let noise_power: f64 = original
         .iter()
@@ -70,8 +65,7 @@ fn test_adpcm_compression_basic() {
     assert!(compressed.len() > 4); // At least header + initial sample
 
     // Decompress
-    let decompressed = decompress(&compressed, flags::ADPCM_MONO, original.len())
-        .expect("ADPCM decompression failed");
+    let decompressed = decompress(&compressed, flags::ADPCM_MONO, original.len()).expect("ADPCM decompression failed");
 
     assert_eq!(decompressed.len(), original.len());
 
@@ -91,8 +85,7 @@ fn test_adpcm_silence() {
     let silence = vec![0u8; 1000];
 
     let compressed = compress(&silence, flags::ADPCM_MONO).expect("ADPCM compression failed");
-    let decompressed = decompress(&compressed, flags::ADPCM_MONO, silence.len())
-        .expect("ADPCM decompression failed");
+    let decompressed = decompress(&compressed, flags::ADPCM_MONO, silence.len()).expect("ADPCM decompression failed");
 
     // Silence should compress reasonably well
     // With ADPCM, we still need to encode step markers and headers
@@ -120,8 +113,7 @@ fn test_adpcm_maximum_values() {
     }
 
     let compressed = compress(&data, flags::ADPCM_MONO).expect("ADPCM compression failed");
-    let decompressed =
-        decompress(&compressed, flags::ADPCM_MONO, data.len()).expect("ADPCM decompression failed");
+    let decompressed = decompress(&compressed, flags::ADPCM_MONO, data.len()).expect("ADPCM decompression failed");
 
     assert_eq!(decompressed.len(), data.len());
 
@@ -148,8 +140,7 @@ fn test_adpcm_gradual_change() {
     }
 
     let compressed = compress(&data, flags::ADPCM_MONO).expect("ADPCM compression failed");
-    let decompressed =
-        decompress(&compressed, flags::ADPCM_MONO, data.len()).expect("ADPCM decompression failed");
+    let decompressed = decompress(&compressed, flags::ADPCM_MONO, data.len()).expect("ADPCM decompression failed");
 
     // Check that gradual changes are preserved
     let original_samples = extract_samples(&data);
@@ -174,8 +165,8 @@ fn test_adpcm_small_input() {
     let small_data = vec![0x12, 0x34, 0x56, 0x78]; // Two samples
 
     let compressed = compress(&small_data, flags::ADPCM_MONO).expect("ADPCM compression failed");
-    let decompressed = decompress(&compressed, flags::ADPCM_MONO, small_data.len())
-        .expect("ADPCM decompression failed");
+    let decompressed =
+        decompress(&compressed, flags::ADPCM_MONO, small_data.len()).expect("ADPCM decompression failed");
 
     assert_eq!(decompressed.len(), small_data.len());
 }
@@ -205,20 +196,11 @@ fn test_adpcm_compression_ratio() {
 
     // ADPCM typically achieves about 2:1 to 4:1 compression
     // Our implementation with headers and markers may be less efficient
-    assert!(
-        sine_ratio < 0.7,
-        "Sine wave compression ratio too poor: {sine_ratio}"
-    );
-    assert!(
-        noise_ratio < 0.8,
-        "Noise compression ratio too poor: {noise_ratio}"
-    );
+    assert!(sine_ratio < 0.7, "Sine wave compression ratio too poor: {sine_ratio}");
+    assert!(noise_ratio < 0.8, "Noise compression ratio too poor: {noise_ratio}");
 
     // Sine should compress better than noise
-    assert!(
-        sine_ratio < noise_ratio,
-        "Sine should compress better than noise"
-    );
+    assert!(sine_ratio < noise_ratio, "Sine should compress better than noise");
 }
 
 #[test]
@@ -260,16 +242,15 @@ fn test_adpcm_stereo_compression_basic() {
     }
 
     // Compress using ADPCM stereo
-    let compressed =
-        compress(&stereo_data, flags::ADPCM_STEREO).expect("ADPCM stereo compression failed");
+    let compressed = compress(&stereo_data, flags::ADPCM_STEREO).expect("ADPCM stereo compression failed");
 
     // Should have some compression
     assert!(compressed.len() < stereo_data.len());
     assert!(compressed.len() > 8); // At least header + initial samples
 
     // Decompress
-    let decompressed = decompress(&compressed, flags::ADPCM_STEREO, stereo_data.len())
-        .expect("ADPCM stereo decompression failed");
+    let decompressed =
+        decompress(&compressed, flags::ADPCM_STEREO, stereo_data.len()).expect("ADPCM stereo decompression failed");
 
     assert_eq!(decompressed.len(), stereo_data.len());
 
@@ -293,10 +274,7 @@ fn test_adpcm_stereo_compression_basic() {
     }
 
     // Both channels should maintain reasonable quality
-    assert!(
-        max_left_error < 1500,
-        "Left channel error too high: {max_left_error}"
-    );
+    assert!(max_left_error < 1500, "Left channel error too high: {max_left_error}");
     assert!(
         max_right_error < 1500,
         "Right channel error too high: {max_right_error}"
@@ -310,8 +288,7 @@ fn test_adpcm_stereo_silence() {
     let silence = vec![0u8; 2000]; // 500 stereo samples
 
     let compressed = compress(&silence, flags::ADPCM_STEREO).expect("Compression failed");
-    let decompressed =
-        decompress(&compressed, flags::ADPCM_STEREO, silence.len()).expect("Decompression failed");
+    let decompressed = decompress(&compressed, flags::ADPCM_STEREO, silence.len()).expect("Decompression failed");
 
     // Stereo silence should compress reasonably well
     assert!(compressed.len() < silence.len());
@@ -357,20 +334,14 @@ fn test_adpcm_stereo_compression_ratio() {
     let sine_ratio = sine_compressed.len() as f32 / stereo_sine.len() as f32;
 
     // ADPCM should achieve reasonable compression for stereo
-    assert!(
-        sine_ratio < 0.7,
-        "Stereo sine compression ratio too poor: {sine_ratio}"
-    );
+    assert!(sine_ratio < 0.7, "Stereo sine compression ratio too poor: {sine_ratio}");
     assert!(
         noise_ratio < 0.8,
         "Stereo noise compression ratio too poor: {noise_ratio}"
     );
 
     // Sine should compress better than noise
-    assert!(
-        sine_ratio < noise_ratio,
-        "Sine should compress better than noise"
-    );
+    assert!(sine_ratio < noise_ratio, "Sine should compress better than noise");
 }
 
 #[test]
@@ -384,10 +355,7 @@ fn test_adpcm_stereo_odd_samples() {
     // Test with odd number of stereo samples
     let odd_stereo = vec![0u8; 6]; // 3 samples = 1.5 stereo pairs
     let result = compress(&odd_stereo, flags::ADPCM_STEREO);
-    assert!(
-        result.is_err(),
-        "Should fail with odd number of stereo samples"
-    );
+    assert!(result.is_err(), "Should fail with odd number of stereo samples");
 }
 
 #[test]
@@ -415,8 +383,7 @@ fn test_adpcm_stereo_bzip2_multi_compression() {
     assert!(compressed.len() < stereo_data.len());
 
     // Decompress and verify
-    let decompressed = decompress(&compressed, multi_flags, stereo_data.len())
-        .expect("Multi-decompression failed");
+    let decompressed = decompress(&compressed, multi_flags, stereo_data.len()).expect("Multi-decompression failed");
 
     assert_eq!(decompressed.len(), stereo_data.len());
 
@@ -429,9 +396,6 @@ fn test_adpcm_stereo_bzip2_multi_compression() {
         let right_diff = (original_samples[i * 2 + 1] - decoded_samples[i * 2 + 1]).abs();
 
         assert!(left_diff < 2000, "Left channel sample {i} error too large");
-        assert!(
-            right_diff < 2000,
-            "Right channel sample {i} error too large"
-        );
+        assert!(right_diff < 2000, "Right channel sample {i} error too large");
     }
 }

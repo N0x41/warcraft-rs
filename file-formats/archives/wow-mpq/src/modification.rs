@@ -319,12 +319,7 @@ impl MutableArchive {
     /// - `data`: File data to add
     /// - `archive_name`: Name for the file within the archive
     /// - `options`: Options controlling compression, encryption, etc.
-    pub fn add_file_data(
-        &mut self,
-        data: &[u8],
-        archive_name: &str,
-        options: AddFileOptions,
-    ) -> Result<()> {
+    pub fn add_file_data(&mut self, data: &[u8], archive_name: &str, options: AddFileOptions) -> Result<()> {
         // Normalize the archive name (convert forward slashes to backslashes)
         let archive_name = archive_name.replace('/', "\\");
 
@@ -335,25 +330,24 @@ impl MutableArchive {
         let is_internal_update = archive_name == "(listfile)" || archive_name == "(attributes)";
 
         // Check if file exists and if we should replace it
-        let existing_block_index =
-            if let Some((hash_index, entry)) = self.find_file_entry(&archive_name)? {
-                if !options.replace_existing {
-                    return Err(Error::FileExists(archive_name));
-                }
-                // Mark the existing entry as deleted for now
-                if let Some(hash_table) = &mut self.hash_table {
-                    hash_table.get_mut(hash_index).unwrap().block_index = HashEntry::EMPTY_DELETED;
-                }
+        let existing_block_index = if let Some((hash_index, entry)) = self.find_file_entry(&archive_name)? {
+            if !options.replace_existing {
+                return Err(Error::FileExists(archive_name));
+            }
+            // Mark the existing entry as deleted for now
+            if let Some(hash_table) = &mut self.hash_table {
+                hash_table.get_mut(hash_index).unwrap().block_index = HashEntry::EMPTY_DELETED;
+            }
 
-                // If this is a special file update, remember its block index for reuse
-                if is_internal_update {
-                    Some(entry.block_index)
-                } else {
-                    None
-                }
+            // If this is a special file update, remember its block index for reuse
+            if is_internal_update {
+                Some(entry.block_index)
             } else {
                 None
-            };
+            }
+        } else {
+            None
+        };
 
         // Determine block index - reuse for special files, allocate new for regular files
         let block_index = if let Some(existing_idx) = existing_block_index {
@@ -366,8 +360,7 @@ impl MutableArchive {
         let file_offset = self.get_archive_end_offset()?;
 
         // Compress the file data if requested
-        let (compressed_data, compressed_size, flags) =
-            self.prepare_file_data(data, &archive_name, &options)?;
+        let (compressed_data, compressed_size, flags) = self.prepare_file_data(data, &archive_name, &options)?;
 
         // Write the file data to the archive
         self.file.seek(SeekFrom::Start(file_offset))?;
@@ -421,8 +414,7 @@ impl MutableArchive {
 
         // Track this block as modified (for attributes CRC calculation)
         if archive_name != "(attributes)" {
-            self.modified_blocks
-                .insert(block_index, archive_name.clone());
+            self.modified_blocks.insert(block_index, archive_name.clone());
         }
 
         // Update (listfile) if present (but not if we're adding the listfile itself)
@@ -610,9 +602,7 @@ impl MutableArchive {
 
                     let filename = filename.unwrap_or_else(|| {
                         // Generate placeholder name if not found in listfile
-                        generate_anonymous_filename(
-                            ((entry.name_1 as u64) << 32 | entry.name_2 as u64) as u32,
-                        )
+                        generate_anonymous_filename(((entry.name_1 as u64) << 32 | entry.name_2 as u64) as u32)
                     });
 
                     files_to_copy.push((hash_idx, block_idx, filename, *entry, *block));
@@ -649,13 +639,7 @@ impl MutableArchive {
             let encrypt = block_entry.is_encrypted();
 
             // Add file to builder
-            builder = builder.add_file_data_with_options(
-                file_data,
-                filename,
-                compression,
-                encrypt,
-                hash_entry.locale,
-            );
+            builder = builder.add_file_data_with_options(file_data, filename, compression, encrypt, hash_entry.locale);
         }
 
         // Build the new archive
@@ -669,10 +653,7 @@ impl MutableArchive {
 
         // Re-open the compacted archive
         self.archive = Archive::open(&self._path)?;
-        self.file = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .open(&self._path)?;
+        self.file = OpenOptions::new().read(true).write(true).open(&self._path)?;
 
         // Reset cached tables
         self.hash_table = None;
@@ -728,12 +709,7 @@ impl MutableArchive {
             .block_table
             .as_ref()
             .map(|t| t.entries().len())
-            .unwrap_or_else(|| {
-                self.archive
-                    .block_table()
-                    .map(|t| t.entries().len())
-                    .unwrap_or(0)
-            });
+            .unwrap_or_else(|| self.archive.block_table().map(|t| t.entries().len()).unwrap_or(0));
 
         let mut attrs = match Attributes::parse(&Bytes::from(attrs_data), block_count) {
             Ok(a) => a,
@@ -881,9 +857,7 @@ impl MutableArchive {
                 }
                 self.block_table = Some(new_table);
             } else {
-                return Err(Error::InvalidFormat(
-                    "No block table in archive".to_string(),
-                ));
+                return Err(Error::InvalidFormat("No block table in archive".to_string()));
             }
         }
 
@@ -943,18 +917,15 @@ impl MutableArchive {
         let archive_offset = self.archive.archive_offset();
 
         // Find the maximum position used by tables
-        let hash_table_end =
-            archive_offset + header.get_hash_table_pos() + (header.hash_table_size * 16) as u64; // Each hash entry is 16 bytes
-        let block_table_end =
-            archive_offset + header.get_block_table_pos() + (header.block_table_size * 16) as u64; // Each block entry is 16 bytes
+        let hash_table_end = archive_offset + header.get_hash_table_pos() + (header.hash_table_size * 16) as u64; // Each hash entry is 16 bytes
+        let block_table_end = archive_offset + header.get_block_table_pos() + (header.block_table_size * 16) as u64; // Each block entry is 16 bytes
 
         // Also check existing file data positions
         let mut max_file_end = 0u64;
         if let Some(block_table) = self.archive.block_table() {
             for entry in block_table.entries() {
                 if entry.flags & BlockEntry::FLAG_EXISTS != 0 {
-                    let file_end =
-                        archive_offset + entry.file_pos as u64 + entry.compressed_size as u64;
+                    let file_end = archive_offset + entry.file_pos as u64 + entry.compressed_size as u64;
                     max_file_end = max_file_end.max(file_end);
                 }
             }
@@ -964,8 +935,7 @@ impl MutableArchive {
         if let Some(block_table) = &self.block_table {
             for entry in block_table.entries() {
                 if entry.flags & BlockEntry::FLAG_EXISTS != 0 {
-                    let file_end =
-                        archive_offset + entry.file_pos as u64 + entry.compressed_size as u64;
+                    let file_end = archive_offset + entry.file_pos as u64 + entry.compressed_size as u64;
                     max_file_end = max_file_end.max(file_end);
                 }
             }
@@ -1081,9 +1051,9 @@ impl MutableArchive {
 
         // Linear probing to find empty or deleted slot
         loop {
-            let entry = hash_table.get_mut(index as usize).ok_or_else(|| {
-                Error::InvalidFormat("Hash table index out of bounds".to_string())
-            })?;
+            let entry = hash_table
+                .get_mut(index as usize)
+                .ok_or_else(|| Error::InvalidFormat("Hash table index out of bounds".to_string()))?;
 
             if entry.is_empty() || entry.is_deleted() {
                 // Found empty or deleted slot
@@ -1151,10 +1121,7 @@ impl MutableArchive {
         };
 
         // Remove the filename line
-        let lines: Vec<&str> = current_content
-            .lines()
-            .filter(|line| line.trim() != filename)
-            .collect();
+        let lines: Vec<&str> = current_content.lines().filter(|line| line.trim() != filename).collect();
 
         // Write updated listfile back if content changed
         let new_content = lines.join("\n");
@@ -1329,10 +1296,7 @@ impl MutableArchive {
     }
 
     /// Create HET table data from hash table (simplified version of ArchiveBuilder logic)
-    fn create_het_table_from_hash_table(
-        &self,
-        hash_table: &HashTable,
-    ) -> Result<(Vec<u8>, HetHeader)> {
+    fn create_het_table_from_hash_table(&self, hash_table: &HashTable) -> Result<(Vec<u8>, HetHeader)> {
         use crate::crypto::het_hash;
 
         // Count actual files from the hash table
@@ -1386,12 +1350,7 @@ impl MutableArchive {
                 loop {
                     if het_hash_table[current_index] == 0xFF {
                         het_hash_table[current_index] = name_hash1;
-                        self.write_bit_entry(
-                            &mut file_indices,
-                            current_index,
-                            file_index as u64,
-                            index_size,
-                        )?;
+                        self.write_bit_entry(&mut file_indices, current_index, file_index as u64, index_size)?;
                         break;
                     }
                     current_index = (current_index + 1) % hash_table_entries as usize;
@@ -1436,10 +1395,7 @@ impl MutableArchive {
     }
 
     /// Create BET table data from block table (simplified version)
-    fn create_bet_table_from_block_table(
-        &self,
-        block_table: &BlockTable,
-    ) -> Result<(Vec<u8>, BetHeader)> {
+    fn create_bet_table_from_block_table(&self, block_table: &BlockTable) -> Result<(Vec<u8>, BetHeader)> {
         use crate::crypto::jenkins_hash;
 
         let file_count = block_table.entries().len() as u32;
@@ -1449,8 +1405,7 @@ impl MutableArchive {
         let bit_count_file_size = 32;
         let bit_count_cmp_size = 32;
         let bit_count_flag_index = 8; // Assume max 256 unique flag combinations
-        let table_entry_size =
-            bit_count_file_pos + bit_count_file_size + bit_count_cmp_size + bit_count_flag_index;
+        let table_entry_size = bit_count_file_pos + bit_count_file_size + bit_count_cmp_size + bit_count_flag_index;
 
         let header = BetHeader {
             table_size: 0, // Will be calculated later
@@ -1519,13 +1474,7 @@ impl MutableArchive {
     }
 
     /// Write a bit-packed entry to a byte array
-    fn write_bit_entry(
-        &self,
-        data: &mut [u8],
-        index: usize,
-        value: u64,
-        bit_size: u32,
-    ) -> Result<()> {
+    fn write_bit_entry(&self, data: &mut [u8], index: usize, value: u64, bit_size: u32) -> Result<()> {
         let bit_offset = index * bit_size as usize;
         let byte_offset = bit_offset / 8;
         let bit_shift = bit_offset % 8;
@@ -1600,23 +1549,17 @@ impl MutableArchive {
             self.file.write_all(b"MPQ\x1A")?; // Signature
             self.file.write_all(&header.header_size.to_le_bytes())?;
             self.file.write_all(&header.archive_size.to_le_bytes())?;
-            self.file
-                .write_all(&(header.format_version as u16).to_le_bytes())?;
+            self.file.write_all(&(header.format_version as u16).to_le_bytes())?;
             self.file.write_all(&header.block_size.to_le_bytes())?;
 
             // Use updated positions if available (for V3+), otherwise use original
-            let hash_pos = self
-                .updated_hash_table_pos
-                .unwrap_or(header.hash_table_pos as u64) as u32;
-            let block_pos = self
-                .updated_block_table_pos
-                .unwrap_or(header.block_table_pos as u64) as u32;
+            let hash_pos = self.updated_hash_table_pos.unwrap_or(header.hash_table_pos as u64) as u32;
+            let block_pos = self.updated_block_table_pos.unwrap_or(header.block_table_pos as u64) as u32;
 
             self.file.write_all(&hash_pos.to_le_bytes())?;
             self.file.write_all(&block_pos.to_le_bytes())?;
             self.file.write_all(&header.hash_table_size.to_le_bytes())?;
-            self.file
-                .write_all(&header.block_table_size.to_le_bytes())?;
+            self.file.write_all(&header.block_table_size.to_le_bytes())?;
 
             // Write extended fields for v2+
             if header.format_version >= FormatVersion::V2 {

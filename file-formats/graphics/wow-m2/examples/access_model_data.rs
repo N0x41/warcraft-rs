@@ -82,10 +82,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Access bone lookup table
-    println!(
-        "\nBone lookup table: {} entries",
-        model.key_bone_lookup.len()
-    );
+    println!("\nBone lookup table: {} entries", model.key_bone_lookup.len());
     if !model.key_bone_lookup.is_empty() {
         println!(
             "  First 5 lookups: {:?}",
@@ -102,10 +99,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Animation {}:", i);
         println!("  Animation ID: {}", anim.animation_id);
         println!("  Sub-animation ID: {}", anim.sub_animation_id);
-        let duration = anim
-            .end_timestamp
-            .unwrap_or(0)
-            .saturating_sub(anim.start_timestamp);
+        let duration = anim.end_timestamp.unwrap_or(0).saturating_sub(anim.start_timestamp);
         println!("  Duration: {}ms", duration);
         println!("  Move speed: {}", anim.movement_speed);
         println!("  Flags: {:#x}", anim.flags);
@@ -116,10 +110,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Animation lookup table
-    println!(
-        "\nAnimation lookup table: {} entries",
-        model.animation_lookup.len()
-    );
+    println!("\nAnimation lookup table: {} entries", model.animation_lookup.len());
 
     // ========================================
     // 5. ACCESS CHUNKED FORMAT DATA (Legion+)
@@ -219,19 +210,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Load first animation file
         match model.load_animation_file(0, &resolver) {
             Ok(anim_data) => {
-                println!(
-                    "Successfully loaded animation 0 ({} bytes)",
-                    anim_data.len()
-                );
+                println!("Successfully loaded animation 0 ({} bytes)", anim_data.len());
 
                 // Parse the animation file
                 let mut cursor = Cursor::new(&anim_data);
                 if let Ok(anim_file) = AnimFile::parse(&mut cursor) {
                     println!("Animation file format: {:?}", anim_file.format);
                     match &anim_file.metadata {
-                        AnimMetadata::Legacy {
-                            animation_count, ..
-                        } => {
+                        AnimMetadata::Legacy { animation_count, .. } => {
                             println!("  Animation count: {}", animation_count);
                         }
                         AnimMetadata::Modern { header, .. } => {
@@ -266,24 +252,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Get specific file IDs
     if let Some(skin_ids) = model.get_skin_file_ids() {
-        println!(
-            "Direct skin ID access: {:?}",
-            &skin_ids[..2.min(skin_ids.len())]
-        );
+        println!("Direct skin ID access: {:?}", &skin_ids[..2.min(skin_ids.len())]);
     }
 
     if let Some(anim_ids) = model.get_animation_file_ids() {
-        println!(
-            "Direct animation ID access: {:?}",
-            &anim_ids[..2.min(anim_ids.len())]
-        );
+        println!("Direct animation ID access: {:?}", &anim_ids[..2.min(anim_ids.len())]);
     }
 
     if let Some(bone_ids) = model.get_bone_file_ids() {
-        println!(
-            "Direct bone ID access: {:?}",
-            &bone_ids[..2.min(bone_ids.len())]
-        );
+        println!("Direct bone ID access: {:?}", &bone_ids[..2.min(bone_ids.len())]);
     }
 
     // Check animation blacklisting

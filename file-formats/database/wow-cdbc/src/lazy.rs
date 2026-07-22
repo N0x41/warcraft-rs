@@ -134,12 +134,7 @@ impl<'a> LazyDbcParser<'a> {
 
     /// Get a lazy record iterator
     pub fn record_iterator(&self) -> LazyRecordIterator<'a> {
-        LazyRecordIterator::new(
-            self.data,
-            self.header,
-            self.schema,
-            Arc::clone(&self.string_block),
-        )
+        LazyRecordIterator::new(self.data, self.header, self.schema, Arc::clone(&self.string_block))
     }
 
     /// Get a record by index
@@ -153,8 +148,7 @@ impl<'a> LazyDbcParser<'a> {
         }
 
         let mut cursor = Cursor::new(self.data);
-        let record_position =
-            DbcHeader::SIZE as u64 + (index as u64 * self.header.record_size as u64);
+        let record_position = DbcHeader::SIZE as u64 + (index as u64 * self.header.record_size as u64);
         cursor.set_position(record_position);
 
         if let Some(schema) = self.schema {
@@ -165,11 +159,7 @@ impl<'a> LazyDbcParser<'a> {
     }
 
     /// Parse a record using a schema
-    fn parse_record_with_schema(
-        &self,
-        cursor: &mut Cursor<&'a [u8]>,
-        schema: &Schema,
-    ) -> Result<Record> {
+    fn parse_record_with_schema(&self, cursor: &mut Cursor<&'a [u8]>, schema: &Schema) -> Result<Record> {
         let mut values = Vec::with_capacity(schema.fields.len());
 
         for field in &schema.fields {
@@ -208,11 +198,7 @@ impl<'a> LazyDbcParser<'a> {
     }
 
     /// Parse a field value based on its type
-    fn parse_field_value(
-        &self,
-        cursor: &mut Cursor<&'a [u8]>,
-        field_type: FieldType,
-    ) -> Result<Value> {
+    fn parse_field_value(&self, cursor: &mut Cursor<&'a [u8]>, field_type: FieldType) -> Result<Value> {
         crate::field_parser::parse_field_value(cursor, field_type)
     }
 

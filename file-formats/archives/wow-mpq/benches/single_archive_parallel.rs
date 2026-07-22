@@ -10,10 +10,7 @@ use wow_mpq::single_archive_parallel::{ParallelArchive, ParallelConfig, extract_
 use wow_mpq::{Archive, ArchiveBuilder, compression::flags};
 
 /// Create a test archive with many files for benchmarking
-fn create_benchmark_archive(
-    num_files: usize,
-    file_size_kb: usize,
-) -> (TempDir, std::path::PathBuf) {
+fn create_benchmark_archive(num_files: usize, file_size_kb: usize) -> (TempDir, std::path::PathBuf) {
     let temp_dir = TempDir::new().unwrap();
     let path = temp_dir.path().join("benchmark.mpq");
 
@@ -26,10 +23,7 @@ fn create_benchmark_archive(
     let content = content_template.repeat(file_size_kb);
 
     for i in 0..num_files {
-        builder = builder.add_file_data(
-            content.clone().into_bytes(),
-            &format!("data/file_{i:04}.dat"),
-        );
+        builder = builder.add_file_data(content.clone().into_bytes(), &format!("data/file_{i:04}.dat"));
     }
 
     builder.build(&path).unwrap();
@@ -73,20 +67,14 @@ fn bench_multiple_file_extraction(c: &mut Criterion) {
         });
 
         // Batched parallel extraction
-        group.bench_with_input(
-            BenchmarkId::new("parallel_batched", count),
-            &files,
-            |b, files| {
-                let archive = ParallelArchive::open(&archive_path).unwrap();
-                let batch_size = (count / 10).max(1);
-                b.iter(|| {
-                    let results = archive
-                        .extract_files_batched(black_box(files), batch_size)
-                        .unwrap();
-                    black_box(results)
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("parallel_batched", count), &files, |b, files| {
+            let archive = ParallelArchive::open(&archive_path).unwrap();
+            let batch_size = (count / 10).max(1);
+            b.iter(|| {
+                let results = archive.extract_files_batched(black_box(files), batch_size).unwrap();
+                black_box(results)
+            });
+        });
     }
 
     group.finish();
@@ -192,19 +180,13 @@ fn bench_thread_pool_scaling(c: &mut Criterion) {
     let thread_counts = vec![1, 2, 4, 8, 16];
 
     for &threads in &thread_counts {
-        group.bench_with_input(
-            BenchmarkId::from_parameter(threads),
-            &threads,
-            |b, &num_threads| {
-                let config = ParallelConfig::new().threads(num_threads);
-                b.iter(|| {
-                    let results =
-                        extract_with_config(black_box(&archive_path), &files, config.clone())
-                            .unwrap();
-                    black_box(results)
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::from_parameter(threads), &threads, |b, &num_threads| {
+            let config = ParallelConfig::new().threads(num_threads);
+            b.iter(|| {
+                let results = extract_with_config(black_box(&archive_path), &files, config.clone()).unwrap();
+                black_box(results)
+            });
+        });
     }
 
     group.finish();
@@ -237,9 +219,7 @@ fn bench_parallel_overhead(c: &mut Criterion) {
     group.bench_function("parallel_small", |b| {
         let archive = ParallelArchive::open(&archive_path).unwrap();
         b.iter(|| {
-            let results = archive
-                .extract_files_parallel(black_box(&small_files))
-                .unwrap();
+            let results = archive.extract_files_parallel(black_box(&small_files)).unwrap();
             black_box(results)
         });
     });
@@ -264,9 +244,7 @@ fn bench_parallel_overhead(c: &mut Criterion) {
     group.bench_function("parallel_large", |b| {
         let archive = ParallelArchive::open(&archive_path).unwrap();
         b.iter(|| {
-            let results = archive
-                .extract_files_parallel(black_box(&large_files))
-                .unwrap();
+            let results = archive.extract_files_parallel(black_box(&large_files)).unwrap();
             black_box(results)
         });
     });
@@ -337,9 +315,7 @@ fn bench_error_handling(c: &mut Criterion) {
     group.bench_function("skip_errors", |b| {
         let config = ParallelConfig::new().skip_errors(true);
         b.iter(|| {
-            let results =
-                extract_with_config(black_box(&archive_path), &mixed_files, config.clone())
-                    .unwrap();
+            let results = extract_with_config(black_box(&archive_path), &mixed_files, config.clone()).unwrap();
             black_box(results)
         });
     });
@@ -352,9 +328,7 @@ fn bench_error_handling(c: &mut Criterion) {
     group.bench_function("valid_only", |b| {
         let archive = ParallelArchive::open(&archive_path).unwrap();
         b.iter(|| {
-            let results = archive
-                .extract_files_parallel(black_box(&valid_files))
-                .unwrap();
+            let results = archive.extract_files_parallel(black_box(&valid_files)).unwrap();
             black_box(results)
         });
     });

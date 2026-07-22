@@ -139,11 +139,7 @@ impl M2Light {
         Self {
             light_type,
             bone_index,
-            position: C3Vector {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-            },
+            position: C3Vector { x: 0.0, y: 0.0, z: 0.0 },
             ambient_color_animation: M2AnimationBlock::new(M2AnimationTrack::default()),
             diffuse_color_animation: M2AnimationBlock::new(M2AnimationTrack::default()),
             attenuation_start_animation: M2AnimationBlock::new(M2AnimationTrack::default()),
@@ -169,9 +165,7 @@ mod tests {
 
         // Test write
         let mut data = Vec::new();
-        light
-            .write(&mut data, M2Version::Vanilla.to_header_version())
-            .unwrap();
+        light.write(&mut data, M2Version::Vanilla.to_header_version()).unwrap();
 
         // Test parse
         let mut cursor = Cursor::new(data);

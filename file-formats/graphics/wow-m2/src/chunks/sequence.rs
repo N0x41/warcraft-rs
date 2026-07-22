@@ -185,10 +185,7 @@ impl M2Sequence {
             flags: 0,
             frequency: 0,
             padding: 0,
-            replay: M2AnimationRepeat {
-                minimum: 0,
-                maximum: 0,
-            },
+            replay: M2AnimationRepeat { minimum: 0, maximum: 0 },
             blend_time: 0,
             bounds: M2Bounds {
                 minimum: [0.0, 0.0, 0.0],
@@ -216,8 +213,7 @@ mod tests {
 
         // Read back
         let mut cursor = Cursor::new(buffer);
-        let parsed =
-            M2Sequence::parse(&mut cursor, M2Version::Vanilla.to_header_version()).unwrap();
+        let parsed = M2Sequence::parse(&mut cursor, M2Version::Vanilla.to_header_version()).unwrap();
 
         // Verify
         assert_eq!(parsed.animation_id, 1);

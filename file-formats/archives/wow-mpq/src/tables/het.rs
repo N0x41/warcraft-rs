@@ -58,12 +58,7 @@ impl HetTable {
     const SIGNATURE: u32 = 0x1A544548; // "HET\x1A"
 
     /// Read and decompress/decrypt a HET table
-    pub fn read<R: Read + Seek>(
-        reader: &mut R,
-        offset: u64,
-        compressed_size: u64,
-        key: u32,
-    ) -> Result<Self> {
+    pub fn read<R: Read + Seek>(reader: &mut R, offset: u64, compressed_size: u64, key: u32) -> Result<Self> {
         reader.seek(SeekFrom::Start(offset))?;
 
         // Read the compressed/encrypted data
@@ -72,9 +67,7 @@ impl HetTable {
 
         // Check if we have at least the extended header (12 bytes)
         if data.len() < 12 {
-            return Err(Error::invalid_format(
-                "HET table too small for extended header",
-            ));
+            return Err(Error::invalid_format("HET table too small for extended header"));
         }
 
         // Parse the extended header (first 12 bytes - never encrypted)
@@ -82,9 +75,7 @@ impl HetTable {
         let ext_version = u32::from_le_bytes([data[4], data[5], data[6], data[7]]);
         let ext_data_size = u32::from_le_bytes([data[8], data[9], data[10], data[11]]);
 
-        log::debug!(
-            "HET extended header: sig=0x{ext_signature:08X}, ver={ext_version}, data_size={ext_data_size}"
-        );
+        log::debug!("HET extended header: sig=0x{ext_signature:08X}, ver={ext_version}, data_size={ext_data_size}");
 
         // Verify extended header
         if ext_signature != Self::SIGNATURE {
@@ -102,18 +93,14 @@ impl HetTable {
         let total_size = data.len();
         let expected_uncompressed_size = ext_data_size as usize + 12; // data_size + header
 
-        log::debug!(
-            "HET table total_size={total_size}, expected_uncompressed_size={expected_uncompressed_size}"
-        );
+        log::debug!("HET table total_size={total_size}, expected_uncompressed_size={expected_uncompressed_size}");
 
         let table_data = if expected_uncompressed_size > total_size {
             // Table is compressed - the data after extended header contains compressed data
             log::debug!("HET table is compressed");
 
             if data.len() <= 12 {
-                return Err(Error::invalid_format(
-                    "No compressed data after HET extended header",
-                ));
+                return Err(Error::invalid_format("No compressed data after HET extended header"));
             }
 
             // First byte after extended header is compression type
@@ -122,8 +109,7 @@ impl HetTable {
 
             // Decompress the data (skip extended header and compression byte)
             let compressed_data = &data[13..];
-            let mut decompressed =
-                decompress(compressed_data, compression_type, ext_data_size as usize)?;
+            let mut decompressed = decompress(compressed_data, compression_type, ext_data_size as usize)?;
 
             // Reconstruct the full table with extended header
             let mut full_table = Vec::with_capacity(12 + decompressed.len());
@@ -244,9 +230,7 @@ impl HetTable {
         // Starting index for linear probing
         let start_index = (hash % (total_count as u64)) as usize;
 
-        log::debug!(
-            "HET find_file_with_collision_info: total_count={total_count}, start_index={start_index}"
-        );
+        log::debug!("HET find_file_with_collision_info: total_count={total_count}, start_index={start_index}");
 
         // Collect ALL collision candidates during linear probing
         let mut collision_candidates = Vec::new();
@@ -273,9 +257,7 @@ impl HetTable {
 
             // Check for empty slot (0xFF = HET_TABLE_EMPTY)
             if stored_hash == 0xFF {
-                log::debug!(
-                    "HET find_file_with_collision_info: hit empty slot at index {index}, search complete"
-                );
+                log::debug!("HET find_file_with_collision_info: hit empty slot at index {index}, search complete");
                 break;
             }
 
@@ -311,9 +293,7 @@ impl HetTable {
             }
             1 => {
                 let file_index = collision_candidates[0];
-                log::debug!(
-                    "HET find_file_with_collision_info: unique match found, file_index={file_index}"
-                );
+                log::debug!("HET find_file_with_collision_info: unique match found, file_index={file_index}");
                 (Some(file_index), collision_candidates)
             }
             _ => {

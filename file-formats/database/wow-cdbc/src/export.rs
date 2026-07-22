@@ -107,8 +107,7 @@ pub fn export_to_json<W: io::Write>(record_set: &RecordSet, writer: W) -> Result
         serializable_records.push(serializable_record);
     }
 
-    serde_json::to_writer_pretty(writer, &serializable_records)
-        .map_err(|e| io::Error::other(e.to_string()))
+    serde_json::to_writer_pretty(writer, &serializable_records).map_err(|e| io::Error::other(e.to_string()))
 }
 
 /// Import a record set from JSON, using a schema to determine field types.
@@ -120,8 +119,8 @@ pub fn export_to_json<W: io::Write>(record_set: &RecordSet, writer: W) -> Result
 /// Returns a `RecordSet` ready to be written with `DbcWriter`.
 #[cfg(feature = "serde")]
 pub fn import_from_json<R: io::Read>(reader: R, schema: Schema) -> Result<RecordSet, io::Error> {
-    let rows: Vec<serde_json::Map<String, serde_json::Value>> = serde_json::from_reader(reader)
-        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?;
+    let rows: Vec<serde_json::Map<String, serde_json::Value>> =
+        serde_json::from_reader(reader).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e.to_string()))?;
 
     // Build a string block incrementally.
     // Offset 0 is always the empty string (null terminator only).
@@ -140,10 +139,7 @@ pub fn import_from_json<R: io::Read>(reader: R, schema: Schema) -> Result<Record
             let json_val = row.get(&field.name).ok_or_else(|| {
                 io::Error::new(
                     io::ErrorKind::InvalidData,
-                    format!(
-                        "row {}: missing field '{}' required by schema",
-                        row_idx, field.name
-                    ),
+                    format!("row {}: missing field '{}' required by schema", row_idx, field.name),
                 )
             })?;
 
@@ -151,10 +147,7 @@ pub fn import_from_json<R: io::Read>(reader: R, schema: Schema) -> Result<Record
                 let arr = json_val.as_array().ok_or_else(|| {
                     io::Error::new(
                         io::ErrorKind::InvalidData,
-                        format!(
-                            "row {}: field '{}' expected a JSON array",
-                            row_idx, field.name
-                        ),
+                        format!("row {}: field '{}' expected a JSON array", row_idx, field.name),
                     )
                 })?;
 
@@ -233,9 +226,7 @@ fn parse_scalar(
             Value::Int32(v as i32)
         }
         FieldType::UInt32 => {
-            let v = json_val
-                .as_u64()
-                .ok_or_else(|| type_err("unsigned integer"))?;
+            let v = json_val.as_u64().ok_or_else(|| type_err("unsigned integer"))?;
             Value::UInt32(v as u32)
         }
         FieldType::Float32 => {
@@ -255,9 +246,7 @@ fn parse_scalar(
             Value::Bool(v)
         }
         FieldType::UInt8 => {
-            let v = json_val
-                .as_u64()
-                .ok_or_else(|| type_err("unsigned integer"))?;
+            let v = json_val.as_u64().ok_or_else(|| type_err("unsigned integer"))?;
             Value::UInt8(v as u8)
         }
         FieldType::Int8 => {
@@ -265,9 +254,7 @@ fn parse_scalar(
             Value::Int8(v as i8)
         }
         FieldType::UInt16 => {
-            let v = json_val
-                .as_u64()
-                .ok_or_else(|| type_err("unsigned integer"))?;
+            let v = json_val.as_u64().ok_or_else(|| type_err("unsigned integer"))?;
             Value::UInt16(v as u16)
         }
         FieldType::Int16 => {
@@ -287,11 +274,7 @@ fn parse_scalar(
 /// If the string already exists in the block the existing offset is returned,
 /// avoiding duplicates.
 #[cfg(feature = "serde")]
-fn intern_string(
-    s: &str,
-    string_data: &mut Vec<u8>,
-    string_offsets: &mut HashMap<String, u32>,
-) -> u32 {
+fn intern_string(s: &str, string_data: &mut Vec<u8>, string_offsets: &mut HashMap<String, u32>) -> u32 {
     if let Some(&existing) = string_offsets.get(s) {
         return existing;
     }
@@ -313,17 +296,11 @@ pub fn export_to_csv<W: io::Write>(record_set: &RecordSet, writer: W) -> Result<
 
     // Get field names
     let field_names = if let Some(schema) = record_set.schema() {
-        schema
-            .fields
-            .iter()
-            .map(|f| f.name.clone())
-            .collect::<Vec<_>>()
+        schema.fields.iter().map(|f| f.name.clone()).collect::<Vec<_>>()
     } else {
         // No schema, use numeric field names
         let record = record_set.get_record(0).unwrap();
-        (0..record.len())
-            .map(|i| format!("field_{i}"))
-            .collect::<Vec<_>>()
+        (0..record.len()).map(|i| format!("field_{i}")).collect::<Vec<_>>()
     };
 
     // Create CSV writer
@@ -342,9 +319,7 @@ pub fn export_to_csv<W: io::Write>(record_set: &RecordSet, writer: W) -> Result<
                     Value::Int32(v) => v.to_string(),
                     Value::UInt32(v) => v.to_string(),
                     Value::Float32(v) => v.to_string(),
-                    Value::StringRef(v) => {
-                        record_set.get_string(*v).unwrap_or_default().to_string()
-                    }
+                    Value::StringRef(v) => record_set.get_string(*v).unwrap_or_default().to_string(),
                     Value::Bool(v) => v.to_string(),
                     Value::UInt8(v) => v.to_string(),
                     Value::Int8(v) => v.to_string(),
@@ -361,8 +336,7 @@ pub fn export_to_csv<W: io::Write>(record_set: &RecordSet, writer: W) -> Result<
                                 Value::UInt32(v) => array_str.push_str(&v.to_string()),
                                 Value::Float32(v) => array_str.push_str(&v.to_string()),
                                 Value::StringRef(v) => {
-                                    array_str
-                                        .push_str(record_set.get_string(*v).unwrap_or_default());
+                                    array_str.push_str(record_set.get_string(*v).unwrap_or_default());
                                 }
                                 Value::Bool(v) => array_str.push_str(&v.to_string()),
                                 Value::UInt8(v) => array_str.push_str(&v.to_string()),

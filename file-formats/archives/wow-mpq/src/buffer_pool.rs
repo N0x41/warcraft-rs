@@ -58,11 +58,7 @@ impl PoolStatistics {
         let misses = self.misses.load(Ordering::Relaxed);
         let total = hits + misses;
 
-        if total == 0 {
-            0.0
-        } else {
-            hits as f64 / total as f64
-        }
+        if total == 0 { 0.0 } else { hits as f64 / total as f64 }
     }
 }
 
@@ -262,9 +258,7 @@ impl PooledBuffer<'_> {
     /// Take ownership of the buffer, preventing automatic return to pool
     /// Useful when the buffer needs to outlive the PooledBuffer
     pub fn take(mut self) -> Vec<u8> {
-        self.buffer
-            .take()
-            .expect("PooledBuffer buffer was already taken")
+        self.buffer.take().expect("PooledBuffer buffer was already taken")
     }
 }
 

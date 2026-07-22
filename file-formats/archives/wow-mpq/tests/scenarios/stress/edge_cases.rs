@@ -39,8 +39,7 @@ fn test_sparse_compression_efficiency() {
     // Sparse compression should be very efficient for data with lots of zeros
     let mostly_zeros = vec![0u8; 1000];
 
-    let compressed =
-        compress_with_method(&mostly_zeros, flags::SPARSE).expect("Compression failed");
+    let compressed = compress_with_method(&mostly_zeros, flags::SPARSE).expect("Compression failed");
 
     // Check if compression was beneficial
     if !compressed.is_empty() && compressed[0] == flags::SPARSE {
@@ -93,18 +92,12 @@ fn test_all_methods_implemented() {
 
     for method in &methods {
         let result = compress_with_method(data, *method);
-        assert!(
-            result.is_ok(),
-            "Method 0x{method:02X} should be implemented"
-        );
+        assert!(result.is_ok(), "Method 0x{method:02X} should be implemented");
     }
 
     // Test ADPCM with valid audio data (16-bit PCM samples)
     let audio_samples = [0i16; 100]; // 100 silence samples
-    let audio_bytes: Vec<u8> = audio_samples
-        .iter()
-        .flat_map(|&sample| sample.to_le_bytes())
-        .collect();
+    let audio_bytes: Vec<u8> = audio_samples.iter().flat_map(|&sample| sample.to_le_bytes()).collect();
 
     let result = compress_with_method(&audio_bytes, flags::ADPCM_MONO);
     assert!(
@@ -120,17 +113,11 @@ fn test_all_methods_implemented() {
 
     // Test that Huffman compression is not implemented
     let result = compress_with_method(data, flags::HUFFMAN);
-    assert!(
-        result.is_err(),
-        "Huffman compression should not be implemented"
-    );
+    assert!(result.is_err(), "Huffman compression should not be implemented");
 
     // Multiple compression with single method + ADPCM should work
     let result = compress_with_method(&audio_bytes, flags::ZLIB | flags::ADPCM_MONO);
-    assert!(
-        result.is_ok(),
-        "Multiple compression with ADPCM should be implemented"
-    );
+    assert!(result.is_ok(), "Multiple compression with ADPCM should be implemented");
 
     // Multiple compression with multiple non-ADPCM methods is not supported
     let result = compress_with_method(data, flags::ZLIB | flags::PKWARE);

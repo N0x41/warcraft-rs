@@ -101,26 +101,17 @@ mod tests {
         assert_eq!(normalize_mpq_path("path/to/file.txt"), "path\\to\\file.txt");
 
         // Backslashes should remain unchanged
-        assert_eq!(
-            normalize_mpq_path("path\\to\\file.txt"),
-            "path\\to\\file.txt"
-        );
+        assert_eq!(normalize_mpq_path("path\\to\\file.txt"), "path\\to\\file.txt");
 
         // Mixed separators should be normalized
-        assert_eq!(
-            normalize_mpq_path("path/to\\file.txt"),
-            "path\\to\\file.txt"
-        );
+        assert_eq!(normalize_mpq_path("path/to\\file.txt"), "path\\to\\file.txt");
 
         // Empty and simple paths
         assert_eq!(normalize_mpq_path(""), "");
         assert_eq!(normalize_mpq_path("file.txt"), "file.txt");
 
         // Multiple consecutive slashes
-        assert_eq!(
-            normalize_mpq_path("path//to///file.txt"),
-            "path\\\\to\\\\\\file.txt"
-        );
+        assert_eq!(normalize_mpq_path("path//to///file.txt"), "path\\\\to\\\\\\file.txt");
     }
 
     #[test]

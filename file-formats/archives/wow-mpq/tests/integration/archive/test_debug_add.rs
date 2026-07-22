@@ -40,14 +40,10 @@ fn test_debug_add_file() {
 
         // Debug: Check tables before adding
         let header_before = mutable_archive.archive().header();
-        println!(
-            "Before adding - Block table size: {}",
-            header_before.block_table_size
-        );
+        println!("Before adding - Block table size: {}", header_before.block_table_size);
 
         // Add a file with no compression
-        let options = wow_mpq::AddFileOptions::new()
-            .compression(wow_mpq::compression::CompressionMethod::None);
+        let options = wow_mpq::AddFileOptions::new().compression(wow_mpq::compression::CompressionMethod::None);
         mutable_archive
             .add_file_data(b"New file content", "new_file.txt", options)
             .unwrap();

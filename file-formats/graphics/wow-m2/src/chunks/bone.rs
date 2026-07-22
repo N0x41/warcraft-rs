@@ -158,11 +158,7 @@ impl M2Bone {
             translation: M2TrackVec3::new(),
             rotation: M2TrackQuat::new(),
             scale: M2TrackVec3::new(),
-            pivot: C3Vector {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-            },
+            pivot: C3Vector { x: 0.0, y: 0.0, z: 0.0 },
         }
     }
 
@@ -175,9 +171,7 @@ impl M2Bone {
         }
 
         // Check parent_bone is reasonable (-1 or within bone count)
-        if self.parent_bone != -1
-            && (self.parent_bone < 0 || self.parent_bone as u32 >= total_bone_count)
-        {
+        if self.parent_bone != -1 && (self.parent_bone < 0 || self.parent_bone as u32 >= total_bone_count) {
             return false;
         }
 
@@ -224,15 +218,9 @@ impl M2Bone {
     /// Check if this bone is a billboard
     pub fn is_billboard(&self) -> bool {
         self.flags.contains(M2BoneFlags::SPHERICAL_BILLBOARD)
-            || self
-                .flags
-                .contains(M2BoneFlags::CYLINDRICAL_BILLBOARD_LOCK_X)
-            || self
-                .flags
-                .contains(M2BoneFlags::CYLINDRICAL_BILLBOARD_LOCK_Y)
-            || self
-                .flags
-                .contains(M2BoneFlags::CYLINDRICAL_BILLBOARD_LOCK_Z)
+            || self.flags.contains(M2BoneFlags::CYLINDRICAL_BILLBOARD_LOCK_X)
+            || self.flags.contains(M2BoneFlags::CYLINDRICAL_BILLBOARD_LOCK_Y)
+            || self.flags.contains(M2BoneFlags::CYLINDRICAL_BILLBOARD_LOCK_Z)
     }
 }
 
@@ -350,10 +338,7 @@ mod tests {
         data.extend_from_slice(&1.0f32.to_le_bytes()); // pivot.y
         data.extend_from_slice(&0.0f32.to_le_bytes()); // pivot.z
 
-        println!(
-            "Test data created: {} bytes (2 bones * 84 = 168 expected)",
-            data.len()
-        );
+        println!("Test data created: {} bytes (2 bones * 84 = 168 expected)", data.len());
         assert_eq!(data.len(), 168); // 2 bones * 84 bytes each for vanilla (no ranges in tracks)
 
         let mut cursor = Cursor::new(&data);
@@ -391,9 +376,7 @@ mod tests {
         // Verify cursor position (2 bones * 84 bytes each = 168 bytes total)
         assert_eq!(cursor.position(), 168);
 
-        println!(
-            "✓ Both bones parsed with expected values (including intentionally corrupted second bone)"
-        );
+        println!("✓ Both bones parsed with expected values (including intentionally corrupted second bone)");
         println!("This confirms M2Bone::parse correctly reads what's in the data,");
         println!("so the issue must be in the source data or cursor positioning.");
     }
@@ -454,11 +437,7 @@ mod tests {
         data.extend_from_slice(&3u32.to_le_bytes()); // values count
         data.extend_from_slice(&1200u32.to_le_bytes()); // values offset
 
-        assert_eq!(
-            data.len(),
-            28,
-            "M2Track test data should be exactly 28 bytes for TBC"
-        );
+        assert_eq!(data.len(), 28, "M2Track test data should be exactly 28 bytes for TBC");
 
         let mut cursor = Cursor::new(&data);
         let pos_before = cursor.position();
@@ -469,10 +448,7 @@ mod tests {
         let pos_after = cursor.position();
         let bytes_consumed = pos_after - pos_before;
 
-        println!(
-            "M2Track parsing: consumed {} bytes (expected 28)",
-            bytes_consumed
-        );
+        println!("M2Track parsing: consumed {} bytes (expected 28)", bytes_consumed);
         println!(
             "Track details: interp={:?}, timestamps_count={}, values_count={}",
             track.base.interpolation_type, track.timestamps.count, track.values.count
@@ -546,10 +522,7 @@ mod tests {
             data.extend_from_slice(&0.0f32.to_le_bytes());
         }
 
-        println!(
-            "Total test data: {} bytes (expected: 3 * 84 = 252)",
-            data.len()
-        );
+        println!("Total test data: {} bytes (expected: 3 * 84 = 252)", data.len());
         assert_eq!(data.len(), 252); // 3 bones * 84 bytes each for vanilla (no ranges)
 
         let mut cursor = Cursor::new(data);
@@ -635,15 +608,9 @@ mod tests {
         assert_eq!(bone.pivot.z, 0.0, "NaN pivot.z should be replaced with 0.0");
 
         // Verify no NaN values remain
-        assert!(
-            !bone.pivot.x.is_nan(),
-            "pivot.x should not be NaN after parsing"
-        );
+        assert!(!bone.pivot.x.is_nan(), "pivot.x should not be NaN after parsing");
         assert!(!bone.pivot.y.is_nan(), "pivot.y should not be NaN");
-        assert!(
-            !bone.pivot.z.is_nan(),
-            "pivot.z should not be NaN after parsing"
-        );
+        assert!(!bone.pivot.z.is_nan(), "pivot.z should not be NaN after parsing");
 
         // Other bone data should be preserved
         assert_eq!(bone.bone_id, 1);
@@ -667,11 +634,7 @@ mod tests {
             translation: M2TrackVec3::new(),
             rotation: M2TrackQuat::new(),
             scale: M2TrackVec3::new(),
-            pivot: C3Vector {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-            },
+            pivot: C3Vector { x: 0.0, y: 0.0, z: 0.0 },
         };
 
         let mut data = Vec::new();
@@ -701,22 +664,13 @@ mod tests {
             translation: M2TrackVec3::new(),
             rotation: M2TrackQuat::new(),
             scale: M2TrackVec3::new(),
-            pivot: C3Vector {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-            },
+            pivot: C3Vector { x: 0.0, y: 0.0, z: 0.0 },
         };
 
         let mut data = Vec::new();
         bone.write(&mut data, 264).unwrap(); // WotLK version
 
         println!("WotLK bone write size: {} bytes (expected 88)", data.len());
-        assert_eq!(
-            data.len(),
-            88,
-            "WotLK bone should be 88 bytes, got {}",
-            data.len()
-        );
+        assert_eq!(data.len(), 88, "WotLK bone should be 88 bytes, got {}", data.len());
     }
 }

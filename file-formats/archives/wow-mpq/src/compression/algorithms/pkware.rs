@@ -15,8 +15,7 @@ pub(crate) fn compress(data: &[u8]) -> Result<Vec<u8>> {
 
     // Use ASCII mode with 2KB dictionary as default for MPQ archives
     // This provides good compression ratio for most data types
-    implode_bytes(data, CompressionMode::ASCII, DictionarySize::Size2K)
-        .map_err(|e| compression_error("PKWare", e))
+    implode_bytes(data, CompressionMode::ASCII, DictionarySize::Size2K).map_err(|e| compression_error("PKWare", e))
 }
 
 /// Decompress PKWare compressed data using implode crate (for MPQ archives)
@@ -75,11 +74,7 @@ pub(crate) fn decompress(data: &[u8], expected_size: usize) -> Result<Vec<u8>> {
 
 /// Compress data using PKWare DCL algorithm with specific parameters
 #[allow(dead_code)]
-pub(crate) fn compress_with_options(
-    data: &[u8],
-    mode: CompressionMode,
-    dict_size: DictionarySize,
-) -> Result<Vec<u8>> {
+pub(crate) fn compress_with_options(data: &[u8], mode: CompressionMode, dict_size: DictionarySize) -> Result<Vec<u8>> {
     // Handle empty data
     if data.is_empty() {
         return Ok(Vec::new());

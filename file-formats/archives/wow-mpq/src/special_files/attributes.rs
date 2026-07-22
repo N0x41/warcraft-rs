@@ -110,9 +110,7 @@ impl Attributes {
     /// Parse attributes from raw data
     pub fn parse(data: &Bytes, block_count: usize) -> Result<Self> {
         if data.len() < 8 {
-            return Err(Error::invalid_format(
-                "Attributes file too small for header",
-            ));
+            return Err(Error::invalid_format("Attributes file too small for header"));
         }
 
         let mut cursor = Cursor::new(data);

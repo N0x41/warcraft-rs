@@ -73,10 +73,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n=== Model Bounds ===");
     println!("Bounding Box Min: {:?}", model.header.bounding_box_min);
     println!("Bounding Box Max: {:?}", model.header.bounding_box_max);
-    println!(
-        "Bounding Sphere Radius: {}",
-        model.header.bounding_sphere_radius
-    );
+    println!("Bounding Sphere Radius: {}", model.header.bounding_sphere_radius);
 
     Ok(())
 }

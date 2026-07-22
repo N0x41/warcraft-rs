@@ -95,9 +95,7 @@ fn test_extraction_path_conversion() {
     let file_data = archive.read_file("data/config/settings.ini").unwrap();
 
     // When extracting with preserved paths, system separators should be used
-    let output_path = extract_dir.join(wow_mpq::path::mpq_path_to_system(
-        "data\\config\\settings.ini",
-    ));
+    let output_path = extract_dir.join(wow_mpq::path::mpq_path_to_system("data\\config\\settings.ini"));
 
     // Create parent directories
     if let Some(parent) = output_path.parent() {

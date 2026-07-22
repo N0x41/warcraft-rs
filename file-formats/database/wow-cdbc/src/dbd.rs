@@ -132,11 +132,7 @@ pub fn parse_dbd_content(content: &str) -> Result<DbdFile, Box<dyn std::error::E
         // Check for section headers
         if line == "COLUMNS" {
             // Save any pending build/layout
-            save_pending_build(
-                &mut builds,
-                &mut current_build_versions,
-                &mut current_build_fields,
-            );
+            save_pending_build(&mut builds, &mut current_build_versions, &mut current_build_fields);
             save_pending_layout(
                 &mut layouts,
                 &mut current_layout_hash,
@@ -154,22 +150,14 @@ pub fn parse_dbd_content(content: &str) -> Result<DbdFile, Box<dyn std::error::E
             if current_section == Some("BUILD") && current_build_fields.is_empty() {
                 current_build_versions.extend(versions);
             } else {
-                save_pending_build(
-                    &mut builds,
-                    &mut current_build_versions,
-                    &mut current_build_fields,
-                );
+                save_pending_build(&mut builds, &mut current_build_versions, &mut current_build_fields);
                 current_build_versions = versions;
             }
             current_section = Some("BUILD");
             continue;
         } else if let Some(stripped) = line.strip_prefix("LAYOUT ") {
             // Save previous build/layout if any
-            save_pending_build(
-                &mut builds,
-                &mut current_build_versions,
-                &mut current_build_fields,
-            );
+            save_pending_build(&mut builds, &mut current_build_versions, &mut current_build_fields);
             save_pending_layout(
                 &mut layouts,
                 &mut current_layout_hash,
@@ -198,8 +186,7 @@ pub fn parse_dbd_content(content: &str) -> Result<DbdFile, Box<dyn std::error::E
             Some("LAYOUT") => {
                 // Check if this is another BUILD line for LAYOUT section
                 if let Some(stripped) = line.strip_prefix("BUILD ") {
-                    let build_versions: Vec<String> =
-                        stripped.split(", ").map(|s| s.to_string()).collect();
+                    let build_versions: Vec<String> = stripped.split(", ").map(|s| s.to_string()).collect();
                     current_layout_builds.extend(build_versions);
                 } else {
                     // Parse field definition
@@ -212,11 +199,7 @@ pub fn parse_dbd_content(content: &str) -> Result<DbdFile, Box<dyn std::error::E
     }
 
     // Save any remaining build/layout
-    save_pending_build(
-        &mut builds,
-        &mut current_build_versions,
-        &mut current_build_fields,
-    );
+    save_pending_build(&mut builds, &mut current_build_versions, &mut current_build_fields);
     save_pending_layout(
         &mut layouts,
         &mut current_layout_hash,
@@ -231,11 +214,7 @@ pub fn parse_dbd_content(content: &str) -> Result<DbdFile, Box<dyn std::error::E
     })
 }
 
-fn save_pending_build(
-    builds: &mut Vec<DbdBuild>,
-    versions: &mut Vec<String>,
-    fields: &mut Vec<DbdField>,
-) {
+fn save_pending_build(builds: &mut Vec<DbdBuild>, versions: &mut Vec<String>, fields: &mut Vec<DbdField>) {
     if !versions.is_empty() && !fields.is_empty() {
         builds.push(DbdBuild {
             versions: versions.clone(),
@@ -361,10 +340,7 @@ fn parse_field_line(line: &str) -> DbdField {
             // Check if there's a type spec before the array
             let before_bracket = &line[..bracket_start];
             let after_bracket = &line[bracket_end + 1..];
-            (
-                before_bracket.to_string() + after_bracket,
-                Some((is_array, array_size)),
-            )
+            (before_bracket.to_string() + after_bracket, Some((is_array, array_size)))
         } else {
             (line.to_string(), None)
         }
@@ -410,23 +386,13 @@ pub fn convert_to_yaml_schemas(
     let mut results = Vec::new();
 
     // Create a map of column info for quick lookup
-    let column_map: HashMap<String, &DbdColumn> = dbd_file
-        .columns
-        .iter()
-        .map(|c| (c.name.clone(), c))
-        .collect();
+    let column_map: HashMap<String, &DbdColumn> = dbd_file.columns.iter().map(|c| (c.name.clone(), c)).collect();
 
     // Generate schemas for builds
     for build in &dbd_file.builds {
         if should_generate_version(&build.versions, version_filter, generate_all) {
             let version_suffix = determine_version_suffix(&build.versions);
-            let yaml_content = generate_yaml_schema(
-                &column_map,
-                build,
-                base_name,
-                &version_suffix,
-                version_filter,
-            );
+            let yaml_content = generate_yaml_schema(&column_map, build, base_name, &version_suffix, version_filter);
             let filename = generate_filename(base_name, &build.versions[0]);
             results.push((filename, yaml_content, version_suffix));
         }
@@ -441,13 +407,8 @@ pub fn convert_to_yaml_schemas(
 
         if should_generate_version(&pseudo_build.versions, version_filter, generate_all) {
             let version_suffix = determine_version_suffix(&pseudo_build.versions);
-            let yaml_content = generate_yaml_schema(
-                &column_map,
-                &pseudo_build,
-                base_name,
-                &version_suffix,
-                version_filter,
-            );
+            let yaml_content =
+                generate_yaml_schema(&column_map, &pseudo_build, base_name, &version_suffix, version_filter);
             let filename = if layout.builds.is_empty() {
                 format!("{}_layout_{}.yaml", base_name, &layout.hash[..8])
             } else {
@@ -458,24 +419,14 @@ pub fn convert_to_yaml_schemas(
     }
 
     // If no schemas generated and no specific filters, generate at least one for the latest
-    if results.is_empty()
-        && version_filter.is_none()
-        && !generate_all
-        && !dbd_file.layouts.is_empty()
-    {
+    if results.is_empty() && version_filter.is_none() && !generate_all && !dbd_file.layouts.is_empty() {
         let layout = &dbd_file.layouts.last().unwrap();
         let pseudo_build = DbdBuild {
             versions: layout.builds.clone(),
             fields: layout.fields.clone(),
         };
         let version_suffix = "Latest".to_string();
-        let yaml_content = generate_yaml_schema(
-            &column_map,
-            &pseudo_build,
-            base_name,
-            &version_suffix,
-            version_filter,
-        );
+        let yaml_content = generate_yaml_schema(&column_map, &pseudo_build, base_name, &version_suffix, version_filter);
         let filename = format!("{base_name}_latest.yaml");
         results.push((filename, yaml_content, version_suffix));
     }
@@ -549,15 +500,13 @@ fn generate_filename(base_name: &str, version: &str) -> String {
 /// Locale ordering for the WotLK-era (3.x and 4.0 pre-collapse) locstring layout.
 /// 16 stringref slots are stored in this order, followed by a single u32 flags field.
 const LOCSTRING_LOCALES_WOTLK: &[&str] = &[
-    "enUS", "koKR", "frFR", "deDE", "zhCN", "zhTW", "esES", "esMX", "ruRU", "unk9", "unk10",
-    "unk11", "unk12", "unk13", "unk14", "unk15",
+    "enUS", "koKR", "frFR", "deDE", "zhCN", "zhTW", "esES", "esMX", "ruRU", "unk9", "unk10", "unk11", "unk12", "unk13",
+    "unk14", "unk15",
 ];
 
 /// Locale ordering for the Vanilla/TBC-era (1.x, 2.x) locstring layout.
 /// 8 stringref slots are stored in this order, followed by a single u32 flags field.
-const LOCSTRING_LOCALES_CLASSIC: &[&str] = &[
-    "enUS", "koKR", "frFR", "deDE", "zhCN", "zhTW", "esES", "esMX",
-];
+const LOCSTRING_LOCALES_CLASSIC: &[&str] = &["enUS", "koKR", "frFR", "deDE", "zhCN", "zhTW", "esES", "esMX"];
 
 /// Determine the per-locale stringref slots that make up a `locstring`.
 ///
@@ -569,10 +518,7 @@ const LOCSTRING_LOCALES_CLASSIC: &[&str] = &[
 ///
 /// Returns an empty slice for 4.1+ builds where `locstring` collapsed back to
 /// a single string field.
-fn locstring_locales_for_build(
-    build: &DbdBuild,
-    target_version: Option<&str>,
-) -> &'static [&'static str] {
+fn locstring_locales_for_build(build: &DbdBuild, target_version: Option<&str>) -> &'static [&'static str] {
     let pick = target_version
         .or_else(|| build.versions.first().map(|s| s.as_str()))
         .unwrap_or("");
@@ -634,10 +580,7 @@ fn generate_yaml_schema(
             }
             yaml.push_str(&format!("  - name: {}_flags\n", field.name));
             yaml.push_str("    type_name: UInt32\n");
-            yaml.push_str(&format!(
-                "    description: Locale flags bitmask for {}\n",
-                field.name
-            ));
+            yaml.push_str(&format!("    description: Locale flags bitmask for {}\n", field.name));
             continue;
         }
 
@@ -668,10 +611,7 @@ fn generate_yaml_schema(
         // Add description
         let description = generate_field_description(field, column);
         // Quote description if it contains special YAML characters
-        let description = if description.contains('&')
-            || description.contains(':')
-            || description.contains('#')
-        {
+        let description = if description.contains('&') || description.contains(':') || description.contains('#') {
             format!("\"{}\"", description.replace('"', "\\\""))
         } else {
             description
@@ -755,8 +695,7 @@ $id$ID<32>
     fn test_parse_field_line_strips_inline_comment() {
         // DanceMoves.dbd has lines like `Name_lang // pre-8622 ...` — the comment
         // must be stripped from the field name so column lookups still work.
-        let field =
-            parse_field_line("Name_lang // pre-8622 this uses the old 9 locale locstring format");
+        let field = parse_field_line("Name_lang // pre-8622 this uses the old 9 locale locstring format");
         assert_eq!(field.name, "Name_lang");
 
         let field = parse_field_line("$id$ID<32> // primary key");
@@ -783,11 +722,7 @@ $id$ID<32>
         assert_eq!(dbd_file.builds.len(), 1);
         assert_eq!(
             dbd_file.builds[0].versions,
-            vec![
-                "3.0.8.9328",
-                "3.0.1.8303-3.3.5.12340",
-                "2.0.0.5610-2.4.3.8606",
-            ]
+            vec!["3.0.8.9328", "3.0.1.8303-3.3.5.12340", "2.0.0.5610-2.4.3.8606",]
         );
         assert_eq!(dbd_file.builds[0].fields.len(), 1);
     }
@@ -806,22 +741,9 @@ Name_lang
 Flags<32>
 ";
         let dbd_file = parse_dbd_content(dbd).unwrap();
-        let column_map: HashMap<String, &DbdColumn> = dbd_file
-            .columns
-            .iter()
-            .map(|c| (c.name.clone(), c))
-            .collect();
-        let yaml = generate_yaml_schema(
-            &column_map,
-            &dbd_file.builds[0],
-            "Test",
-            "3.3.5a",
-            Some("3.3.5"),
-        );
-        let name_lines: Vec<&str> = yaml
-            .lines()
-            .filter(|l| l.trim_start().starts_with("- name:"))
-            .collect();
+        let column_map: HashMap<String, &DbdColumn> = dbd_file.columns.iter().map(|c| (c.name.clone(), c)).collect();
+        let yaml = generate_yaml_schema(&column_map, &dbd_file.builds[0], "Test", "3.3.5a", Some("3.3.5"));
+        let name_lines: Vec<&str> = yaml.lines().filter(|l| l.trim_start().starts_with("- name:")).collect();
         // ID + 16 locale stringrefs + Name_lang_flags + Flags = 19
         assert_eq!(name_lines.len(), 19);
         assert!(yaml.contains("- name: Name_lang_enUS"));
@@ -843,22 +765,9 @@ $id$ID<32>
 Name_lang
 ";
         let dbd_file = parse_dbd_content(dbd).unwrap();
-        let column_map: HashMap<String, &DbdColumn> = dbd_file
-            .columns
-            .iter()
-            .map(|c| (c.name.clone(), c))
-            .collect();
-        let yaml = generate_yaml_schema(
-            &column_map,
-            &dbd_file.builds[0],
-            "Test",
-            "1.12.x",
-            Some("1.12"),
-        );
-        let name_lines: Vec<&str> = yaml
-            .lines()
-            .filter(|l| l.trim_start().starts_with("- name:"))
-            .collect();
+        let column_map: HashMap<String, &DbdColumn> = dbd_file.columns.iter().map(|c| (c.name.clone(), c)).collect();
+        let yaml = generate_yaml_schema(&column_map, &dbd_file.builds[0], "Test", "1.12.x", Some("1.12"));
+        let name_lines: Vec<&str> = yaml.lines().filter(|l| l.trim_start().starts_with("- name:")).collect();
         // ID + 8 locale stringrefs + flags = 10
         assert_eq!(name_lines.len(), 10);
         assert!(yaml.contains("- name: Name_lang_enUS"));
@@ -878,18 +787,8 @@ $id$ID<32>
 Name_lang
 ";
         let dbd_file = parse_dbd_content(dbd).unwrap();
-        let column_map: HashMap<String, &DbdColumn> = dbd_file
-            .columns
-            .iter()
-            .map(|c| (c.name.clone(), c))
-            .collect();
-        let yaml = generate_yaml_schema(
-            &column_map,
-            &dbd_file.builds[0],
-            "Test",
-            "5.4.8",
-            Some("5.4.8"),
-        );
+        let column_map: HashMap<String, &DbdColumn> = dbd_file.columns.iter().map(|c| (c.name.clone(), c)).collect();
+        let yaml = generate_yaml_schema(&column_map, &dbd_file.builds[0], "Test", "5.4.8", Some("5.4.8"));
         // ID + Name_lang (single string)
         assert!(yaml.contains("- name: Name_lang\n"));
         assert!(!yaml.contains("Name_lang_enUS"));
@@ -914,23 +813,10 @@ Name_lang
 Ui_order<32>
 ";
         let dbd_file = parse_dbd_content(dbd).unwrap();
-        let column_map: HashMap<String, &DbdColumn> = dbd_file
-            .columns
-            .iter()
-            .map(|c| (c.name.clone(), c))
-            .collect();
+        let column_map: HashMap<String, &DbdColumn> = dbd_file.columns.iter().map(|c| (c.name.clone(), c)).collect();
         // Filtering for 3.3.5 should expand the locstring to 16 locales + flags.
-        let yaml = generate_yaml_schema(
-            &column_map,
-            &dbd_file.builds[0],
-            "Test",
-            "3.3.5a",
-            Some("3.3.5"),
-        );
-        let name_lines: Vec<&str> = yaml
-            .lines()
-            .filter(|l| l.trim_start().starts_with("- name:"))
-            .collect();
+        let yaml = generate_yaml_schema(&column_map, &dbd_file.builds[0], "Test", "3.3.5a", Some("3.3.5"));
+        let name_lines: Vec<&str> = yaml.lines().filter(|l| l.trim_start().starts_with("- name:")).collect();
         // ID + 16 locale stringrefs + Name_lang_flags + Ui_order = 19
         assert_eq!(name_lines.len(), 19);
         assert!(yaml.contains("- name: Name_lang_enUS"));
@@ -944,10 +830,7 @@ Ui_order<32>
         assert_eq!(col.base_type, "int");
         assert!(col.foreign_key.is_none());
 
-        let col = parse_column_line(
-            "int<SpellCastTimes::ID> CastingTimeIndex // todo: rename CastingTimeID",
-        )
-        .unwrap();
+        let col = parse_column_line("int<SpellCastTimes::ID> CastingTimeIndex // todo: rename CastingTimeID").unwrap();
         assert_eq!(col.name, "CastingTimeIndex");
         assert_eq!(col.base_type, "int");
         assert!(col.foreign_key.is_some());

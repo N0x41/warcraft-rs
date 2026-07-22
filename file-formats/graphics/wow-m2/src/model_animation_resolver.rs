@@ -43,22 +43,11 @@ impl ResolvedBoneAnimation {
             let bind_trans = if !values.is_empty() {
                 values[0]
             } else {
-                C3Vector {
-                    x: 0.0,
-                    y: 0.0,
-                    z: 0.0,
-                }
+                C3Vector { x: 0.0, y: 0.0, z: 0.0 }
             };
             (Some((timestamps, values)), bind_trans)
         } else {
-            (
-                None,
-                C3Vector {
-                    x: 0.0,
-                    y: 0.0,
-                    z: 0.0,
-                },
-            )
+            (None, C3Vector { x: 0.0, y: 0.0, z: 0.0 })
         };
 
         // Try to resolve rotation track
@@ -99,22 +88,11 @@ impl ResolvedBoneAnimation {
             let bind_scale = if !values.is_empty() {
                 values[0]
             } else {
-                C3Vector {
-                    x: 1.0,
-                    y: 1.0,
-                    z: 1.0,
-                }
+                C3Vector { x: 1.0, y: 1.0, z: 1.0 }
             };
             (Some((timestamps, values)), bind_scale)
         } else {
-            (
-                None,
-                C3Vector {
-                    x: 1.0,
-                    y: 1.0,
-                    z: 1.0,
-                },
-            )
+            (None, C3Vector { x: 1.0, y: 1.0, z: 1.0 })
         };
 
         Ok(ResolvedBoneAnimation {
@@ -220,11 +198,7 @@ mod tests {
                 timestamps: crate::common::M2Array::new(0, 0),
                 values: crate::common::M2Array::new(0, 0),
             },
-            pivot: C3Vector {
-                x: 1.0,
-                y: 2.0,
-                z: 3.0,
-            },
+            pivot: C3Vector { x: 1.0, y: 2.0, z: 3.0 },
         };
 
         let data = vec![0u8; 1000];
@@ -233,31 +207,10 @@ mod tests {
         let resolved = ResolvedBoneAnimation::from_bone(&bone, &mut cursor).unwrap();
 
         // Check defaults
-        assert_eq!(
-            resolved.bind_pose_translation,
-            C3Vector {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0
-            }
-        );
+        assert_eq!(resolved.bind_pose_translation, C3Vector { x: 0.0, y: 0.0, z: 0.0 });
         assert_eq!(resolved.bind_pose_rotation, [0.0, 0.0, 0.0, 1.0]);
-        assert_eq!(
-            resolved.bind_pose_scale,
-            C3Vector {
-                x: 1.0,
-                y: 1.0,
-                z: 1.0
-            }
-        );
-        assert_eq!(
-            resolved.pivot,
-            C3Vector {
-                x: 1.0,
-                y: 2.0,
-                z: 3.0
-            }
-        );
+        assert_eq!(resolved.bind_pose_scale, C3Vector { x: 1.0, y: 1.0, z: 1.0 });
+        assert_eq!(resolved.pivot, C3Vector { x: 1.0, y: 2.0, z: 3.0 });
         assert!(!resolved.has_animation());
     }
 }

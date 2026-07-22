@@ -44,22 +44,10 @@ fn test_patch_chain_with_regular_files() {
     chain.add_archive(&patch_path, 100).unwrap();
 
     // Test file priority - patch should override base
-    assert_eq!(
-        chain.read_file("file1.txt").unwrap(),
-        b"Patched version of file1"
-    );
-    assert_eq!(
-        chain.read_file("file2.txt").unwrap(),
-        b"Base version of file2"
-    );
-    assert_eq!(
-        chain.read_file("unchanged.txt").unwrap(),
-        b"This file stays the same"
-    );
-    assert_eq!(
-        chain.read_file("new.txt").unwrap(),
-        b"New file added in patch"
-    );
+    assert_eq!(chain.read_file("file1.txt").unwrap(), b"Patched version of file1");
+    assert_eq!(chain.read_file("file2.txt").unwrap(), b"Base version of file2");
+    assert_eq!(chain.read_file("unchanged.txt").unwrap(), b"This file stays the same");
+    assert_eq!(chain.read_file("new.txt").unwrap(), b"New file added in patch");
 
     // Verify chain info
     let chain_info = chain.get_chain_info();
@@ -123,10 +111,7 @@ fn test_parallel_chain_loading() {
     let mut chain = PatchChain::from_archives_parallel(archives).unwrap();
 
     // Highest priority should win for common.txt
-    assert_eq!(
-        chain.read_file("common.txt").unwrap(),
-        b"Content from archive 4"
-    );
+    assert_eq!(chain.read_file("common.txt").unwrap(), b"Content from archive 4");
 
     // All unique files should be accessible
     for i in 0..5 {
@@ -151,14 +136,8 @@ fn test_chain_file_location() {
     chain.add_archive(&patch_path, 100).unwrap();
 
     // Verify file locations
-    assert_eq!(
-        chain.find_file_archive("base.txt"),
-        Some(base_path.as_path())
-    );
-    assert_eq!(
-        chain.find_file_archive("patch.txt"),
-        Some(patch_path.as_path())
-    );
+    assert_eq!(chain.find_file_archive("base.txt"), Some(base_path.as_path()));
+    assert_eq!(chain.find_file_archive("patch.txt"), Some(patch_path.as_path()));
     assert_eq!(chain.find_file_archive("nonexistent.txt"), None);
 
     // Verify contains
@@ -184,10 +163,7 @@ fn test_chain_listing() {
     let files = chain.list().unwrap();
 
     // Filter out listfile
-    let user_files: Vec<_> = files
-        .into_iter()
-        .filter(|f| f.name != "(listfile)")
-        .collect();
+    let user_files: Vec<_> = files.into_iter().filter(|f| f.name != "(listfile)").collect();
 
     // Should have 3 unique files (file1, file2, file3)
     assert_eq!(user_files.len(), 3);

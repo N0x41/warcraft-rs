@@ -158,13 +158,7 @@ impl Schema {
             // For arrays, we need to count each element as a separate field
             self.fields
                 .iter()
-                .map(|f| {
-                    if f.is_array {
-                        f.array_size.unwrap_or(0)
-                    } else {
-                        1
-                    }
-                })
+                .map(|f| if f.is_array { f.array_size.unwrap_or(0) } else { 1 })
                 .sum::<usize>() as u32
         } else {
             self.fields.len() as u32

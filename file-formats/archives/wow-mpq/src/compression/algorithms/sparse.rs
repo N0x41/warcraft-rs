@@ -9,9 +9,7 @@ use crate::{Error, Result};
 pub(crate) fn decompress(data: &[u8], expected_size: usize) -> Result<Vec<u8>> {
     // Don't decompress anything that is shorter than 5 bytes
     if data.len() < 5 {
-        return Err(Error::compression(
-            "Sparse decompression: input too small (< 5 bytes)",
-        ));
+        return Err(Error::compression("Sparse decompression: input too small (< 5 bytes)"));
     }
 
     // Get the 32-bits from the input stream (big-endian)
@@ -257,11 +255,7 @@ mod tests {
         let original = b"Hello\0\0\0\0\0World\0\0\0!!!";
 
         let compressed = compress(original).expect("Compression failed");
-        println!(
-            "Original len: {}, Compressed: {:?}",
-            original.len(),
-            compressed
-        );
+        println!("Original len: {}, Compressed: {:?}", original.len(), compressed);
         let decompressed = decompress(&compressed, original.len()).expect("Decompression failed");
 
         assert_eq!(decompressed, original);

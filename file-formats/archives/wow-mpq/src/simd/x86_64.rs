@@ -203,12 +203,7 @@ unsafe fn jenkins_hash_scalar_optimized(filename: &str) -> u64 {
 
         // Extract normalized bytes and process with Jenkins algorithm
         let mut normalized_bytes = [0u8; 32];
-        unsafe {
-            _mm256_storeu_si256(
-                normalized_bytes.as_mut_ptr() as *mut __m256i,
-                case_corrected,
-            )
-        };
+        unsafe { _mm256_storeu_si256(normalized_bytes.as_mut_ptr() as *mut __m256i, case_corrected) };
 
         for &byte in &normalized_bytes {
             // Jenkins one-at-a-time hash algorithm
@@ -292,12 +287,7 @@ pub(super) unsafe fn normalize_filenames_avx2(filenames: &mut [Vec<u8>]) {
             );
 
             // Store back
-            unsafe {
-                _mm256_storeu_si256(
-                    filename.as_mut_ptr().add(pos) as *mut __m256i,
-                    case_corrected,
-                )
-            };
+            unsafe { _mm256_storeu_si256(filename.as_mut_ptr().add(pos) as *mut __m256i, case_corrected) };
             pos += chunk_size;
         }
 
@@ -412,17 +402,12 @@ mod tests {
                 let simd_result = unsafe { hash_string_avx2(test_bytes, 0) };
                 let scalar_result = super::super::scalar::hash_string_scalar(test_bytes, 0);
 
-                assert_eq!(
-                    simd_result, scalar_result,
-                    "AVX2 hash mismatch for '{}'",
-                    test_string
-                );
+                assert_eq!(simd_result, scalar_result, "AVX2 hash mismatch for '{}'", test_string);
 
                 // Test different hash types
                 for hash_type in [1, 2, 3] {
                     let simd_result_typed = unsafe { hash_string_avx2(test_bytes, hash_type) };
-                    let scalar_result_typed =
-                        super::super::scalar::hash_string_scalar(test_bytes, hash_type);
+                    let scalar_result_typed = super::super::scalar::hash_string_scalar(test_bytes, hash_type);
 
                     assert_eq!(
                         simd_result_typed, scalar_result_typed,

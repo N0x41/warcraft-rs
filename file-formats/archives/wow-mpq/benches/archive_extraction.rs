@@ -84,17 +84,13 @@ fn bench_single_file_extraction(c: &mut Criterion) {
         );
 
         group.throughput(Throughput::Bytes(size as u64));
-        group.bench_with_input(
-            BenchmarkId::from_parameter(name),
-            &archive_path,
-            |b, path| {
-                b.iter(|| {
-                    let mut archive = Archive::open(black_box(path)).unwrap();
-                    let extracted = archive.read_file("test_file.dat").unwrap();
-                    black_box(extracted);
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::from_parameter(name), &archive_path, |b, path| {
+            b.iter(|| {
+                let mut archive = Archive::open(black_box(path)).unwrap();
+                let extracted = archive.read_file("test_file.dat").unwrap();
+                black_box(extracted);
+            });
+        });
     }
 
     group.finish();
@@ -171,17 +167,13 @@ fn bench_file_listing(c: &mut Criterion) {
             FormatVersion::V2,
         );
 
-        group.bench_with_input(
-            BenchmarkId::from_parameter(name),
-            &archive_path,
-            |b, path| {
-                b.iter(|| {
-                    let mut archive = Archive::open(black_box(path)).unwrap();
-                    let files = archive.list().unwrap();
-                    black_box(files);
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::from_parameter(name), &archive_path, |b, path| {
+            b.iter(|| {
+                let mut archive = Archive::open(black_box(path)).unwrap();
+                let files = archive.list().unwrap();
+                black_box(files);
+            });
+        });
     }
 
     group.finish();
@@ -203,18 +195,10 @@ fn bench_random_access(c: &mut Criterion) {
         })
         .collect();
 
-    let archive_path = create_test_archive(
-        temp_dir.path(),
-        "random_access",
-        files,
-        flags::ZLIB,
-        FormatVersion::V2,
-    );
+    let archive_path = create_test_archive(temp_dir.path(), "random_access", files, flags::ZLIB, FormatVersion::V2);
 
     // Generate access patterns
-    let sequential: Vec<String> = (0..file_count)
-        .map(|i| format!("file_{i:03}.dat"))
-        .collect();
+    let sequential: Vec<String> = (0..file_count).map(|i| format!("file_{i:03}.dat")).collect();
     let random = {
         let mut indices: Vec<usize> = (0..file_count).collect();
         // Simple shuffle
@@ -222,10 +206,7 @@ fn bench_random_access(c: &mut Criterion) {
             let j = (i * 7 + 13) % file_count;
             indices.swap(i, j);
         }
-        indices
-            .iter()
-            .map(|&i| format!("file_{i:03}.dat"))
-            .collect::<Vec<_>>()
+        indices.iter().map(|&i| format!("file_{i:03}.dat")).collect::<Vec<_>>()
     };
 
     group.throughput(Throughput::Elements(file_count as u64));
@@ -286,17 +267,13 @@ fn bench_version_extraction(c: &mut Criterion) {
         );
 
         group.throughput(Throughput::Bytes(data_size as u64));
-        group.bench_with_input(
-            BenchmarkId::from_parameter(name),
-            &archive_path,
-            |b, path| {
-                b.iter(|| {
-                    let mut archive = Archive::open(black_box(path)).unwrap();
-                    let extracted = archive.read_file("test.dat").unwrap();
-                    black_box(extracted);
-                });
-            },
-        );
+        group.bench_with_input(BenchmarkId::from_parameter(name), &archive_path, |b, path| {
+            b.iter(|| {
+                let mut archive = Archive::open(black_box(path)).unwrap();
+                let extracted = archive.read_file("test.dat").unwrap();
+                black_box(extracted);
+            });
+        });
     }
 
     group.finish();
@@ -318,13 +295,7 @@ fn bench_parallel_extraction(c: &mut Criterion) {
         })
         .collect();
 
-    let archive_path = create_test_archive(
-        temp_dir.path(),
-        "parallel",
-        files,
-        flags::ZLIB,
-        FormatVersion::V2,
-    );
+    let archive_path = create_test_archive(temp_dir.path(), "parallel", files, flags::ZLIB, FormatVersion::V2);
 
     let total_size = file_count * file_size;
     group.throughput(Throughput::Bytes(total_size as u64));
@@ -345,9 +316,7 @@ fn bench_parallel_extraction(c: &mut Criterion) {
     group.bench_function("multi_handle", |b| {
         b.iter(|| {
             // In real parallel code, these would be in different threads
-            let mut archives: Vec<_> = (0..4)
-                .map(|_| Archive::open(&archive_path).unwrap())
-                .collect();
+            let mut archives: Vec<_> = (0..4).map(|_| Archive::open(&archive_path).unwrap()).collect();
 
             for (i, archive) in archives.iter_mut().enumerate() {
                 for j in (i..file_count).step_by(4) {
@@ -371,15 +340,9 @@ fn bench_metadata_operations(c: &mut Criterion) {
 
     let files: Vec<(&str, Vec<u8>)> = (0..file_count)
         .map(|i| {
-            let filename = Box::leak(
-                format!(
-                    "folder{}/subfolder{}/file_{:04}.dat",
-                    i / 100,
-                    (i / 10) % 10,
-                    i
-                )
-                .into_boxed_str(),
-            ) as &str;
+            let filename =
+                Box::leak(format!("folder{}/subfolder{}/file_{:04}.dat", i / 100, (i / 10) % 10, i).into_boxed_str())
+                    as &str;
             let data = vec![0u8; 1024]; // 1KB files
             (filename, data)
         })
@@ -397,12 +360,7 @@ fn bench_metadata_operations(c: &mut Criterion) {
         let archive = Archive::open(&archive_path).unwrap();
         b.iter(|| {
             for i in 0..100 {
-                let filename = format!(
-                    "folder{}/subfolder{}/file_{:04}.dat",
-                    i / 100,
-                    (i / 10) % 10,
-                    i
-                );
+                let filename = format!("folder{}/subfolder{}/file_{:04}.dat", i / 100, (i / 10) % 10, i);
                 let exists = archive.find_file(&filename).unwrap().is_some();
                 black_box(exists);
             }
@@ -413,12 +371,7 @@ fn bench_metadata_operations(c: &mut Criterion) {
         let archive = Archive::open(&archive_path).unwrap();
         b.iter(|| {
             for i in 0..100 {
-                let filename = format!(
-                    "folder{}/subfolder{}/file_{:04}.dat",
-                    i / 100,
-                    (i / 10) % 10,
-                    i
-                );
+                let filename = format!("folder{}/subfolder{}/file_{:04}.dat", i / 100, (i / 10) % 10, i);
                 if let Ok(Some(entry)) = archive.find_file(&filename) {
                     black_box(entry.file_size);
                     black_box(entry.compressed_size);

@@ -16,10 +16,7 @@ pub struct DbcWriter<W: Write + Seek> {
 impl<W: Write + Seek> DbcWriter<W> {
     /// Create a new DBC writer
     pub fn new(writer: W) -> Self {
-        Self {
-            writer,
-            schema: None,
-        }
+        Self { writer, schema: None }
     }
 
     /// Set the schema for the writer
@@ -70,10 +67,7 @@ impl<W: Write + Seek> DbcWriter<W> {
     }
 
     /// Build a string block from a record set
-    fn build_string_block(
-        &self,
-        record_set: &RecordSet,
-    ) -> Result<(Vec<u8>, HashMap<String, u32>)> {
+    fn build_string_block(&self, record_set: &RecordSet) -> Result<(Vec<u8>, HashMap<String, u32>)> {
         let mut string_block = Vec::new();
         let mut string_offsets = HashMap::new();
 
@@ -149,9 +143,9 @@ impl<W: Write + Seek> DbcWriter<W> {
                 let offset = string_offsets.get(string).unwrap_or(&0);
                 self.writer.write_all(&offset.to_le_bytes())?;
             }
-            (Value::Bool(v), FieldType::Bool) => self
-                .writer
-                .write_all(&(if *v { 1u32 } else { 0u32 }).to_le_bytes())?,
+            (Value::Bool(v), FieldType::Bool) => {
+                self.writer.write_all(&(if *v { 1u32 } else { 0u32 }).to_le_bytes())?
+            }
             (Value::UInt8(v), FieldType::UInt8) => self.writer.write_all(&[*v])?,
             (Value::Int8(v), FieldType::Int8) => self.writer.write_all(&[*v as u8])?,
             (Value::UInt16(v), FieldType::UInt16) => self.writer.write_all(&v.to_le_bytes())?,

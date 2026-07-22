@@ -181,9 +181,7 @@ mod tests {
 
         // Test write
         let mut data = Vec::new();
-        event
-            .write(&mut data, M2Version::Vanilla.to_header_version())
-            .unwrap();
+        event.write(&mut data, M2Version::Vanilla.to_header_version()).unwrap();
 
         // Event should be 44 bytes
         assert_eq!(data.len(), 44);
@@ -207,10 +205,7 @@ mod tests {
     fn test_event_types() {
         assert_eq!(M2EventType::from_u32(0), Some(M2EventType::Sound));
         assert_eq!(M2EventType::from_u32(5), Some(M2EventType::StandOrLand));
-        assert_eq!(
-            M2EventType::from_u32(9),
-            Some(M2EventType::PlaySoundKitFromTable)
-        );
+        assert_eq!(M2EventType::from_u32(9), Some(M2EventType::PlaySoundKitFromTable));
         assert_eq!(M2EventType::from_u32(20), None);
     }
 }

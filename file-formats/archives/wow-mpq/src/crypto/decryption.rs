@@ -22,10 +22,7 @@ pub fn decrypt_block(data: &mut [u32], mut key: u32) {
         key = (!key << 0x15).wrapping_add(0x11111111) | (key >> 0x0B);
 
         // Update seed for next round
-        seed = ch
-            .wrapping_add(seed)
-            .wrapping_add(seed << 5)
-            .wrapping_add(3);
+        seed = ch.wrapping_add(seed).wrapping_add(seed << 5).wrapping_add(3);
     }
 }
 

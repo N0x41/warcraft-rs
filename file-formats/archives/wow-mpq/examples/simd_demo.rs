@@ -48,38 +48,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 fn display_cpu_features(features: &CpuFeatures) {
     println!("🔍 Detected CPU Features:");
-    println!(
-        "   SSE4.2 (Hardware CRC32): {}",
-        format_bool(features.has_sse42)
-    );
-    println!(
-        "   AVX2 (256-bit vectors):   {}",
-        format_bool(features.has_avx2)
-    );
-    println!(
-        "   AES Instructions:         {}",
-        format_bool(features.has_aes)
-    );
-    println!(
-        "   PCLMULQDQ:               {}",
-        format_bool(features.has_pclmulqdq)
-    );
+    println!("   SSE4.2 (Hardware CRC32): {}", format_bool(features.has_sse42));
+    println!("   AVX2 (256-bit vectors):   {}", format_bool(features.has_avx2));
+    println!("   AES Instructions:         {}", format_bool(features.has_aes));
+    println!("   PCLMULQDQ:               {}", format_bool(features.has_pclmulqdq));
 
     #[cfg(target_arch = "aarch64")]
-    println!(
-        "   NEON (ARM SIMD):         {}",
-        format_bool(features.has_neon)
-    );
+    println!("   NEON (ARM SIMD):         {}", format_bool(features.has_neon));
 
     println!();
 }
 
 fn format_bool(value: bool) -> &'static str {
-    if value {
-        "✅ Available"
-    } else {
-        "❌ Not Available"
-    }
+    if value { "✅ Available" } else { "❌ Not Available" }
 }
 
 fn demonstrate_crc32_performance(simd: &SimdOps) -> Result<(), Box<dyn std::error::Error>> {
@@ -110,10 +91,8 @@ fn demonstrate_crc32_performance(simd: &SimdOps) -> Result<(), Box<dyn std::erro
         let scalar_duration = start.elapsed();
 
         let speedup = scalar_duration.as_nanos() as f64 / simd_duration.as_nanos() as f64;
-        let throughput_simd =
-            (*size as f64 * iterations as f64) / (simd_duration.as_secs_f64() * 1024.0 * 1024.0);
-        let throughput_scalar =
-            (*size as f64 * iterations as f64) / (scalar_duration.as_secs_f64() * 1024.0 * 1024.0);
+        let throughput_simd = (*size as f64 * iterations as f64) / (simd_duration.as_secs_f64() * 1024.0 * 1024.0);
+        let throughput_scalar = (*size as f64 * iterations as f64) / (scalar_duration.as_secs_f64() * 1024.0 * 1024.0);
 
         println!("  📊 {} KB data ({} iterations):", size / 1024, iterations);
         println!(
@@ -228,17 +207,12 @@ fn demonstrate_batch_processing(simd: &SimdOps) -> Result<(), Box<dyn std::error
         let individual_duration = start.elapsed();
 
         let speedup = individual_duration.as_nanos() as f64 / batch_duration.as_nanos() as f64;
-        let items_per_sec_batch =
-            (*batch_size as f64 * iterations as f64) / batch_duration.as_secs_f64();
-        let items_per_sec_individual =
-            (*batch_size as f64 * iterations as f64) / individual_duration.as_secs_f64();
+        let items_per_sec_batch = (*batch_size as f64 * iterations as f64) / batch_duration.as_secs_f64();
+        let items_per_sec_individual = (*batch_size as f64 * iterations as f64) / individual_duration.as_secs_f64();
 
         println!("  📊 Batch size {} filenames:", batch_size);
         println!("     Batch:      {:>12.0} items/sec", items_per_sec_batch);
-        println!(
-            "     Individual: {:>12.0} items/sec",
-            items_per_sec_individual
-        );
+        println!("     Individual: {:>12.0} items/sec", items_per_sec_individual);
         println!(
             "     Speedup: {:.2}x {}",
             speedup,
@@ -264,11 +238,7 @@ fn demonstrate_realistic_workload(simd: &SimdOps) -> Result<(), Box<dyn std::err
 
         let iterations = if filenames.len() > 1000 { 10 } else { 100 };
 
-        println!(
-            "  🎮 Scenario: {} ({} files)",
-            scenario_name,
-            filenames.len()
-        );
+        println!("  🎮 Scenario: {} ({} files)", scenario_name, filenames.len());
 
         // Simulate complete file processing: hash lookup + Jenkins hash + CRC verification
 
@@ -316,10 +286,8 @@ fn demonstrate_realistic_workload(simd: &SimdOps) -> Result<(), Box<dyn std::err
         let scalar_total = start.elapsed();
 
         let speedup = scalar_total.as_nanos() as f64 / simd_total.as_nanos() as f64;
-        let files_per_sec_simd =
-            (filenames.len() as f64 * iterations as f64) / simd_total.as_secs_f64();
-        let files_per_sec_scalar =
-            (filenames.len() as f64 * iterations as f64) / scalar_total.as_secs_f64();
+        let files_per_sec_simd = (filenames.len() as f64 * iterations as f64) / simd_total.as_secs_f64();
+        let files_per_sec_scalar = (filenames.len() as f64 * iterations as f64) / scalar_total.as_secs_f64();
 
         println!(
             "     SIMD:   {:>8.0} files/sec ({:>6.2}ms total)",
@@ -364,9 +332,7 @@ fn print_performance_summary(simd: &SimdOps) {
         println!("• Large archive operations (Cataclysm/MoP era) benefit most from SIMD");
         println!("• Bulk processing shows 20-40% overall improvement in realistic workloads");
     } else {
-        println!(
-            "• No SIMD acceleration available, but scalar implementations are still optimized"
-        );
+        println!("• No SIMD acceleration available, but scalar implementations are still optimized");
         println!("• Consider running on a CPU with SSE4.2 or AVX2 for maximum performance");
     }
 
@@ -415,18 +381,9 @@ fn generate_expansion_filenames() -> Vec<String> {
     for zone in &zones {
         for typ in &types {
             for i in 0..100 {
-                filenames.push(format!(
-                    "World\\Maps\\{}\\{}\\{}_{:04}.adt",
-                    zone, typ, typ, i
-                ));
-                filenames.push(format!(
-                    "World\\Maps\\{}\\{}\\{}_{:04}.m2",
-                    zone, typ, typ, i
-                ));
-                filenames.push(format!(
-                    "World\\Maps\\{}\\{}\\{}_{:04}.blp",
-                    zone, typ, typ, i
-                ));
+                filenames.push(format!("World\\Maps\\{}\\{}\\{}_{:04}.adt", zone, typ, typ, i));
+                filenames.push(format!("World\\Maps\\{}\\{}\\{}_{:04}.m2", zone, typ, typ, i));
+                filenames.push(format!("World\\Maps\\{}\\{}\\{}_{:04}.blp", zone, typ, typ, i));
             }
         }
     }

@@ -236,8 +236,7 @@ impl HashTable {
             // Check if this is our file
             if entry.name_1 == name_a && entry.name_2 == name_b {
                 // Check locale (0 = default/any locale)
-                if (locale == 0 || entry.locale == 0 || entry.locale == locale) && entry.is_valid()
-                {
+                if (locale == 0 || entry.locale == 0 || entry.locale == locale) && entry.is_valid() {
                     return Some((index, entry));
                 }
             }

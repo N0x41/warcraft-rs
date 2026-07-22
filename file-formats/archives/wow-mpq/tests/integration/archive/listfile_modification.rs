@@ -1,9 +1,7 @@
 //! Test listfile modification and updating
 
 use tempfile::NamedTempFile;
-use wow_mpq::{
-    AddFileOptions, Archive, ArchiveBuilder, FormatVersion, ListfileOption, MutableArchive,
-};
+use wow_mpq::{AddFileOptions, Archive, ArchiveBuilder, FormatVersion, ListfileOption, MutableArchive};
 
 #[test]
 fn test_listfile_updates_correctly() {
@@ -40,18 +38,10 @@ fn test_listfile_updates_correctly() {
 
         // Add new files
         mutable
-            .add_file_data(
-                b"File 3 content".as_ref(),
-                "file3.txt",
-                AddFileOptions::default(),
-            )
+            .add_file_data(b"File 3 content".as_ref(), "file3.txt", AddFileOptions::default())
             .unwrap();
         mutable
-            .add_file_data(
-                b"File 4 content".as_ref(),
-                "file4.txt",
-                AddFileOptions::default(),
-            )
+            .add_file_data(b"File 4 content".as_ref(), "file4.txt", AddFileOptions::default())
             .unwrap();
 
         // Flush changes
@@ -103,26 +93,11 @@ fn test_listfile_updates_correctly() {
         // Check updated listfile content
         let listfile_data = archive.read_file("(listfile)").unwrap();
         let listfile_content = String::from_utf8_lossy(&listfile_data);
-        assert!(
-            listfile_content.contains("file1.txt"),
-            "file1.txt not in listfile"
-        );
-        assert!(
-            listfile_content.contains("file2.txt"),
-            "file2.txt not in listfile"
-        );
-        assert!(
-            listfile_content.contains("file3.txt"),
-            "file3.txt not in listfile"
-        );
-        assert!(
-            listfile_content.contains("file4.txt"),
-            "file4.txt not in listfile"
-        );
-        assert!(
-            listfile_content.contains("(listfile)"),
-            "(listfile) not in listfile"
-        );
+        assert!(listfile_content.contains("file1.txt"), "file1.txt not in listfile");
+        assert!(listfile_content.contains("file2.txt"), "file2.txt not in listfile");
+        assert!(listfile_content.contains("file3.txt"), "file3.txt not in listfile");
+        assert!(listfile_content.contains("file4.txt"), "file4.txt not in listfile");
+        assert!(listfile_content.contains("(listfile)"), "(listfile) not in listfile");
     }
 }
 

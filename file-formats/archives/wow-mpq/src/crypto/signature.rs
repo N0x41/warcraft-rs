@@ -192,8 +192,7 @@ L4MWaiKuOzq08mSyNqPeN8oSy18q848CIHeMn+3s+eOmu7su1UYQl6yH7OrdBd1q
             .map_err(|e| Error::invalid_format(format!("Invalid weak key modulus: {e}")))?;
         let e = RsaBigUint::from(BLIZZARD_WEAK_PUBLIC_KEY_E);
 
-        RsaPublicKey::new(n, e)
-            .map_err(|e| Error::invalid_format(format!("Invalid weak public key: {e}")))
+        RsaPublicKey::new(n, e).map_err(|e| Error::invalid_format(format!("Invalid weak public key: {e}")))
     }
 
     /// Get the strong signature public key
@@ -202,8 +201,7 @@ L4MWaiKuOzq08mSyNqPeN8oSy18q848CIHeMn+3s+eOmu7su1UYQl6yH7OrdBd1q
             .map_err(|e| Error::invalid_format(format!("Invalid strong key modulus: {e}")))?;
         let e = RsaBigUint::from(BLIZZARD_STRONG_PUBLIC_KEY_E);
 
-        RsaPublicKey::new(n, e)
-            .map_err(|e| Error::invalid_format(format!("Invalid strong public key: {e}")))
+        RsaPublicKey::new(n, e).map_err(|e| Error::invalid_format(format!("Invalid strong public key: {e}")))
     }
 
     /// Get the weak signature private key (for testing/educational purposes only)
@@ -383,11 +381,7 @@ pub fn verify_weak_signature_stormlib<R: Read + std::io::Seek>(
 }
 
 /// Legacy verify function (kept for backward compatibility)
-pub fn verify_weak_signature<R: Read>(
-    mut reader: R,
-    signature: &[u8],
-    archive_size: u64,
-) -> Result<bool> {
+pub fn verify_weak_signature<R: Read>(mut reader: R, signature: &[u8], archive_size: u64) -> Result<bool> {
     // Get the public key
     let public_key = public_keys::weak_public_key()?;
 
@@ -426,11 +420,7 @@ pub fn verify_weak_signature<R: Read>(
 }
 
 /// Verify a strong signature (2048-bit RSA with SHA-1)
-pub fn verify_strong_signature<R: Read>(
-    mut reader: R,
-    signature: &[u8],
-    archive_size: u64,
-) -> Result<bool> {
+pub fn verify_strong_signature<R: Read>(mut reader: R, signature: &[u8], archive_size: u64) -> Result<bool> {
     // Get the public key
     let public_key = public_keys::strong_public_key()?;
 
@@ -497,8 +487,7 @@ fn verify_pkcs1_v15_md5(decrypted: &[u8], expected_hash: &[u8]) -> Result<bool> 
         }
     }
 
-    let separator_pos = separator_pos
-        .ok_or_else(|| Error::invalid_format("No separator found in PKCS#1 padding"))?;
+    let separator_pos = separator_pos.ok_or_else(|| Error::invalid_format("No separator found in PKCS#1 padding"))?;
 
     // MD5 DigestInfo (from PKCS#1)
     let md5_digest_info = [
@@ -539,10 +528,7 @@ fn verify_mpq_strong_signature_padding(decrypted: &[u8], expected_hash: &[u8]) -
 
     // Check padding type
     if decrypted[0] != 0x0B {
-        log::debug!(
-            "Invalid padding type: expected 0x0B, got 0x{:02X}",
-            decrypted[0]
-        );
+        log::debug!("Invalid padding type: expected 0x0B, got 0x{:02X}", decrypted[0]);
         return Ok(false);
     }
 
@@ -568,10 +554,7 @@ fn verify_mpq_strong_signature_padding(decrypted: &[u8], expected_hash: &[u8]) -
 
 /// Generate a weak signature for an MPQ archive
 /// This creates a 72-byte (signature) file with the signature at offset 8
-pub fn generate_weak_signature<R: Read + std::io::Seek>(
-    reader: R,
-    signature_info: &SignatureInfo,
-) -> Result<Vec<u8>> {
+pub fn generate_weak_signature<R: Read + std::io::Seek>(reader: R, signature_info: &SignatureInfo) -> Result<Vec<u8>> {
     // Get the private key
     let private_key = public_keys::weak_private_key()?;
 
@@ -605,10 +588,7 @@ pub fn generate_weak_signature<R: Read + std::io::Seek>(
     let mut signature_file = vec![0u8; WEAK_SIGNATURE_FILE_SIZE];
     signature_file[8..8 + WEAK_SIGNATURE_SIZE].copy_from_slice(&signature_le);
 
-    log::debug!(
-        "Generated weak signature file ({} bytes)",
-        signature_file.len()
-    );
+    log::debug!("Generated weak signature file ({} bytes)", signature_file.len());
     Ok(signature_file)
 }
 
@@ -629,9 +609,7 @@ fn create_pkcs1_v15_padding_md5(hash: &[u8]) -> Result<Vec<u8>> {
     let padding_len = WEAK_SIGNATURE_SIZE - message_len - 3; // -3 for header bytes
 
     if padding_len < 8 {
-        return Err(Error::invalid_format(
-            "Insufficient space for PKCS#1 padding",
-        ));
+        return Err(Error::invalid_format("Insufficient space for PKCS#1 padding"));
     }
 
     // Build padded message: 0x00 || 0x01 || PS || 0x00 || DigestInfo || Hash
@@ -832,8 +810,8 @@ mod tests {
 
         // Add test SHA-1 hash
         let test_hash = [
-            0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF, 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB,
-            0xCD, 0xEF, 0x01, 0x23, 0x45, 0x67,
+            0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF, 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF, 0x01, 0x23,
+            0x45, 0x67,
         ];
         decrypted[236..256].copy_from_slice(&test_hash);
 

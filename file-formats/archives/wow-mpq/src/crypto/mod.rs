@@ -83,9 +83,8 @@ pub use jenkins::{jenkins_hashlittle2 as het_hash, jenkins_one_at_a_time as jenk
 pub use signature::{
     DIGEST_UNIT_SIZE, STRONG_SIGNATURE_HEADER, STRONG_SIGNATURE_SIZE, SignatureInfo, SignatureType,
     StrongSignatureTailType, WEAK_SIGNATURE_FILE_SIZE, WEAK_SIGNATURE_SIZE, calculate_mpq_hash_md5,
-    generate_strong_signature, generate_weak_signature, parse_strong_signature,
-    parse_weak_signature, public_keys, verify_strong_signature, verify_weak_signature,
-    verify_weak_signature_stormlib,
+    generate_strong_signature, generate_weak_signature, parse_strong_signature, parse_weak_signature, public_keys,
+    verify_strong_signature, verify_weak_signature, verify_weak_signature_stormlib,
 };
 pub use types::hash_type;
 

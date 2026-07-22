@@ -73,9 +73,7 @@ fn test_add_file_from_memory() {
     let mut mutable_archive = MutableArchive::open(&archive_path).unwrap();
 
     // Add file from memory with custom options
-    let options = AddFileOptions::new()
-        .compression(CompressionMethod::Lzma)
-        .encrypt();
+    let options = AddFileOptions::new().compression(CompressionMethod::Lzma).encrypt();
 
     mutable_archive
         .add_file_data(b"Memory file content", "memory\\file.dat", options)
@@ -95,10 +93,7 @@ fn test_add_file_from_memory() {
     // Try to read the file directly
     match archive.read_file("memory\\file.dat") {
         Ok(content) => {
-            println!(
-                "Successfully read memory\\file.dat: {} bytes",
-                content.len()
-            );
+            println!("Successfully read memory\\file.dat: {} bytes", content.len());
             println!("Expected: {:?}", b"Memory file content");
             println!("Actual:   {content:?}");
 
@@ -216,18 +211,10 @@ fn test_compact_archive() {
 
     // Add and remove some files to create fragmentation
     mutable_archive
-        .add_file_data(
-            b"X".repeat(10000).as_slice(),
-            "big1.dat",
-            Default::default(),
-        )
+        .add_file_data(b"X".repeat(10000).as_slice(), "big1.dat", Default::default())
         .unwrap();
     mutable_archive
-        .add_file_data(
-            b"Y".repeat(10000).as_slice(),
-            "big2.dat",
-            Default::default(),
-        )
+        .add_file_data(b"Y".repeat(10000).as_slice(), "big2.dat", Default::default())
         .unwrap();
     mutable_archive.flush().unwrap();
 
@@ -248,10 +235,7 @@ fn test_compact_archive() {
     // Verify all remaining files are still accessible
     let mut archive = Archive::open(&archive_path).unwrap();
     assert_eq!(archive.read_file("file1.txt").unwrap(), b"Test content 1");
-    assert_eq!(
-        archive.read_file("big2.dat").unwrap(),
-        b"Y".repeat(10000).as_slice()
-    );
+    assert_eq!(archive.read_file("big2.dat").unwrap(), b"Y".repeat(10000).as_slice());
 }
 
 #[test]
@@ -265,11 +249,7 @@ fn test_path_normalization() {
 
     // Add file with forward slashes
     mutable_archive
-        .add_file_data(
-            b"Forward slash content",
-            "path/to/file.txt",
-            Default::default(),
-        )
+        .add_file_data(b"Forward slash content", "path/to/file.txt", Default::default())
         .unwrap();
 
     drop(mutable_archive);

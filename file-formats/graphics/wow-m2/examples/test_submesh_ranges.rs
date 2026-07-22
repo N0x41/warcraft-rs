@@ -53,8 +53,7 @@ fn main() -> anyhow::Result<()> {
                 let triangle_end = submesh.triangle_start + submesh.triangle_count;
                 if triangle_end <= raw_triangles.len() as u16 {
                     // Extract the submesh-specific triangle slice
-                    let submesh_triangles =
-                        &raw_triangles[submesh.triangle_start as usize..triangle_end as usize];
+                    let submesh_triangles = &raw_triangles[submesh.triangle_start as usize..triangle_end as usize];
                     println!(
                         "  ✅ Successfully extracted {} triangle indices for submesh",
                         submesh_triangles.len()
@@ -72,10 +71,7 @@ fn main() -> anyhow::Result<()> {
                         let v2_idx = submesh_triangles[tri_start + 1] as usize;
                         let v3_idx = submesh_triangles[tri_start + 2] as usize;
 
-                        if v1_idx < raw_indices.len()
-                            && v2_idx < raw_indices.len()
-                            && v3_idx < raw_indices.len()
-                        {
+                        if v1_idx < raw_indices.len() && v2_idx < raw_indices.len() && v3_idx < raw_indices.len() {
                             let v1 = raw_indices[v1_idx];
                             let v2 = raw_indices[v2_idx];
                             let v3 = raw_indices[v3_idx];
@@ -87,10 +83,7 @@ fn main() -> anyhow::Result<()> {
                     }
                 } else {
                     println!("  ❌ ERROR: triangle range out of bounds!");
-                    println!(
-                        "     Requested range: {}..{}",
-                        submesh.triangle_start, triangle_end
-                    );
+                    println!("     Requested range: {}..{}", submesh.triangle_start, triangle_end);
                     println!("     Available range: 0..{}", raw_triangles.len());
                 }
             }
@@ -103,8 +96,7 @@ fn main() -> anyhow::Result<()> {
             if let Some(submesh) = submeshes.first() {
                 let triangle_end = submesh.triangle_start + submesh.triangle_count;
                 if triangle_end <= raw_triangles.len() as u16 {
-                    let submesh_triangles =
-                        &raw_triangles[submesh.triangle_start as usize..triangle_end as usize];
+                    let submesh_triangles = &raw_triangles[submesh.triangle_start as usize..triangle_end as usize];
 
                     // Apply two-level indirection to submesh triangle range
                     let submesh_resolved: Vec<u16> = submesh_triangles
@@ -119,15 +111,10 @@ fn main() -> anyhow::Result<()> {
                         .collect();
 
                     println!("Submesh resolved length: {}", submesh_resolved.len());
-                    println!(
-                        "Lengths match: {}",
-                        current_resolved.len() == submesh_resolved.len()
-                    );
+                    println!("Lengths match: {}", current_resolved.len() == submesh_resolved.len());
 
                     if current_resolved.len() != submesh_resolved.len() {
-                        println!(
-                            "❌ FOUND THE ISSUE: Length mismatch confirms submesh range extraction is needed!"
-                        );
+                        println!("❌ FOUND THE ISSUE: Length mismatch confirms submesh range extraction is needed!");
                     }
                 }
             }

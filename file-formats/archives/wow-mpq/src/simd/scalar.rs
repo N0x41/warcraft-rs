@@ -208,10 +208,7 @@ mod tests {
 
         // Test with initial value of 0
         let result1 = crc32_scalar(test_data, 0);
-        assert_ne!(
-            result1, 0,
-            "CRC32 should produce non-zero result for non-empty data"
-        );
+        assert_ne!(result1, 0, "CRC32 should produce non-zero result for non-empty data");
 
         // Test with different initial value
         let result2 = crc32_scalar(test_data, 0x12345678);
@@ -222,10 +219,7 @@ mod tests {
 
         // Test empty data
         let empty_result = crc32_scalar(&[], 0);
-        assert_eq!(
-            empty_result, 0,
-            "CRC32 of empty data with 0 initial should be 0"
-        );
+        assert_eq!(empty_result, 0, "CRC32 of empty data with 0 initial should be 0");
     }
 
     #[test]
@@ -287,18 +281,12 @@ mod tests {
 
         let jenkins1 = jenkins_hash_scalar("path/file");
         let jenkins2 = jenkins_hash_scalar("path\\file");
-        assert_eq!(
-            jenkins1, jenkins2,
-            "Jenkins hash should normalize path separators"
-        );
+        assert_eq!(jenkins1, jenkins2, "Jenkins hash should normalize path separators");
 
         // Case sensitivity (MPQ hash is case-insensitive, Jenkins is lowercase)
         let hash_upper = hash_string_scalar(b"FILE", 0);
         let hash_lower = hash_string_scalar(b"file", 0);
-        assert_eq!(
-            hash_upper, hash_lower,
-            "MPQ hash should be case-insensitive"
-        );
+        assert_eq!(hash_upper, hash_lower, "MPQ hash should be case-insensitive");
 
         let jenkins_upper = jenkins_hash_scalar("FILE");
         let jenkins_lower = jenkins_hash_scalar("file");

@@ -18,28 +18,20 @@ pub fn parse_header(input: &[u8]) -> ParseResult<BlpHeader> {
     });
 
     let mut flags = if version >= BlpVersion::Blp2 {
-        let compression_field = reader
-            .read_u8()
-            .map_err(|e| e.with_context("compression field"))?;
+        let compression_field = reader.read_u8().map_err(|e| e.with_context("compression field"))?;
         let compression: Compression = compression_field.try_into().map_err(|_| {
             error!("Unexpected value for compression {content_field}, defaulting to jpeg");
             Error::Blp2UnknownCompression(compression_field)
         })?;
-        let alpha_bits = reader
-            .read_u8()
-            .map_err(|e| e.with_context("alpha_bits field"))?;
-        let alpha_type_raw = reader
-            .read_u8()
-            .map_err(|e| e.with_context("alpha_type field"))?;
+        let alpha_bits = reader.read_u8().map_err(|e| e.with_context("alpha_bits field"))?;
+        let alpha_type_raw = reader.read_u8().map_err(|e| e.with_context("alpha_type field"))?;
         let alpha_type = alpha_type_raw.try_into().map_err(|_| {
             warn!("Unknown alpha_type value {alpha_type_raw}, treating as raw value");
             // For now, we'll handle unknown alpha types gracefully
             // In a production system, you might want to return an error or use a fallback
             Error::UnknownAlphaType(alpha_type_raw)
         })?;
-        let has_mipmaps = reader
-            .read_u8()
-            .map_err(|e| e.with_context("has_mipmaps field"))?;
+        let has_mipmaps = reader.read_u8().map_err(|e| e.with_context("has_mipmaps field"))?;
 
         BlpFlags::Blp2 {
             compression,
@@ -48,21 +40,14 @@ pub fn parse_header(input: &[u8]) -> ParseResult<BlpHeader> {
             has_mipmaps,
         }
     } else {
-        let alpha_bits_raw = reader
-            .read_u32_le()
-            .map_err(|e| e.with_context("alpha_bits field"))?;
-        let alpha_bits = if content == BlpContentTag::Jpeg
-            && (alpha_bits_raw != 0 && alpha_bits_raw != 8)
-        {
+        let alpha_bits_raw = reader.read_u32_le().map_err(|e| e.with_context("alpha_bits field"))?;
+        let alpha_bits = if content == BlpContentTag::Jpeg && (alpha_bits_raw != 0 && alpha_bits_raw != 8) {
             warn!(
                 "For jpeg content detected non standard alpha bits value {alpha_bits_raw} when 0 or 8 is expected, defaulting to 0"
             );
             0
         } else if content == BlpContentTag::Direct
-            && (alpha_bits_raw != 0
-                && alpha_bits_raw != 1
-                && alpha_bits_raw != 4
-                && alpha_bits_raw != 8)
+            && (alpha_bits_raw != 0 && alpha_bits_raw != 1 && alpha_bits_raw != 4 && alpha_bits_raw != 8)
         {
             warn!(
                 "For direct content detected non standard alpha bits value {alpha_bits_raw} when 0, 1, 4 or 8 is expected, defaulting to 0"
@@ -79,30 +64,18 @@ pub fn parse_header(input: &[u8]) -> ParseResult<BlpHeader> {
         }
     };
 
-    let width = reader
-        .read_u32_le()
-        .map_err(|e| e.with_context("width field"))?;
-    let height = reader
-        .read_u32_le()
-        .map_err(|e| e.with_context("height field"))?;
+    let width = reader.read_u32_le().map_err(|e| e.with_context("width field"))?;
+    let height = reader.read_u32_le().map_err(|e| e.with_context("height field"))?;
 
-    if let BlpFlags::Old {
-        extra, has_mipmaps, ..
-    } = &mut flags
-    {
-        let extra_value = reader
-            .read_u32_le()
-            .map_err(|e| e.with_context("extra field"))?;
-        let has_mipmaps_value = reader
-            .read_u32_le()
-            .map_err(|e| e.with_context("has_mipmaps field"))?;
+    if let BlpFlags::Old { extra, has_mipmaps, .. } = &mut flags {
+        let extra_value = reader.read_u32_le().map_err(|e| e.with_context("extra field"))?;
+        let has_mipmaps_value = reader.read_u32_le().map_err(|e| e.with_context("has_mipmaps field"))?;
         *extra = extra_value;
         *has_mipmaps = has_mipmaps_value;
     }
 
     // Parse mipmap locator
-    let mipmap_locator =
-        parse_mipmap_locator(version, &mut reader).map_err(|e| e.with_context("mipmap locator"))?;
+    let mipmap_locator = parse_mipmap_locator(version, &mut reader).map_err(|e| e.with_context("mipmap locator"))?;
 
     Ok(BlpHeader {
         version,
@@ -129,10 +102,7 @@ fn parse_magic(reader: &mut impl ByteReader) -> ParseResult<BlpVersion> {
     Ok(version)
 }
 
-fn parse_mipmap_locator(
-    version: BlpVersion,
-    reader: &mut impl ByteReader,
-) -> ParseResult<MipmapLocator> {
+fn parse_mipmap_locator(version: BlpVersion, reader: &mut impl ByteReader) -> ParseResult<MipmapLocator> {
     if version >= BlpVersion::Blp1 {
         let mut offsets: [u32; 16] = Default::default();
         let mut sizes: [u32; 16] = Default::default();

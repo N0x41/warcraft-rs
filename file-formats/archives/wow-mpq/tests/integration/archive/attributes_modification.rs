@@ -1,9 +1,7 @@
 //! Test attributes modification and updating
 
 use tempfile::NamedTempFile;
-use wow_mpq::{
-    AddFileOptions, Archive, ArchiveBuilder, FormatVersion, ListfileOption, MutableArchive,
-};
+use wow_mpq::{AddFileOptions, Archive, ArchiveBuilder, FormatVersion, ListfileOption, MutableArchive};
 
 #[test]
 fn test_attributes_updates_on_modification() {

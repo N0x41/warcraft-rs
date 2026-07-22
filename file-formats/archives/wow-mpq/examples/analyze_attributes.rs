@@ -66,16 +66,12 @@ fn analyze_attributes(path: &str, name: &str) -> Result<(), Box<dyn std::error::
                     // CRC32 + timestamp + MD5
                     let entry_size = 4 + 8 + 16; // 28 bytes
                     let file_count = remaining / entry_size;
-                    println!(
-                        "  Estimated file count: {file_count} (assuming {entry_size} bytes per entry)"
-                    );
+                    println!("  Estimated file count: {file_count} (assuming {entry_size} bytes per entry)");
                 } else if flags & 0x01 != 0 {
                     // Just CRC32
                     let entry_size = 4;
                     let file_count = remaining / entry_size;
-                    println!(
-                        "  Estimated file count: {file_count} (assuming {entry_size} bytes per entry)"
-                    );
+                    println!("  Estimated file count: {file_count} (assuming {entry_size} bytes per entry)");
                 }
             }
         }

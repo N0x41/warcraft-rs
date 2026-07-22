@@ -110,11 +110,7 @@ fn measure_archive_performance(archive_path: &str, description: &str) -> Option<
     println!("  📊 Category: {} archive\n", category);
 
     Some(PerformanceResult {
-        name: description
-            .split_whitespace()
-            .last()
-            .unwrap_or("unknown")
-            .to_string(),
+        name: description.split_whitespace().last().unwrap_or("unknown").to_string(),
         file_count: entries.len(),
         open_time_ms: open_time.as_secs_f64() * 1000.0,
         list_time_ms: list_time.as_secs_f64() * 1000.0,
@@ -174,10 +170,7 @@ fn analyze_phase1_improvements(results: &[PerformanceResult]) {
     // Estimate improvement (theoretical baseline was 439 files/sec for small archives)
     if min_perf.files_per_sec > 1000.0 {
         let improvement = min_perf.files_per_sec / 439.0;
-        println!(
-            "  🚀 Estimated improvement vs. pre-optimization: {:.1}x",
-            improvement
-        );
+        println!("  🚀 Estimated improvement vs. pre-optimization: {:.1}x", improvement);
     }
 }
 

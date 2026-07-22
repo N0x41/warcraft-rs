@@ -139,11 +139,7 @@ impl ParallelArchive {
     ///
     /// When extracting many small files, the overhead of opening file handles
     /// can dominate. This method processes files in batches per thread.
-    pub fn extract_files_batched(
-        &self,
-        filenames: &[&str],
-        batch_size: usize,
-    ) -> Result<Vec<(String, Vec<u8>)>> {
+    pub fn extract_files_batched(&self, filenames: &[&str], batch_size: usize) -> Result<Vec<(String, Vec<u8>)>> {
         // Divide files into chunks
         let chunks: Vec<_> = filenames.chunks(batch_size).collect();
 
@@ -243,9 +239,7 @@ fn extract_with_config_batched<P: AsRef<Path>>(
     let archive = ParallelArchive::open(archive_path)?;
 
     // Calculate appropriate batch size based on file count and available threads
-    let num_threads = config
-        .num_threads
-        .unwrap_or_else(rayon::current_num_threads);
+    let num_threads = config.num_threads.unwrap_or_else(rayon::current_num_threads);
     let effective_batch_size = if filenames.len() > 5000 {
         // For very large extractions, use larger batches to reduce overhead
         std::cmp::max(config.batch_size, filenames.len() / (num_threads * 2))
@@ -258,11 +252,7 @@ fn extract_with_config_batched<P: AsRef<Path>>(
         rayon::ThreadPoolBuilder::new()
             .num_threads(threads)
             .build()
-            .map_err(|e| {
-                Error::Io(std::io::Error::other(format!(
-                    "Failed to create thread pool: {e}"
-                )))
-            })?
+            .map_err(|e| Error::Io(std::io::Error::other(format!("Failed to create thread pool: {e}"))))?
     } else {
         rayon::ThreadPoolBuilder::new().build().unwrap()
     };
@@ -315,11 +305,7 @@ fn extract_with_config_unbatched<P: AsRef<Path>>(
         rayon::ThreadPoolBuilder::new()
             .num_threads(threads)
             .build()
-            .map_err(|e| {
-                Error::Io(std::io::Error::other(format!(
-                    "Failed to create thread pool: {e}"
-                )))
-            })?
+            .map_err(|e| Error::Io(std::io::Error::other(format!("Failed to create thread pool: {e}"))))?
     } else {
         rayon::ThreadPoolBuilder::new().build().unwrap()
     };
@@ -434,10 +420,7 @@ mod tests {
     fn test_with_config() {
         let (_temp, archive_path) = create_test_archive();
 
-        let config = ParallelConfig::new()
-            .threads(2)
-            .batch_size(5)
-            .skip_errors(true);
+        let config = ParallelConfig::new().threads(2).batch_size(5).skip_errors(true);
 
         let files = vec!["file_00.txt", "nonexistent.txt", "file_01.txt"];
         let results = extract_with_config(&archive_path, &files, config).unwrap();

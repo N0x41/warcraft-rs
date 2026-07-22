@@ -286,9 +286,7 @@ impl HiBlockTable {
 
     /// Create a new Hi-block table with the given size
     pub fn new(size: usize) -> Self {
-        Self {
-            entries: vec![0; size],
-        }
+        Self { entries: vec![0; size] }
     }
 
     /// Set a hi-block entry

@@ -13,11 +13,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Try to find any available WoW data
         match find_any_wow_data() {
             Some((version, data_path)) => {
-                println!(
-                    "Found {} data at: {}",
-                    version.display_name(),
-                    data_path.display()
-                );
+                println!("Found {} data at: {}", version.display_name(), data_path.display());
 
                 // Try common MPQ files in order of preference
                 let mpq_candidates = ["patch.MPQ", "patch.mpq", "misc.MPQ", "dbc.MPQ"];

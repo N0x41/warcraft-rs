@@ -281,8 +281,7 @@ pub fn image_to_blp(
                     height: image.height(),
                     mipmap_locator: MipmapLocator::External,
                 };
-                let blp_raw1 =
-                    image_to_raw1(image, alpha_bits.into(), make_mipmaps, mipmap_filter)?;
+                let blp_raw1 = image_to_raw1(image, alpha_bits.into(), make_mipmaps, mipmap_filter)?;
                 Ok(BlpImage {
                     header,
                     content: BlpContent::Raw1(blp_raw1),
@@ -312,8 +311,7 @@ pub fn image_to_blp(
             BlpOldFormat::Raw1 { alpha_bits } => {
                 let width = image.width();
                 let height = image.height();
-                let blp_raw1 =
-                    image_to_raw1(image, alpha_bits.into(), make_mipmaps, mipmap_filter)?;
+                let blp_raw1 = image_to_raw1(image, alpha_bits.into(), make_mipmaps, mipmap_filter)?;
                 let header = BlpHeader {
                     version: BlpVersion::Blp1,
                     content: BlpContentTag::Direct,
@@ -355,8 +353,7 @@ pub fn image_to_blp(
             Blp2Format::Raw1 { alpha_bits } => {
                 let width = image.width();
                 let height = image.height();
-                let blp_raw1 =
-                    image_to_raw1(image, alpha_bits.into(), make_mipmaps, mipmap_filter)?;
+                let blp_raw1 = image_to_raw1(image, alpha_bits.into(), make_mipmaps, mipmap_filter)?;
                 let header = BlpHeader {
                     version: BlpVersion::Blp2,
                     content: BlpContentTag::Direct,
@@ -423,13 +420,7 @@ pub fn image_to_blp(
                 let width = image.width();
                 let height = image.height();
                 let alpha_bits = if has_alpha { 1 } else { 0 };
-                let blp_dxtn = image_to_dxtn(
-                    image,
-                    DxtnFormat::Dxt1,
-                    make_mipmaps,
-                    mipmap_filter,
-                    compress_algorithm,
-                )?;
+                let blp_dxtn = image_to_dxtn(image, DxtnFormat::Dxt1, make_mipmaps, mipmap_filter, compress_algorithm)?;
                 Ok(BlpImage {
                     header: BlpHeader {
                         version: BlpVersion::Blp2,
@@ -454,13 +445,7 @@ pub fn image_to_blp(
                 let width = image.width();
                 let height = image.height();
                 let alpha_bits = if has_alpha { 8 } else { 0 };
-                let blp_dxtn = image_to_dxtn(
-                    image,
-                    DxtnFormat::Dxt3,
-                    make_mipmaps,
-                    mipmap_filter,
-                    compress_algorithm,
-                )?;
+                let blp_dxtn = image_to_dxtn(image, DxtnFormat::Dxt3, make_mipmaps, mipmap_filter, compress_algorithm)?;
                 Ok(BlpImage {
                     header: BlpHeader {
                         version: BlpVersion::Blp2,
@@ -485,13 +470,7 @@ pub fn image_to_blp(
                 let width = image.width();
                 let height = image.height();
                 let alpha_bits = if has_alpha { 8 } else { 0 };
-                let blp_dxtn = image_to_dxtn(
-                    image,
-                    DxtnFormat::Dxt5,
-                    make_mipmaps,
-                    mipmap_filter,
-                    compress_algorithm,
-                )?;
+                let blp_dxtn = image_to_dxtn(image, DxtnFormat::Dxt5, make_mipmaps, mipmap_filter, compress_algorithm)?;
                 Ok(BlpImage {
                     header: BlpHeader {
                         version: BlpVersion::Blp2,

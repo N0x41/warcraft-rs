@@ -146,20 +146,16 @@ impl SimdOps {
 
     /// Check if any SIMD optimizations are available
     pub fn has_simd_support(&self) -> bool {
-        self.features.has_sse42
-            || self.features.has_avx2
-            || self.features.has_aes
-            || self.features.has_pclmulqdq
-            || {
-                #[cfg(target_arch = "aarch64")]
-                {
-                    self.features.has_neon
-                }
-                #[cfg(not(target_arch = "aarch64"))]
-                {
-                    false
-                }
+        self.features.has_sse42 || self.features.has_avx2 || self.features.has_aes || self.features.has_pclmulqdq || {
+            #[cfg(target_arch = "aarch64")]
+            {
+                self.features.has_neon
             }
+            #[cfg(not(target_arch = "aarch64"))]
+            {
+                false
+            }
+        }
     }
 }
 
@@ -281,13 +277,7 @@ mod tests {
     #[test]
     fn test_jenkins_hash_batch() {
         let simd = SimdOps::new();
-        let filenames = [
-            "file1.txt",
-            "file2.txt",
-            "file3.txt",
-            "file4.txt",
-            "file5.txt",
-        ];
+        let filenames = ["file1.txt", "file2.txt", "file3.txt", "file4.txt", "file5.txt"];
 
         let batch_result = simd.jenkins_hash_batch(&filenames);
         assert_eq!(batch_result.len(), filenames.len());

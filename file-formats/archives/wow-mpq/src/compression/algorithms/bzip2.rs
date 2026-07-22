@@ -33,9 +33,7 @@ pub(crate) fn decompress(data: &[u8], expected_size: usize) -> Result<Vec<u8>> {
 /// Compress using BZip2
 pub(crate) fn compress(data: &[u8]) -> Result<Vec<u8>> {
     let mut encoder = BzEncoder::new(Vec::new(), Compression::default());
-    encoder
-        .write_all(data)
-        .map_err(|e| compression_error("BZip2", e))?;
+    encoder.write_all(data).map_err(|e| compression_error("BZip2", e))?;
 
     encoder.finish().map_err(|e| compression_error("BZip2", e))
 }

@@ -62,10 +62,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!(
                 "  Root bone {}: {} (children: {})",
                 index,
-                bone_info
-                    .name
-                    .as_deref()
-                    .unwrap_or(&format!("Bone_{}", index)),
+                bone_info.name.as_deref().unwrap_or(&format!("Bone_{}", index)),
                 bone_info.children.len()
             );
         }
@@ -77,18 +74,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for (i, anim_info) in enhanced_data.animations.iter().take(10).enumerate() {
             println!(
                 "  Animation {}: {} (ID: {}, Duration: {}ms, Loop: {})",
-                i,
-                anim_info.name,
-                anim_info.animation.animation_id,
-                anim_info.duration_ms,
-                anim_info.is_looping
+                i, anim_info.name, anim_info.animation.animation_id, anim_info.duration_ms, anim_info.is_looping
             );
         }
         if enhanced_data.animations.len() > 10 {
-            println!(
-                "  ... and {} more animations",
-                enhanced_data.animations.len() - 10
-            );
+            println!("  ... and {} more animations", enhanced_data.animations.len() - 10);
         }
         println!();
     }
@@ -104,10 +94,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             );
         }
         if enhanced_data.textures.len() > 5 {
-            println!(
-                "  ... and {} more textures",
-                enhanced_data.textures.len() - 5
-            );
+            println!("  ... and {} more textures", enhanced_data.textures.len() - 5);
         }
         println!();
     }

@@ -150,13 +150,7 @@ pub fn interpolate_with_blend<T: Lerp + Clone>(
     global_times: &[f64],
     default: T,
 ) -> T {
-    let current_value = interpolate_track(
-        track,
-        current_anim,
-        current_time,
-        global_times,
-        default.clone(),
-    );
+    let current_value = interpolate_track(track, current_anim, current_time, global_times, default.clone());
 
     // If blend factor is ~1.0 or no next animation, return current value
     if blend_factor >= 0.999 || next_anim.is_none() {

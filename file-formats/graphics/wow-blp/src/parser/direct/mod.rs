@@ -83,11 +83,7 @@ where
                         remaining_input,
                     )
                     .map_err(|e| e.with_context("dxt1 format"))?;
-                    Ok(BlpContent::Dxt1(BlpDxtn {
-                        format,
-                        cmap,
-                        images,
-                    }))
+                    Ok(BlpContent::Dxt1(BlpDxtn { format, cmap, images }))
                 }
                 Compression::Dxtc if alpha_type == AlphaType::OneBit => {
                     let format = DxtnFormat::Dxt3;
@@ -103,11 +99,7 @@ where
                     )
                     .map_err(|e| e.with_context("dxt3 format"))?;
 
-                    Ok(BlpContent::Dxt3(BlpDxtn {
-                        format,
-                        cmap,
-                        images,
-                    }))
+                    Ok(BlpContent::Dxt3(BlpDxtn { format, cmap, images }))
                 }
                 Compression::Dxtc if alpha_type == AlphaType::Enhanced => {
                     let format = DxtnFormat::Dxt5;
@@ -122,11 +114,7 @@ where
                         remaining_input,
                     )
                     .map_err(|e| e.with_context("dxt5 format"))?;
-                    Ok(BlpContent::Dxt5(BlpDxtn {
-                        format,
-                        cmap,
-                        images,
-                    }))
+                    Ok(BlpContent::Dxt5(BlpDxtn { format, cmap, images }))
                 }
                 Compression::Dxtc => {
                     error!("Alpha type {alpha_type} is not supported for BLP2!");

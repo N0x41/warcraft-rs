@@ -24,10 +24,7 @@ pub fn encrypt_block(data: &mut [u32], mut key: u32) {
         key = (!key << 0x15).wrapping_add(0x11111111) | (key >> 0x0B);
 
         // Update seed for next round
-        seed = ch
-            .wrapping_add(seed)
-            .wrapping_add(seed << 5)
-            .wrapping_add(3);
+        seed = ch.wrapping_add(seed).wrapping_add(seed << 5).wrapping_add(3);
     }
 }
 
@@ -39,8 +36,7 @@ mod tests {
     #[test]
     fn test_encrypt_decrypt_round_trip() {
         let original_data = vec![
-            0x12345678, 0x9ABCDEF0, 0x13579BDF, 0x2468ACE0, 0xFEDCBA98, 0x76543210, 0xF0DEBC9A,
-            0xE1C3A597,
+            0x12345678, 0x9ABCDEF0, 0x13579BDF, 0x2468ACE0, 0xFEDCBA98, 0x76543210, 0xF0DEBC9A, 0xE1C3A597,
         ];
 
         let key = 0xC1EB1CEF;
@@ -63,8 +59,7 @@ mod tests {
     fn test_known_encryption() {
         // Test with known test vectors
         let mut data = vec![
-            0x12345678, 0x9ABCDEF0, 0x13579BDF, 0x2468ACE0, 0xFEDCBA98, 0x76543210, 0xF0DEBC9A,
-            0xE1C3A597,
+            0x12345678, 0x9ABCDEF0, 0x13579BDF, 0x2468ACE0, 0xFEDCBA98, 0x76543210, 0xF0DEBC9A, 0xE1C3A597,
         ];
 
         let key = 0xC1EB1CEF;

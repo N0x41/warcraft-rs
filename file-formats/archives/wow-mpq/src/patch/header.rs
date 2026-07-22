@@ -28,9 +28,7 @@ impl PatchType {
         match magic {
             0x59504f43 => Ok(PatchType::Copy), // 'COPY'
             0x30445342 => Ok(PatchType::Bsd0), // 'BSD0'
-            _ => Err(Error::invalid_format(format!(
-                "Unknown patch type: 0x{magic:08X}"
-            ))),
+            _ => Err(Error::invalid_format(format!("Unknown patch type: 0x{magic:08X}"))),
         }
     }
 
@@ -84,9 +82,7 @@ impl PatchHeader {
         let size_before = reader.read_u32::<LittleEndian>()?;
         let size_after = reader.read_u32::<LittleEndian>()?;
 
-        log::debug!(
-            "PTCH header: patch_size={patch_data_size}, before={size_before}, after={size_after}"
-        );
+        log::debug!("PTCH header: patch_size={patch_data_size}, before={size_before}, after={size_after}");
 
         // --- MD5 Block (40 bytes) ---
         let md5_sig = reader.read_u32::<LittleEndian>()?;

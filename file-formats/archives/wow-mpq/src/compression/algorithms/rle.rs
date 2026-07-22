@@ -19,11 +19,7 @@ use crate::error::{Error, Result};
 /// * `compressed` - RLE-compressed data
 /// * `decompressed_size` - Expected size after decompression
 /// * `skip_header` - Whether to skip first 4 bytes (size header)
-pub fn decompress(
-    compressed: &[u8],
-    decompressed_size: usize,
-    skip_header: bool,
-) -> Result<Vec<u8>> {
+pub fn decompress(compressed: &[u8], decompressed_size: usize, skip_header: bool) -> Result<Vec<u8>> {
     let data = if skip_header {
         if compressed.len() < 4 {
             return Err(Error::compression("RLE data too short for header"));

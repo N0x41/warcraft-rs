@@ -64,9 +64,7 @@ pub fn find_wow_data(version: WowVersion) -> Option<PathBuf> {
 
     // Strategy 2: Check common installation paths
     let common_paths = get_common_wow_paths(version);
-    common_paths
-        .into_iter()
-        .find(|path| path.exists() && path.is_dir())
+    common_paths.into_iter().find(|path| path.exists() && path.is_dir())
 }
 
 /// Get common installation paths for a WoW version
@@ -81,17 +79,9 @@ fn get_common_wow_paths(version: WowVersion) -> Vec<PathBuf> {
             "C:\\Games\\World of Warcraft",
         ]
     } else if cfg!(target_os = "macos") {
-        vec![
-            "/Applications/World of Warcraft",
-            "~/Applications/World of Warcraft",
-        ]
+        vec!["/Applications/World of Warcraft", "~/Applications/World of Warcraft"]
     } else {
-        vec![
-            "~/wow",
-            "~/Downloads/wow",
-            "/opt/wow",
-            "/usr/local/games/wow",
-        ]
+        vec!["~/wow", "~/Downloads/wow", "/opt/wow", "/usr/local/games/wow"]
     };
 
     for base in base_dirs {
@@ -177,11 +167,7 @@ pub fn print_setup_instructions() {
         WowVersion::Cata,
         WowVersion::Mop,
     ] {
-        println!(
-            "  {} = /path/to/{}/Data",
-            version.env_var(),
-            version.version_string()
-        );
+        println!("  {} = /path/to/{}/Data", version.env_var(), version.version_string());
         println!("    For: {}", version.display_name());
         println!();
     }

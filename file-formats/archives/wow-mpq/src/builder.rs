@@ -288,10 +288,7 @@ impl ArchiveBuilder {
     /// ```
     pub fn attributes_option(mut self, option: AttributesOption) -> Self {
         // Enable CRC generation if attributes are requested
-        if matches!(
-            option,
-            AttributesOption::GenerateCrc32 | AttributesOption::GenerateFull
-        ) {
+        if matches!(option, AttributesOption::GenerateCrc32 | AttributesOption::GenerateFull) {
             self.generate_crcs = true;
         }
         self.attributes_option = option;
@@ -565,9 +562,7 @@ impl ArchiveBuilder {
                 ListfileOption::None => 0,
             }
             + match &self.attributes_option {
-                AttributesOption::GenerateCrc32
-                | AttributesOption::GenerateFull
-                | AttributesOption::External(_) => 1,
+                AttributesOption::GenerateCrc32 | AttributesOption::GenerateFull | AttributesOption::External(_) => 1,
                 AttributesOption::None => 0,
             };
 
@@ -616,8 +611,7 @@ impl ArchiveBuilder {
                 // Add table sizes (conservative estimates)
                 let estimated_table_size = self.pending_files.len() * 1000; // Conservative per-file overhead
 
-                let total_estimated_size =
-                    header_size + estimated_file_data_size + estimated_table_size;
+                let total_estimated_size = header_size + estimated_file_data_size + estimated_table_size;
 
                 log::debug!(
                     "Pre-allocating buffer of {total_estimated_size} bytes for v3+ archive (header: {header_size}, estimated data: {estimated_file_data_size}, tables: {estimated_table_size})"
@@ -767,11 +761,7 @@ impl ArchiveBuilder {
             self.attributes_option,
             AttributesOption::GenerateCrc32 | AttributesOption::GenerateFull
         );
-        let mut collected_attributes = if collect_attributes {
-            Some(Vec::new())
-        } else {
-            None
-        };
+        let mut collected_attributes = if collect_attributes { Some(Vec::new()) } else { None };
 
         // Write all files and populate tables
         let mut actual_block_index = 0;
@@ -847,13 +837,7 @@ impl ArchiveBuilder {
         // Generate and write attributes file if needed
         if let Some(attrs) = collected_attributes {
             log::debug!("Writing attributes for {} files", attrs.len());
-            self.write_attributes_file(
-                writer,
-                &mut hash_table,
-                &mut block_table,
-                attrs,
-                actual_block_index,
-            )?;
+            self.write_attributes_file(writer, &mut hash_table, &mut block_table, attrs, actual_block_index)?;
         }
 
         // Write hash table
@@ -930,11 +914,7 @@ impl ArchiveBuilder {
             self.attributes_option,
             AttributesOption::GenerateCrc32 | AttributesOption::GenerateFull
         );
-        let mut collected_attributes = if collect_attributes {
-            Some(Vec::new())
-        } else {
-            None
-        };
+        let mut collected_attributes = if collect_attributes { Some(Vec::new()) } else { None };
 
         // Write all files and populate block table
         let mut actual_block_index = 0;
@@ -1026,13 +1006,7 @@ impl ArchiveBuilder {
 
         // Write attributes file if we collected them
         if let Some(attrs) = collected_attributes {
-            self.write_attributes_file(
-                writer,
-                &mut hash_table,
-                &mut block_table,
-                attrs,
-                actual_block_index,
-            )?;
+            self.write_attributes_file(writer, &mut hash_table, &mut block_table, attrs, actual_block_index)?;
         }
 
         // Create HET table (now includes proper attributes file info)
@@ -1175,11 +1149,7 @@ impl ArchiveBuilder {
     }
 
     /// Write a single file to the archive
-    fn write_file<W: Write>(
-        &self,
-        writer: &mut W,
-        params: &FileWriteParams<'_>,
-    ) -> Result<(usize, u32)> {
+    fn write_file<W: Write>(&self, writer: &mut W, params: &FileWriteParams<'_>) -> Result<(usize, u32)> {
         let FileWriteParams {
             file_data,
             archive_name,
@@ -1233,8 +1203,7 @@ impl ArchiveBuilder {
                 if *use_fix_key {
                     flags |= BlockEntry::FLAG_FIX_KEY;
                 }
-                let key =
-                    self.calculate_file_key(archive_name, *file_pos, file_data.len() as u32, flags);
+                let key = self.calculate_file_key(archive_name, *file_pos, file_data.len() as u32, flags);
                 let mut encrypted = compressed_data;
                 self.encrypt_data(&mut encrypted, key);
                 encrypted
@@ -1266,11 +1235,7 @@ impl ArchiveBuilder {
 
             // Reserve space for sector offset table and CRC table if enabled
             let offset_table_size = (sector_count + 1) * 4;
-            let crc_table_size = if self.generate_crcs {
-                sector_count * 4
-            } else {
-                0
-            };
+            let crc_table_size = if self.generate_crcs { sector_count * 4 } else { 0 };
             let data_start = offset_table_size + crc_table_size;
 
             let mut sector_offsets = vec![0u32; sector_count + 1];
@@ -1335,8 +1300,7 @@ impl ArchiveBuilder {
                 if *use_fix_key {
                     flags |= BlockEntry::FLAG_FIX_KEY;
                 }
-                let key =
-                    self.calculate_file_key(archive_name, *file_pos, file_data.len() as u32, flags);
+                let key = self.calculate_file_key(archive_name, *file_pos, file_data.len() as u32, flags);
 
                 // Save original offsets for sector encryption
                 let original_offsets = sector_offsets.clone();
@@ -1393,9 +1357,7 @@ impl ArchiveBuilder {
         // Check if we're actually generating attributes
         let flags = match self.attributes_option {
             AttributesOption::GenerateCrc32 => AttributeFlags::CRC32,
-            AttributesOption::GenerateFull => {
-                AttributeFlags::CRC32 | AttributeFlags::MD5 | AttributeFlags::FILETIME
-            }
+            AttributesOption::GenerateFull => AttributeFlags::CRC32 | AttributeFlags::MD5 | AttributeFlags::FILETIME,
             _ => return Ok(()), // Should not happen due to earlier checks
         };
 
@@ -1429,9 +1391,7 @@ impl ArchiveBuilder {
         if let Some(entry) = block_table.get_mut(block_index) {
             *entry = block_entry;
         } else {
-            return Err(Error::invalid_format(
-                "Invalid block index for attributes file",
-            ));
+            return Err(Error::invalid_format("Invalid block index for attributes file"));
         }
 
         // Add to hash table
@@ -1475,9 +1435,7 @@ impl ArchiveBuilder {
 
             // Check for duplicate
             if entry.name_1 == name_a && entry.name_2 == name_b && entry.locale == locale {
-                return Err(Error::invalid_format(format!(
-                    "Duplicate file in archive: {filename}"
-                )));
+                return Err(Error::invalid_format(format!("Duplicate file in archive: {filename}")));
             }
 
             // Move to next slot
@@ -1488,11 +1446,7 @@ impl ArchiveBuilder {
     }
 
     /// Write the hash table
-    fn write_hash_table<W: Write>(
-        &self,
-        writer: &mut W,
-        hash_table: &HashTable,
-    ) -> Result<[u8; 16]> {
+    fn write_hash_table<W: Write>(&self, writer: &mut W, hash_table: &HashTable) -> Result<[u8; 16]> {
         // Convert to bytes for encryption
         let mut table_data = Vec::new();
         for entry in hash_table.entries() {
@@ -1517,11 +1471,7 @@ impl ArchiveBuilder {
     }
 
     /// Write the block table
-    fn write_block_table<W: Write>(
-        &self,
-        writer: &mut W,
-        block_table: &BlockTable,
-    ) -> Result<[u8; 16]> {
+    fn write_block_table<W: Write>(&self, writer: &mut W, block_table: &BlockTable) -> Result<[u8; 16]> {
         // Convert to bytes for encryption
         let mut table_data = Vec::new();
         for entry in block_table.entries() {
@@ -1545,11 +1495,7 @@ impl ArchiveBuilder {
     }
 
     /// Write the hi-block table
-    fn write_hi_block_table<W: Write>(
-        &self,
-        writer: &mut W,
-        hi_block_table: &HiBlockTable,
-    ) -> Result<[u8; 16]> {
+    fn write_hi_block_table<W: Write>(&self, writer: &mut W, hi_block_table: &HiBlockTable) -> Result<[u8; 16]> {
         // Hi-block table is not encrypted
         let mut table_data = Vec::new();
         for &entry in hi_block_table.entries() {
@@ -1566,11 +1512,7 @@ impl ArchiveBuilder {
     }
 
     /// Write the MPQ header
-    fn write_header<W: Write + Seek>(
-        &self,
-        writer: &mut W,
-        params: &HeaderWriteParams,
-    ) -> Result<()> {
+    fn write_header<W: Write + Seek>(&self, writer: &mut W, params: &HeaderWriteParams) -> Result<()> {
         // Write signature
         writer.write_u32_le(crate::signatures::MPQ_ARCHIVE)?;
 
@@ -1736,10 +1678,7 @@ impl ArchiveBuilder {
     }
 
     /// Create HET table data using the final hash table (includes attributes file)
-    fn create_het_table_with_hash_table(
-        &self,
-        hash_table: &HashTable,
-    ) -> Result<(Vec<u8>, HetHeader)> {
+    fn create_het_table_with_hash_table(&self, hash_table: &HashTable) -> Result<(Vec<u8>, HetHeader)> {
         // Count actual files from the hash table
         let mut file_count = 0u32;
 
@@ -1753,9 +1692,7 @@ impl ArchiveBuilder {
         // For simplicity, let's use the same logic as create_het_table but with proper file count
         let hash_table_entries = (file_count * 2).next_power_of_two();
 
-        log::debug!(
-            "Creating HET table from hash_table: {file_count} files, {hash_table_entries} hash entries"
-        );
+        log::debug!("Creating HET table from hash_table: {file_count} files, {hash_table_entries} hash entries");
 
         // Create header
         let header = HetHeader {
@@ -1815,12 +1752,7 @@ impl ArchiveBuilder {
                     het_hash_table[current_index] = name_hash1;
 
                     // Store the file index in the bit-packed array
-                    self.write_bit_entry(
-                        &mut file_indices,
-                        current_index,
-                        file_index as u64,
-                        index_size,
-                    )?;
+                    self.write_bit_entry(&mut file_indices, current_index, file_index as u64, index_size)?;
 
                     break;
                 }
@@ -1843,12 +1775,7 @@ impl ArchiveBuilder {
             loop {
                 if het_hash_table[current_index] == 0xFF {
                     het_hash_table[current_index] = name_hash1;
-                    self.write_bit_entry(
-                        &mut file_indices,
-                        current_index,
-                        file_index as u64,
-                        index_size,
-                    )?;
+                    self.write_bit_entry(&mut file_indices, current_index, file_index as u64, index_size)?;
                     break;
                 }
 
@@ -1896,13 +1823,7 @@ impl ArchiveBuilder {
     }
 
     /// Write a bit-packed entry to a byte array
-    fn write_bit_entry(
-        &self,
-        data: &mut [u8],
-        index: usize,
-        value: u64,
-        bit_size: u32,
-    ) -> Result<()> {
+    fn write_bit_entry(&self, data: &mut [u8], index: usize, value: u64, bit_size: u32) -> Result<()> {
         let bit_offset = index * bit_size as usize;
         let byte_offset = bit_offset / 8;
         let bit_shift = bit_offset % 8;
@@ -1965,12 +1886,7 @@ impl ArchiveBuilder {
     }
 
     /// Write HET table to the archive, returns the written size and MD5
-    fn write_het_table<W: Write>(
-        &self,
-        writer: &mut W,
-        data: &[u8],
-        encrypt: bool,
-    ) -> Result<(u64, [u8; 16])> {
+    fn write_het_table<W: Write>(&self, writer: &mut W, data: &[u8], encrypt: bool) -> Result<(u64, [u8; 16])> {
         // HET table structure:
         // - Extended header (12 bytes) - NEVER encrypted
         // - Table data (rest) - can be compressed and/or encrypted
@@ -2166,8 +2082,7 @@ impl ArchiveBuilder {
         // Calculate final sizes
         let bet_header_size = std::mem::size_of::<BetHeader>();
         let flag_array_size = flag_count * 4;
-        let data_size =
-            bet_header_size as u32 + flag_array_size + file_table_size + bet_hash_array_size;
+        let data_size = bet_header_size as u32 + flag_array_size + file_table_size + bet_hash_array_size;
         let table_size = 12 + data_size; // Extended header (12 bytes) + data
 
         // Update header with final size
@@ -2222,12 +2137,7 @@ impl ArchiveBuilder {
     }
 
     /// Write BET table to the archive, returns the written size and MD5
-    fn write_bet_table<W: Write>(
-        &self,
-        writer: &mut W,
-        data: &[u8],
-        encrypt: bool,
-    ) -> Result<(u64, [u8; 16])> {
+    fn write_bet_table<W: Write>(&self, writer: &mut W, data: &[u8], encrypt: bool) -> Result<(u64, [u8; 16])> {
         // BET table structure:
         // - Extended header (12 bytes) - NEVER encrypted
         // - Table data (rest) - can be compressed and/or encrypted

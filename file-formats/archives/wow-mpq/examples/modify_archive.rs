@@ -34,9 +34,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Add an encrypted compressed file
     println!("🔐 Adding encrypted compressed file...");
-    let options = AddFileOptions::new()
-        .compression(CompressionMethod::Zlib)
-        .encrypt();
+    let options = AddFileOptions::new().compression(CompressionMethod::Zlib).encrypt();
 
     archive.add_file_data(b"Secret compressed data", "data/secret.bin", options)?;
 
@@ -54,11 +52,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .compression(CompressionMethod::None)
         .replace_existing(true); // This is the default
 
-    archive.add_file_data(
-        b"Replaced content for file1.txt",
-        "file1.txt",
-        replace_options,
-    )?;
+    archive.add_file_data(b"Replaced content for file1.txt", "file1.txt", replace_options)?;
 
     // Flush changes (also happens automatically on drop)
     println!("\n💾 Saving changes...");
@@ -78,17 +72,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Read the new file
     let new_content = readonly.read_file("new_file.txt")?;
-    println!(
-        "\nContent of new_file.txt: {}",
-        String::from_utf8_lossy(&new_content)
-    );
+    println!("\nContent of new_file.txt: {}", String::from_utf8_lossy(&new_content));
 
     // Read the encrypted file
     let secret = readonly.read_file("data/secret.bin")?;
-    println!(
-        "Content of secret.bin: {}",
-        String::from_utf8_lossy(&secret)
-    );
+    println!("Content of secret.bin: {}", String::from_utf8_lossy(&secret));
 
     // Try to read removed file (should fail)
     match readonly.read_file("remove_me.txt") {

@@ -275,22 +275,10 @@ mod tests {
 
     #[test]
     fn test_interpolation_type_conversion() {
-        assert_eq!(
-            M2InterpolationType::from_u16(0),
-            Some(M2InterpolationType::None)
-        );
-        assert_eq!(
-            M2InterpolationType::from_u16(1),
-            Some(M2InterpolationType::Linear)
-        );
-        assert_eq!(
-            M2InterpolationType::from_u16(2),
-            Some(M2InterpolationType::Bezier)
-        );
-        assert_eq!(
-            M2InterpolationType::from_u16(3),
-            Some(M2InterpolationType::Hermite)
-        );
+        assert_eq!(M2InterpolationType::from_u16(0), Some(M2InterpolationType::None));
+        assert_eq!(M2InterpolationType::from_u16(1), Some(M2InterpolationType::Linear));
+        assert_eq!(M2InterpolationType::from_u16(2), Some(M2InterpolationType::Bezier));
+        assert_eq!(M2InterpolationType::from_u16(3), Some(M2InterpolationType::Hermite));
 
         // Test unknown value returns None
         assert_eq!(M2InterpolationType::from_u16(999), None);
@@ -411,8 +399,7 @@ mod tests {
 
     #[test]
     fn test_m2track_with_interpolation() {
-        let track: M2Track<M2CompQuat> =
-            M2Track::new_with_interpolation(M2InterpolationType::Hermite);
+        let track: M2Track<M2CompQuat> = M2Track::new_with_interpolation(M2InterpolationType::Hermite);
 
         assert_eq!(track.base.interpolation_type, M2InterpolationType::Hermite);
         assert_eq!(track.base.global_sequence, 65535);
@@ -426,8 +413,7 @@ mod tests {
         let original_z = 0.707;
         let original_w = 0.0;
 
-        let quat =
-            M2CompQuat::from_float_quaternion(original_x, original_y, original_z, original_w);
+        let quat = M2CompQuat::from_float_quaternion(original_x, original_y, original_z, original_w);
         let (recovered_x, recovered_y, recovered_z, recovered_w) = quat.to_float_quaternion();
 
         // Should recover original values (accounting for quantization loss)

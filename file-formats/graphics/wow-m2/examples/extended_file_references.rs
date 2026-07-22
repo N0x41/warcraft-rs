@@ -67,11 +67,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         for (index, level) in lod_data.levels.iter().enumerate() {
             println!(
                 "    LOD {}: distance={}, skin_file_index={}, vertices={}, triangles={}",
-                index,
-                level.distance,
-                level.skin_file_index,
-                level.vertex_count,
-                level.triangle_count
+                index, level.distance, level.skin_file_index, level.vertex_count, level.triangle_count
             );
         }
 

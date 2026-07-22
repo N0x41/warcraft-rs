@@ -185,11 +185,7 @@ mod tests {
         schema.set_key_field("ID");
 
         // This should pass
-        assert!(
-            schema
-                .validate(header.field_count, header.record_size)
-                .is_ok()
-        );
+        assert!(schema.validate(header.field_count, header.record_size).is_ok());
 
         // Now let's test some invalid schemas
         let mut invalid_schema = Schema::new("Invalid");
@@ -197,11 +193,7 @@ mod tests {
         invalid_schema.add_field(SchemaField::new("Name", FieldType::String));
         // Missing a field
 
-        assert!(
-            invalid_schema
-                .validate(header.field_count, header.record_size)
-                .is_err()
-        );
+        assert!(invalid_schema.validate(header.field_count, header.record_size).is_err());
     }
 
     #[test]
@@ -218,10 +210,7 @@ mod tests {
         assert_eq!(format!("{}", Value::Int8(-128)), "-128");
         assert_eq!(format!("{}", Value::UInt16(65535)), "65535");
         assert_eq!(format!("{}", Value::Int16(-32768)), "-32768");
-        assert_eq!(
-            format!("{}", Value::StringRef(StringRef::new(42))),
-            "StringRef(42)"
-        );
+        assert_eq!(format!("{}", Value::StringRef(StringRef::new(42))), "StringRef(42)");
 
         // Test array display
         let array = Value::Array(vec![Value::Int32(1), Value::Int32(2), Value::Int32(3)]);

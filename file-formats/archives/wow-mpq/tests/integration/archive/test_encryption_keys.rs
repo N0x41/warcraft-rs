@@ -36,9 +36,7 @@ fn test_encryption_key_diagnosis() {
             .compression(CompressionMethod::None) // No compression, just encryption
             .encrypt();
 
-        mutable_archive
-            .add_file_data(content, filename, options)
-            .unwrap();
+        mutable_archive.add_file_data(content, filename, options).unwrap();
         mutable_archive.flush().unwrap();
     }
 
@@ -79,9 +77,7 @@ fn test_encryption_key_diagnosis() {
                 println!("✅ Keys match!");
             } else {
                 println!("❌ Keys do NOT match!");
-                println!(
-                    "  Difference: modification uses base key, reading might use modified key"
-                );
+                println!("  Difference: modification uses base key, reading might use modified key");
             }
 
             // Let's manually test the decryption process
@@ -89,8 +85,7 @@ fn test_encryption_key_diagnosis() {
 
             // Read raw encrypted data
             let mut file = std::fs::File::open(&archive_path).unwrap();
-            file.seek(std::io::SeekFrom::Start(file_info.file_pos))
-                .unwrap();
+            file.seek(std::io::SeekFrom::Start(file_info.file_pos)).unwrap();
             let mut raw_data = vec![0u8; file_info.compressed_size as usize];
             file.read_exact(&mut raw_data).unwrap();
 

@@ -366,9 +366,7 @@ impl BoneTransformComputer {
         for i in 0..count {
             let pivot = pivot_points[i];
             pivots.push(Mat4::from_translation(pivot));
-            anti_pivots.push(Mat4::from_translation(Vec3::new(
-                -pivot.x, -pivot.y, -pivot.z,
-            )));
+            anti_pivots.push(Mat4::from_translation(Vec3::new(-pivot.x, -pivot.y, -pivot.z)));
 
             let bone_flags = BoneFlags::from_raw(raw_flags[i]);
             is_billboard[i] = bone_flags.spherical_billboard;
@@ -379,8 +377,7 @@ impl BoneTransformComputer {
         // Propagate spherical billboard flag from parents (children inherit)
         for i in 0..count {
             let parent_idx = parents[i];
-            if parent_idx >= 0 && (parent_idx as usize) < count && is_billboard[parent_idx as usize]
-            {
+            if parent_idx >= 0 && (parent_idx as usize) < count && is_billboard[parent_idx as usize] {
                 is_billboard[i] = true;
             }
         }
@@ -453,13 +450,11 @@ impl BoneTransformComputer {
                     // Billboard bones: transform is parent * antiPivot
                     // postBillboard accumulates the local transform
                     self.bones[i].transform = parent_transform.mul(&self.anti_pivots[i]);
-                    self.bones[i].post_billboard_transform =
-                        parent_post_billboard.mul(&local_bone_transform);
+                    self.bones[i].post_billboard_transform = parent_post_billboard.mul(&local_bone_transform);
                 } else {
                     // Regular bones: apply antiPivot to local transform
                     let final_local = local_bone_transform.mul(&self.anti_pivots[i]);
-                    self.bones[i].post_billboard_transform =
-                        parent_post_billboard.mul(&final_local);
+                    self.bones[i].post_billboard_transform = parent_post_billboard.mul(&final_local);
                     // For non-billboard, transform is same as post_billboard
                     self.bones[i].transform = self.bones[i].post_billboard_transform;
                 }
@@ -520,9 +515,7 @@ impl BoneTransformComputer {
 
     /// Check if a bone uses spherical billboard
     pub fn is_spherical_billboard(&self, bone_index: usize) -> bool {
-        self.bones
-            .get(bone_index)
-            .is_some_and(|b| b.is_spherical_billboard)
+        self.bones.get(bone_index).is_some_and(|b| b.is_spherical_billboard)
     }
 
     /// Get all bone matrices as flat array for GPU upload
@@ -535,11 +528,7 @@ impl BoneTransformComputer {
 
         for bone in &self.bones {
             // Pack billboard flag as first element
-            data.push(if bone.is_spherical_billboard {
-                1.0
-            } else {
-                0.0
-            });
+            data.push(if bone.is_spherical_billboard { 1.0 } else { 0.0 });
             // Padding for alignment
             data.push(0.0);
             data.push(0.0);

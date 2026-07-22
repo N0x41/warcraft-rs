@@ -209,11 +209,7 @@ mod tests {
             texture_slot: M2AnimationBlock::new(M2AnimationTrack::default()),
             visibility: M2AnimationBlock::new(M2AnimationTrack::default()),
             bone_index: 1,
-            position: C3Vector {
-                x: 1.0,
-                y: 2.0,
-                z: 3.0,
-            },
+            position: C3Vector { x: 1.0, y: 2.0, z: 3.0 },
             texture_indices: M2Array::new(1, 0x100),
             material_indices: M2Array::new(1, 0x200),
             color_animation: M2AnimationBlock::new(M2AnimationTrack::default()),
@@ -228,19 +224,15 @@ mod tests {
             texture_slice: None,
             variation: None,
             id: 0,
-
         };
 
         // Test write
         let mut data = Vec::new();
-        ribbon
-            .write(&mut data, M2Version::Vanilla.to_header_version())
-            .unwrap();
+        ribbon.write(&mut data, M2Version::Vanilla.to_header_version()).unwrap();
 
         // Test parse
         let mut cursor = Cursor::new(data);
-        let parsed =
-            M2RibbonEmitter::parse(&mut cursor, M2Version::Vanilla.to_header_version()).unwrap();
+        let parsed = M2RibbonEmitter::parse(&mut cursor, M2Version::Vanilla.to_header_version()).unwrap();
 
         assert_eq!(parsed.bone_index, 1);
         assert_eq!(parsed.position.x, 1.0);
@@ -258,7 +250,6 @@ mod tests {
         assert_eq!(parsed.texture_slice, None);
         assert_eq!(parsed.variation, None);
         assert_eq!(parsed.id, 0);
-
     }
 
     #[test]
@@ -267,11 +258,7 @@ mod tests {
             texture_slot: M2AnimationBlock::new(M2AnimationTrack::default()),
             visibility: M2AnimationBlock::new(M2AnimationTrack::default()),
             bone_index: 1,
-            position: C3Vector {
-                x: 1.0,
-                y: 2.0,
-                z: 3.0,
-            },
+            position: C3Vector { x: 1.0, y: 2.0, z: 3.0 },
             texture_indices: M2Array::new(1, 0x100),
             material_indices: M2Array::new(1, 0x200),
             color_animation: M2AnimationBlock::new(M2AnimationTrack::default()),
@@ -286,19 +273,15 @@ mod tests {
             texture_slice: Some(0),
             variation: Some(0),
             id: 0,
-
         };
 
         // Test write
         let mut data = Vec::new();
-        ribbon
-            .write(&mut data, M2Version::MoP.to_header_version())
-            .unwrap();
+        ribbon.write(&mut data, M2Version::MoP.to_header_version()).unwrap();
 
         // Test parse
         let mut cursor = Cursor::new(data);
-        let parsed =
-            M2RibbonEmitter::parse(&mut cursor, M2Version::MoP.to_header_version()).unwrap();
+        let parsed = M2RibbonEmitter::parse(&mut cursor, M2Version::MoP.to_header_version()).unwrap();
 
         assert_eq!(parsed.bone_index, 1);
         assert_eq!(parsed.position.x, 1.0);
@@ -316,7 +299,6 @@ mod tests {
         assert_eq!(parsed.texture_slice, Some(0));
         assert_eq!(parsed.variation, Some(0));
         assert_eq!(parsed.id, 0);
-
     }
 
     #[test]
@@ -327,11 +309,7 @@ mod tests {
             texture_slot: M2AnimationBlock::new(M2AnimationTrack::default()),
             visibility: M2AnimationBlock::new(M2AnimationTrack::default()),
             bone_index: 1,
-            position: C3Vector {
-                x: 1.0,
-                y: 2.0,
-                z: 3.0,
-            },
+            position: C3Vector { x: 1.0, y: 2.0, z: 3.0 },
             texture_indices: M2Array::new(1, 0x100),
             material_indices: M2Array::new(1, 0x200),
             color_animation: M2AnimationBlock::new(M2AnimationTrack::default()),
@@ -345,8 +323,6 @@ mod tests {
             texture_cols: 1,
             texture_slice: None,
             variation: None,
-
-
         };
 
         // Convert to MoP

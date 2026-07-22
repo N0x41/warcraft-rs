@@ -43,17 +43,11 @@ impl MmapDbcFile {
                 wdb5_header.to_dbc_header()
             }
             _ => {
-                return Err(Error::InvalidHeader(format!(
-                    "Unsupported DBC version: {version:?}"
-                )));
+                return Err(Error::InvalidHeader(format!("Unsupported DBC version: {version:?}")));
             }
         };
 
-        Ok(Self {
-            mmap,
-            version,
-            header,
-        })
+        Ok(Self { mmap, version, header })
     }
 
     /// Get a slice of the memory-mapped file

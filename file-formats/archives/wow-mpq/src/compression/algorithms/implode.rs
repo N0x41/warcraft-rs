@@ -37,11 +37,7 @@ pub(crate) fn decompress(data: &[u8], _expected_size: usize) -> Result<Vec<u8>> 
                 "IMPLODE trying header: [0x{:02X}, 0x{:02X}] (mode={}, dict={}KB) + {} bytes",
                 compression_type,
                 dict_size_bits,
-                if compression_type == 0 {
-                    "Binary"
-                } else {
-                    "ASCII"
-                },
+                if compression_type == 0 { "Binary" } else { "ASCII" },
                 1 << (dict_size_bits - 4), // Convert to KB
                 data.len()
             );
@@ -51,11 +47,7 @@ pub(crate) fn decompress(data: &[u8], _expected_size: usize) -> Result<Vec<u8>> 
                 Ok(result) => {
                     log::info!(
                         "IMPLODE decompress SUCCESS: mode={}, dict={}KB, output={} bytes",
-                        if compression_type == 0 {
-                            "Binary"
-                        } else {
-                            "ASCII"
-                        },
+                        if compression_type == 0 { "Binary" } else { "ASCII" },
                         1 << (dict_size_bits - 4),
                         result.len()
                     );
@@ -68,11 +60,7 @@ pub(crate) fn decompress(data: &[u8], _expected_size: usize) -> Result<Vec<u8>> 
                 Err(e) => {
                     log::debug!(
                         "IMPLODE failed with mode={}, dict={}KB: {}",
-                        if compression_type == 0 {
-                            "Binary"
-                        } else {
-                            "ASCII"
-                        },
+                        if compression_type == 0 { "Binary" } else { "ASCII" },
                         1 << (dict_size_bits - 4),
                         e
                     );

@@ -100,9 +100,7 @@ fn bench_multi_file_archive(c: &mut Criterion) {
 
                 b.iter(|| {
                     let output_path = temp_dir.path().join("archive.mpq");
-                    let mut builder = ArchiveBuilder::new()
-                        .version(FormatVersion::V2)
-                        .block_size(16); // 64KB sectors
+                    let mut builder = ArchiveBuilder::new().version(FormatVersion::V2).block_size(16); // 64KB sectors
 
                     for (filename, data) in &files {
                         builder = builder.add_file_data(data.clone(), filename);
@@ -181,22 +179,18 @@ fn bench_archive_versions(c: &mut Criterion) {
 
     for (name, version) in versions {
         group.throughput(Throughput::Bytes(data_size as u64));
-        group.bench_with_input(
-            BenchmarkId::from_parameter(name),
-            &version,
-            |b, &version| {
-                let temp_dir = TempDir::new().unwrap();
+        group.bench_with_input(BenchmarkId::from_parameter(name), &version, |b, &version| {
+            let temp_dir = TempDir::new().unwrap();
 
-                b.iter(|| {
-                    let output_path = temp_dir.path().join("archive.mpq");
-                    ArchiveBuilder::new()
-                        .version(version)
-                        .add_file_data(data.clone(), "test.dat")
-                        .build(&output_path)
-                        .unwrap();
-                });
-            },
-        );
+            b.iter(|| {
+                let output_path = temp_dir.path().join("archive.mpq");
+                ArchiveBuilder::new()
+                    .version(version)
+                    .add_file_data(data.clone(), "test.dat")
+                    .build(&output_path)
+                    .unwrap();
+            });
+        });
     }
 
     group.finish();
@@ -265,23 +259,19 @@ fn bench_block_sizes(c: &mut Criterion) {
 
     for (name, block_size) in block_sizes {
         group.throughput(Throughput::Bytes(data_size as u64));
-        group.bench_with_input(
-            BenchmarkId::from_parameter(name),
-            &block_size,
-            |b, &block_size| {
-                let temp_dir = TempDir::new().unwrap();
+        group.bench_with_input(BenchmarkId::from_parameter(name), &block_size, |b, &block_size| {
+            let temp_dir = TempDir::new().unwrap();
 
-                b.iter(|| {
-                    let output_path = temp_dir.path().join("archive.mpq");
-                    ArchiveBuilder::new()
-                        .version(FormatVersion::V2)
-                        .block_size(block_size)
-                        .add_file_data(data.clone(), "test.dat")
-                        .build(&output_path)
-                        .unwrap();
-                });
-            },
-        );
+            b.iter(|| {
+                let output_path = temp_dir.path().join("archive.mpq");
+                ArchiveBuilder::new()
+                    .version(FormatVersion::V2)
+                    .block_size(block_size)
+                    .add_file_data(data.clone(), "test.dat")
+                    .build(&output_path)
+                    .unwrap();
+            });
+        });
     }
 
     group.finish();

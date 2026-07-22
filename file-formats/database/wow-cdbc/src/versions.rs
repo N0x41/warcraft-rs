@@ -150,46 +150,39 @@ impl Wdb2Header {
         // Check if this is an extended header (build > 12880)
         let has_extended_header = build > Self::EXTENDED_BUILD_THRESHOLD;
 
-        let (min_index, max_index, locale, copy_table_size, index_array_size) =
-            if has_extended_header {
-                // Read extended header fields
-                reader.read_exact(&mut buf)?;
-                let min_index = i32::from_le_bytes(buf);
+        let (min_index, max_index, locale, copy_table_size, index_array_size) = if has_extended_header {
+            // Read extended header fields
+            reader.read_exact(&mut buf)?;
+            let min_index = i32::from_le_bytes(buf);
 
-                reader.read_exact(&mut buf)?;
-                let max_index = i32::from_le_bytes(buf);
+            reader.read_exact(&mut buf)?;
+            let max_index = i32::from_le_bytes(buf);
 
-                reader.read_exact(&mut buf)?;
-                let locale = i32::from_le_bytes(buf);
+            reader.read_exact(&mut buf)?;
+            let locale = i32::from_le_bytes(buf);
 
-                reader.read_exact(&mut buf)?;
-                let copy_table_size = u32::from_le_bytes(buf);
+            reader.read_exact(&mut buf)?;
+            let copy_table_size = u32::from_le_bytes(buf);
 
-                // Calculate index array size to skip
-                let index_array_size = if max_index > 0 {
-                    let diff = (max_index - min_index + 1) as u64;
-                    // Index array: diff * 4 bytes (u32 per entry)
-                    // String length array: diff * 2 bytes (u16 per entry)
-                    diff * 4 + diff * 2
-                } else {
-                    0
-                };
-
-                // Skip the index arrays
-                if index_array_size > 0 {
-                    reader.seek(SeekFrom::Current(index_array_size as i64))?;
-                }
-
-                (
-                    min_index,
-                    max_index,
-                    locale,
-                    copy_table_size,
-                    index_array_size,
-                )
+            // Calculate index array size to skip
+            let index_array_size = if max_index > 0 {
+                let diff = (max_index - min_index + 1) as u64;
+                // Index array: diff * 4 bytes (u32 per entry)
+                // String length array: diff * 2 bytes (u16 per entry)
+                diff * 4 + diff * 2
             } else {
-                (0, 0, 0, 0, 0)
+                0
             };
+
+            // Skip the index arrays
+            if index_array_size > 0 {
+                reader.seek(SeekFrom::Current(index_array_size as i64))?;
+            }
+
+            (min_index, max_index, locale, copy_table_size, index_array_size)
+        } else {
+            (0, 0, 0, 0, 0)
+        };
 
         Ok(Self {
             magic,

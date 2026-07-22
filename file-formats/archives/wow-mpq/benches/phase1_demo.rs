@@ -65,10 +65,7 @@ fn measure_listing_performance(archive_path: &str, archive_name: &str) {
                     println!("  List time: {:?}", list_duration);
                     println!("  Total time: {:?}", total_duration);
                     println!("  List performance: {:.0} files/sec", files_per_sec);
-                    println!(
-                        "  Overall performance: {:.0} files/sec",
-                        total_files_per_sec
-                    );
+                    println!("  Overall performance: {:.0} files/sec", total_files_per_sec);
 
                     // Categorize performance based on file count
                     let category = if entries.len() < 1000 {

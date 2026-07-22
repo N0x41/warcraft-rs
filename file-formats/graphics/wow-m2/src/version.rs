@@ -47,12 +47,9 @@ impl M2Version {
             )));
         }
 
-        let major = parts[0].parse::<u32>().map_err(|_| {
-            crate::error::M2Error::UnsupportedVersion(format!(
-                "Invalid major version: {}",
-                parts[0]
-            ))
-        })?;
+        let major = parts[0]
+            .parse::<u32>()
+            .map_err(|_| crate::error::M2Error::UnsupportedVersion(format!("Invalid major version: {}", parts[0])))?;
 
         Ok(match major {
             1 => M2Version::Vanilla,
@@ -114,9 +111,9 @@ impl M2Version {
             265..=271 => Some(Self::WotLK),
 
             // Legion+ versions (272+ with chunked format support)
-            273..=279 => Some(Self::Legion), // Legion 7.x versions
-            280..=289 => Some(Self::BfA),    // Battle for Azeroth 8.x versions
-            290..=299 => Some(Self::Shadowlands), // Shadowlands 9.x versions
+            273..=279 => Some(Self::Legion),       // Legion 7.x versions
+            280..=289 => Some(Self::BfA),          // Battle for Azeroth 8.x versions
+            290..=299 => Some(Self::Shadowlands),  // Shadowlands 9.x versions
             300..=309 => Some(Self::Dragonflight), // Dragonflight 10.x versions
             310..=399 => Some(Self::TheWarWithin), // The War Within 11.x versions
 
@@ -206,12 +203,7 @@ impl M2Version {
         match self {
             Self::Vanilla | Self::TBC => false,
             Self::WotLK | Self::Cataclysm | Self::MoP => true, // Capability exists but unused
-            Self::WoD
-            | Self::Legion
-            | Self::BfA
-            | Self::Shadowlands
-            | Self::Dragonflight
-            | Self::TheWarWithin => true,
+            Self::WoD | Self::Legion | Self::BfA | Self::Shadowlands | Self::Dragonflight | Self::TheWarWithin => true,
         }
     }
 
@@ -220,14 +212,8 @@ impl M2Version {
     /// External chunks introduced with Legion+ (versions 272+)
     pub fn uses_external_chunks(&self) -> bool {
         match self {
-            Self::Vanilla | Self::TBC | Self::WotLK | Self::Cataclysm | Self::MoP | Self::WoD => {
-                false
-            }
-            Self::Legion
-            | Self::BfA
-            | Self::Shadowlands
-            | Self::Dragonflight
-            | Self::TheWarWithin => true,
+            Self::Vanilla | Self::TBC | Self::WotLK | Self::Cataclysm | Self::MoP | Self::WoD => false,
+            Self::Legion | Self::BfA | Self::Shadowlands | Self::Dragonflight | Self::TheWarWithin => true,
         }
     }
 
@@ -236,14 +222,8 @@ impl M2Version {
     /// Legion+ versions use chunked data with FileDataID references
     pub fn uses_inline_data(&self) -> bool {
         match self {
-            Self::Vanilla | Self::TBC | Self::WotLK | Self::Cataclysm | Self::MoP | Self::WoD => {
-                true
-            }
-            Self::Legion
-            | Self::BfA
-            | Self::Shadowlands
-            | Self::Dragonflight
-            | Self::TheWarWithin => false,
+            Self::Vanilla | Self::TBC | Self::WotLK | Self::Cataclysm | Self::MoP | Self::WoD => true,
+            Self::Legion | Self::BfA | Self::Shadowlands | Self::Dragonflight | Self::TheWarWithin => false,
         }
     }
 
@@ -310,12 +290,7 @@ impl M2Version {
 
 impl std::fmt::Display for M2Version {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{} ({})",
-            self.expansion_name(),
-            self.to_version_string()
-        )
+        write!(f, "{} ({})", self.expansion_name(), self.to_version_string())
     }
 }
 
@@ -325,68 +300,35 @@ mod tests {
 
     #[test]
     fn test_version_from_string() {
-        assert_eq!(
-            M2Version::from_string("1.12.1").unwrap(),
-            M2Version::Vanilla
-        );
+        assert_eq!(M2Version::from_string("1.12.1").unwrap(), M2Version::Vanilla);
         assert_eq!(M2Version::from_string("2.4.3").unwrap(), M2Version::TBC);
         assert_eq!(M2Version::from_string("3.3.5a").unwrap(), M2Version::WotLK);
-        assert_eq!(
-            M2Version::from_string("4.3.4").unwrap(),
-            M2Version::Cataclysm
-        );
+        assert_eq!(M2Version::from_string("4.3.4").unwrap(), M2Version::Cataclysm);
         assert_eq!(M2Version::from_string("5.4.8").unwrap(), M2Version::MoP);
     }
 
     #[test]
     fn test_version_from_expansion_name() {
-        assert_eq!(
-            M2Version::from_expansion_name("classic").unwrap(),
-            M2Version::Vanilla
-        );
-        assert_eq!(
-            M2Version::from_expansion_name("TBC").unwrap(),
-            M2Version::TBC
-        );
-        assert_eq!(
-            M2Version::from_expansion_name("wotlk").unwrap(),
-            M2Version::WotLK
-        );
-        assert_eq!(
-            M2Version::from_expansion_name("cata").unwrap(),
-            M2Version::Cataclysm
-        );
-        assert_eq!(
-            M2Version::from_expansion_name("MoP").unwrap(),
-            M2Version::MoP
-        );
+        assert_eq!(M2Version::from_expansion_name("classic").unwrap(), M2Version::Vanilla);
+        assert_eq!(M2Version::from_expansion_name("TBC").unwrap(), M2Version::TBC);
+        assert_eq!(M2Version::from_expansion_name("wotlk").unwrap(), M2Version::WotLK);
+        assert_eq!(M2Version::from_expansion_name("cata").unwrap(), M2Version::Cataclysm);
+        assert_eq!(M2Version::from_expansion_name("MoP").unwrap(), M2Version::MoP);
 
         // Test numeric fallback
-        assert_eq!(
-            M2Version::from_expansion_name("3.3.5a").unwrap(),
-            M2Version::WotLK
-        );
+        assert_eq!(M2Version::from_expansion_name("3.3.5a").unwrap(), M2Version::WotLK);
     }
 
     #[test]
     fn test_header_version_conversion() {
         // Empirically verified versions
-        assert_eq!(
-            M2Version::from_header_version(256),
-            Some(M2Version::Vanilla)
-        );
+        assert_eq!(M2Version::from_header_version(256), Some(M2Version::Vanilla));
         assert_eq!(M2Version::from_header_version(260), Some(M2Version::TBC));
         assert_eq!(M2Version::from_header_version(264), Some(M2Version::WotLK));
-        assert_eq!(
-            M2Version::from_header_version(272),
-            Some(M2Version::Cataclysm)
-        );
+        assert_eq!(M2Version::from_header_version(272), Some(M2Version::Cataclysm));
 
         // Legacy support ranges
-        assert_eq!(
-            M2Version::from_header_version(257),
-            Some(M2Version::Vanilla)
-        );
+        assert_eq!(M2Version::from_header_version(257), Some(M2Version::Vanilla));
         assert_eq!(M2Version::from_header_version(261), Some(M2Version::TBC));
         assert_eq!(M2Version::from_header_version(265), Some(M2Version::WotLK));
 
@@ -394,36 +336,18 @@ mod tests {
         assert_eq!(M2Version::from_header_version(273), Some(M2Version::Legion));
         assert_eq!(M2Version::from_header_version(276), Some(M2Version::Legion));
         assert_eq!(M2Version::from_header_version(280), Some(M2Version::BfA));
-        assert_eq!(
-            M2Version::from_header_version(290),
-            Some(M2Version::Shadowlands)
-        );
-        assert_eq!(
-            M2Version::from_header_version(300),
-            Some(M2Version::Dragonflight)
-        );
-        assert_eq!(
-            M2Version::from_header_version(310),
-            Some(M2Version::TheWarWithin)
-        );
+        assert_eq!(M2Version::from_header_version(290), Some(M2Version::Shadowlands));
+        assert_eq!(M2Version::from_header_version(300), Some(M2Version::Dragonflight));
+        assert_eq!(M2Version::from_header_version(310), Some(M2Version::TheWarWithin));
 
         // Legacy alternative versions
         assert_eq!(M2Version::from_header_version(8), Some(M2Version::MoP));
         assert_eq!(M2Version::from_header_version(10), Some(M2Version::WoD));
         assert_eq!(M2Version::from_header_version(11), Some(M2Version::Legion));
         assert_eq!(M2Version::from_header_version(16), Some(M2Version::BfA));
-        assert_eq!(
-            M2Version::from_header_version(17),
-            Some(M2Version::Shadowlands)
-        );
-        assert_eq!(
-            M2Version::from_header_version(18),
-            Some(M2Version::Dragonflight)
-        );
-        assert_eq!(
-            M2Version::from_header_version(19),
-            Some(M2Version::TheWarWithin)
-        );
+        assert_eq!(M2Version::from_header_version(17), Some(M2Version::Shadowlands));
+        assert_eq!(M2Version::from_header_version(18), Some(M2Version::Dragonflight));
+        assert_eq!(M2Version::from_header_version(19), Some(M2Version::TheWarWithin));
 
         // Unknown versions
         assert_eq!(M2Version::from_header_version(1), None);

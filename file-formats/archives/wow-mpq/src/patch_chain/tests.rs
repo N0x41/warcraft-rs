@@ -161,23 +161,11 @@ fn test_custom_patch_priority() {
     let test_file = "Interface/AddOns/MyAddon/Core.lua";
 
     // Create official and custom patches
-    let patch3 = create_test_archive(
-        temp.path(),
-        "patch-3.MPQ",
-        &[(test_file, b"official patch 3")],
-    );
+    let patch3 = create_test_archive(temp.path(), "patch-3.MPQ", &[(test_file, b"official patch 3")]);
 
-    let patch4 = create_test_archive(
-        temp.path(),
-        "patch-4.MPQ",
-        &[(test_file, b"custom patch 4")],
-    );
+    let patch4 = create_test_archive(temp.path(), "patch-4.MPQ", &[(test_file, b"custom patch 4")]);
 
-    let patch_x = create_test_archive(
-        temp.path(),
-        "patch-x.MPQ",
-        &[(test_file, b"custom patch x")],
-    );
+    let patch_x = create_test_archive(temp.path(), "patch-x.MPQ", &[(test_file, b"custom patch x")]);
 
     // Test numerical ordering
     let mut chain = PatchChain::new();

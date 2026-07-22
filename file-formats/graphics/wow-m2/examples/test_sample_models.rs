@@ -32,11 +32,7 @@ fn test_model(path: &Path) -> anyhow::Result<()> {
         println!("  ✓ Vertices parsed: {}", enhanced_data.vertices.len());
 
         // Check bone weights
-        let weighted_verts = enhanced_data
-            .vertices
-            .iter()
-            .filter(|v| v.bone_weights[0] > 0)
-            .count();
+        let weighted_verts = enhanced_data.vertices.iter().filter(|v| v.bone_weights[0] > 0).count();
         println!(
             "  ✓ Weighted vertices: {}/{}",
             weighted_verts,
@@ -48,11 +44,7 @@ fn test_model(path: &Path) -> anyhow::Result<()> {
     if !enhanced_data.bones.is_empty() {
         println!("  ✓ Bones parsed: {}", enhanced_data.bones.len());
 
-        let root_bones = enhanced_data
-            .bones
-            .iter()
-            .filter(|b| b.bone.parent_bone == -1)
-            .count();
+        let root_bones = enhanced_data.bones.iter().filter(|b| b.bone.parent_bone == -1).count();
         println!("  ✓ Root bones: {}", root_bones);
     }
 
@@ -60,11 +52,7 @@ fn test_model(path: &Path) -> anyhow::Result<()> {
     if !enhanced_data.animations.is_empty() {
         println!("  ✓ Animations parsed: {}", enhanced_data.animations.len());
 
-        let looping_anims = enhanced_data
-            .animations
-            .iter()
-            .filter(|a| a.is_looping)
-            .count();
+        let looping_anims = enhanced_data.animations.iter().filter(|a| a.is_looping).count();
         println!(
             "  ✓ Looping animations: {}/{}",
             looping_anims,
@@ -102,9 +90,8 @@ fn main() -> anyhow::Result<()> {
     println!("╚═══════════════════════════════════════════════════════╝");
 
     // Define sample model paths
-    let sample_dir = Path::new(
-        "/home/danielsreichenbach/Repos/github.com/wowemulation-dev/blender-wow-addon/sample_data/1.12.1/m2",
-    );
+    let sample_dir =
+        Path::new("/home/danielsreichenbach/Repos/github.com/wowemulation-dev/blender-wow-addon/sample_data/1.12.1/m2");
 
     let models = ["Rabbit.m2", "HumanMale.m2", "OrcMale.m2"];
 

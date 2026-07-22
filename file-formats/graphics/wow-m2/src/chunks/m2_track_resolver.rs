@@ -1,8 +1,8 @@
 use crate::{
     Result,
-    chunks::m2_track::{M2CompQuat, M2Track, M2TrackQuat, M2TrackVec3, /* M2TrackFloat */},
-    common::{C3Vector, read_array},
     chunks::animation::M2AnimationBlock,
+    chunks::m2_track::{M2CompQuat, M2Track, M2TrackQuat, M2TrackVec3 /* M2TrackFloat */},
+    common::{C3Vector, read_array},
     io_ext::ReadExt,
 };
 use std::io::{Read, Seek};
@@ -13,10 +13,7 @@ pub struct M2TrackResolver;
 
 impl M2TrackResolver {
     /// Resolve timestamp data for a track
-    pub fn resolve_timestamps<R: Read + Seek>(
-        reader: &mut R,
-        track: &M2Track<impl Clone>,
-    ) -> Result<Vec<u32>> {
+    pub fn resolve_timestamps<R: Read + Seek>(reader: &mut R, track: &M2Track<impl Clone>) -> Result<Vec<u32>> {
         if track.timestamps.is_empty() {
             return Ok(Vec::new());
         }
@@ -25,10 +22,7 @@ impl M2TrackResolver {
     }
 
     /// Resolve Vec3 track values (translation/scale)
-    pub fn resolve_vec3_values<R: Read + Seek>(
-        reader: &mut R,
-        track: &M2TrackVec3,
-    ) -> Result<Vec<C3Vector>> {
+    pub fn resolve_vec3_values<R: Read + Seek>(reader: &mut R, track: &M2TrackVec3) -> Result<Vec<C3Vector>> {
         if track.values.is_empty() {
             return Ok(Vec::new());
         }
@@ -46,21 +40,18 @@ impl M2TrackResolver {
 
         let mut values = Vec::with_capacity(count as usize);
         reader.seek(std::io::SeekFrom::Start(offset as u64))?;
-        
+
         let mut buffer = [0u8; 4];
         for _ in 0..track.track.values.array.count {
             reader.read_exact(&mut buffer)?;
             values.push(f32::from_le_bytes(buffer));
         }
-        
+
         Ok(values)
     }
 
     /// Resolve quaternion track values (rotation)
-    pub fn resolve_quat_values<R: Read + Seek>(
-        reader: &mut R,
-        track: &M2TrackQuat,
-    ) -> Result<Vec<M2CompQuat>> {
+    pub fn resolve_quat_values<R: Read + Seek>(reader: &mut R, track: &M2TrackQuat) -> Result<Vec<M2CompQuat>> {
         if track.values.is_empty() {
             return Ok(Vec::new());
         }
@@ -70,10 +61,7 @@ impl M2TrackResolver {
 
     /// Resolve range data for pre-WotLK tracks
     /// Ranges are stored as pairs of u32 values (start, end)
-    pub fn resolve_ranges<R: Read + Seek>(
-        reader: &mut R,
-        track: &M2Track<impl Clone>,
-    ) -> Result<Option<Vec<u32>>> {
+    pub fn resolve_ranges<R: Read + Seek>(reader: &mut R, track: &M2Track<impl Clone>) -> Result<Option<Vec<u32>>> {
         if let Some(ref ranges) = track.ranges {
             if ranges.is_empty() {
                 return Ok(Some(Vec::new()));
@@ -109,20 +97,14 @@ impl M2TrackVec3Ext for M2TrackVec3 {
 }
 
 pub trait M2TrackFloatExt {
-    fn resolve_data<R: Read + Seek>(
-        &self,
-        reader: &mut R,
-    ) -> Result<(Vec<u32>, Vec<f32>, Option<Vec<u32>>)>;
+    fn resolve_data<R: Read + Seek>(&self, reader: &mut R) -> Result<(Vec<u32>, Vec<f32>, Option<Vec<u32>>)>;
 }
 
 impl M2TrackFloatExt for M2AnimationBlock<f32> {
-    fn resolve_data<R: Read + Seek>(
-        &self,
-        reader: &mut R,
-    ) -> Result<(Vec<u32>, Vec<f32>, Option<Vec<u32>>)> {
+    fn resolve_data<R: Read + Seek>(&self, reader: &mut R) -> Result<(Vec<u32>, Vec<f32>, Option<Vec<u32>>)> {
         let count = self.track.timestamps.count as usize;
         let offset = self.track.timestamps.offset as u64;
-    
+
         let mut timestamps = Vec::with_capacity(count);
         if count > 0 {
             reader.seek(std::io::SeekFrom::Start(offset))?;
@@ -221,29 +203,8 @@ mod tests {
 
         assert_eq!(timestamps, vec![10, 20, 30]);
         assert_eq!(values.len(), 3);
-        assert_eq!(
-            values[0],
-            C3Vector {
-                x: 1.0,
-                y: 2.0,
-                z: 3.0
-            }
-        );
-        assert_eq!(
-            values[1],
-            C3Vector {
-                x: 4.0,
-                y: 5.0,
-                z: 6.0
-            }
-        );
-        assert_eq!(
-            values[2],
-            C3Vector {
-                x: 7.0,
-                y: 8.0,
-                z: 9.0
-            }
-        );
+        assert_eq!(values[0], C3Vector { x: 1.0, y: 2.0, z: 3.0 });
+        assert_eq!(values[1], C3Vector { x: 4.0, y: 5.0, z: 6.0 });
+        assert_eq!(values[2], C3Vector { x: 7.0, y: 8.0, z: 9.0 });
     }
 }

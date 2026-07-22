@@ -64,10 +64,7 @@ fn test_real_wow_archive(archive_path: &str) -> Result<()> {
 
     // Test parallel extraction
     println!("🚀 Parallel extraction...");
-    let config = ParallelConfig::new()
-        .threads(8)
-        .batch_size(25)
-        .skip_errors(true); // Skip errors since some files might not be readable
+    let config = ParallelConfig::new().threads(8).batch_size(25).skip_errors(true); // Skip errors since some files might not be readable
 
     let start = Instant::now();
     let results = extract_with_config(path, &file_refs, config)?;
@@ -85,11 +82,7 @@ fn test_real_wow_archive(archive_path: &str) -> Result<()> {
     );
 
     // Calculate speedup
-    if sequential_count > 0
-        && successful > 0
-        && seq_duration.as_secs_f64() > 0.0
-        && par_duration.as_secs_f64() > 0.0
-    {
+    if sequential_count > 0 && successful > 0 && seq_duration.as_secs_f64() > 0.0 && par_duration.as_secs_f64() > 0.0 {
         let seq_rate = sequential_count as f64 / seq_duration.as_secs_f64();
         let speedup = files_per_sec / seq_rate;
         println!("   📈 Speedup: {:.1}x faster than sequential", speedup);

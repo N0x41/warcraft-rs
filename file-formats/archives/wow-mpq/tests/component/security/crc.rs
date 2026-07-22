@@ -10,10 +10,7 @@ fn test_crc32_algorithm() {
         (b"a".as_ref(), 0xE8B7BE43),
         (b"abc".as_ref(), 0x352441C2),
         (b"Hello, World!".as_ref(), 0xEC4AC3D0),
-        (
-            b"The quick brown fox jumps over the lazy dog".as_ref(),
-            0x414FA339,
-        ),
+        (b"The quick brown fox jumps over the lazy dog".as_ref(), 0x414FA339),
     ];
 
     for (data, expected) in test_cases {
@@ -39,9 +36,7 @@ fn test_valid_crc_extraction() {
     let mut archive = Archive::open(test_file).expect("Failed to open test archive");
 
     // This should succeed with valid CRCs
-    let data = archive
-        .read_file("test_crc.txt")
-        .expect("Failed to read file with CRC");
+    let data = archive.read_file("test_crc.txt").expect("Failed to read file with CRC");
 
     // Verify we got the expected content
     assert!(data.starts_with(b"This is test data for CRC validation. "));

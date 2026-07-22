@@ -38,9 +38,6 @@ fn test_collision_edge_cases() {
     for (i, filename) in collision_files.iter().enumerate() {
         let data = archive.read_file(filename).unwrap();
         assert_eq!(data.len(), 1024, "File {filename} has wrong size");
-        assert!(
-            data.iter().all(|&b| b == i as u8),
-            "File {filename} has wrong content"
-        );
+        assert!(data.iter().all(|&b| b == i as u8), "File {filename} has wrong content");
     }
 }

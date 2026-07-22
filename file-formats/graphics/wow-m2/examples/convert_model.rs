@@ -25,10 +25,7 @@ fn parse_version(version_str: &str) -> Result<M2Version, String> {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 4 {
-        eprintln!(
-            "Usage: {} <input_file> <output_file> <target_version>",
-            args[0]
-        );
+        eprintln!("Usage: {} <input_file> <output_file> <target_version>", args[0]);
         eprintln!("Target versions:");
         eprintln!("  classic/vanilla/tbc/wrath/wotlk - Classic WoW (1.x-3.x)");
         eprintln!("  cata/cataclysm - Cataclysm (4.x)");
@@ -80,11 +77,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         model.vertices.len(),
         converted_model.vertices.len()
     );
-    println!(
-        "Bones: {} -> {}",
-        model.bones.len(),
-        converted_model.bones.len()
-    );
+    println!("Bones: {} -> {}", model.bones.len(), converted_model.bones.len());
     println!(
         "Textures: {} -> {}",
         model.textures.len(),

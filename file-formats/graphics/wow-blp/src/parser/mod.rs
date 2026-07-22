@@ -24,8 +24,7 @@ pub fn load_blp<Q>(path: Q) -> Result<BlpImage, LoadError>
 where
     Q: AsRef<Path>,
 {
-    let input =
-        std::fs::read(&path).map_err(|e| LoadError::FileSystem(path.as_ref().to_owned(), e))?;
+    let input = std::fs::read(&path).map_err(|e| LoadError::FileSystem(path.as_ref().to_owned(), e))?;
     load_blp_ex(Some(path), &input)
 }
 
@@ -47,11 +46,11 @@ where
     let mut mipmaps = vec![];
     if let Some(path) = path.as_ref() {
         for i in 0..16 {
-            let mipmap_path = make_mipmap_path(path, i)
-                .ok_or_else(|| LoadError::InvalidFilename(path.as_ref().to_owned()))?;
+            let mipmap_path =
+                make_mipmap_path(path, i).ok_or_else(|| LoadError::InvalidFilename(path.as_ref().to_owned()))?;
             if mipmap_path.is_file() {
-                let mipmap = std::fs::read(mipmap_path)
-                    .map_err(|e| LoadError::FileSystem(path.as_ref().to_owned(), e))?;
+                let mipmap =
+                    std::fs::read(mipmap_path).map_err(|e| LoadError::FileSystem(path.as_ref().to_owned(), e))?;
                 mipmaps.push(mipmap);
             } else {
                 break;
@@ -76,10 +75,7 @@ pub fn no_mipmaps<'a>(_: usize) -> Result<Option<&'a [u8]>, Box<dyn std::error::
 
 /// Helper for `parse_blp` when external mipmaps are located in filesystem near the
 /// root file and loaded in memory when reading the main file.
-pub fn preloaded_mipmaps(
-    mipmaps: &[Vec<u8>],
-    i: usize,
-) -> Result<Option<&[u8]>, Box<dyn std::error::Error>> {
+pub fn preloaded_mipmaps(mipmaps: &[Vec<u8>], i: usize) -> Result<Option<&[u8]>, Box<dyn std::error::Error>> {
     if i >= mipmaps.len() {
         Ok(None)
     } else {
@@ -88,10 +84,7 @@ pub fn preloaded_mipmaps(
 }
 
 /// Parse BLP file from slice and use user provided callback to read mipmaps
-pub fn parse_blp_with_externals<'a, F>(
-    root_input: &'a [u8],
-    external_mipmaps: F,
-) -> ParseResult<BlpImage>
+pub fn parse_blp_with_externals<'a, F>(root_input: &'a [u8], external_mipmaps: F) -> ParseResult<BlpImage>
 where
     F: FnMut(usize) -> Result<Option<&'a [u8]>, Box<dyn std::error::Error>> + Clone,
 {
@@ -123,15 +116,13 @@ where
 {
     match blp_header.content {
         BlpContentTag::Jpeg => {
-            let content =
-                parse_jpeg_content(blp_header, external_mipmaps.clone(), original_input, input)
-                    .map_err(|e| e.with_context("jpeg content"))?;
+            let content = parse_jpeg_content(blp_header, external_mipmaps.clone(), original_input, input)
+                .map_err(|e| e.with_context("jpeg content"))?;
             Ok(BlpContent::Jpeg(content))
         }
         BlpContentTag::Direct => {
-            let content =
-                parse_direct_content(blp_header, external_mipmaps.clone(), original_input, input)
-                    .map_err(|e| e.with_context("direct content"))?;
+            let content = parse_direct_content(blp_header, external_mipmaps.clone(), original_input, input)
+                .map_err(|e| e.with_context("direct content"))?;
             Ok(content)
         }
     }

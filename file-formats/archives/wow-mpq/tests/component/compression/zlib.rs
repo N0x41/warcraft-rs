@@ -1,8 +1,6 @@
 //! Zlib compression tests
 
-use crate::common::test_helpers::{
-    compress_with_method, decompress_from_compress_api, test_round_trip,
-};
+use crate::common::test_helpers::{compress_with_method, decompress_from_compress_api, test_round_trip};
 use wow_mpq::compression::flags;
 
 #[test]
@@ -60,10 +58,7 @@ fn test_zlib_size_mismatch() {
         "Decompression should succeed even with wrong expected size"
     );
     let decompressed = result.unwrap();
-    assert_eq!(
-        decompressed, test_data,
-        "Decompressed data should match original"
-    );
+    assert_eq!(decompressed, test_data, "Decompressed data should match original");
     assert_eq!(
         decompressed.len(),
         test_data.len(),

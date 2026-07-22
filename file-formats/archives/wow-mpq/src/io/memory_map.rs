@@ -139,9 +139,8 @@ impl MemoryMappedArchive {
         }
 
         // Open the file
-        let file = File::open(&path).map_err(|e| {
-            Error::io_error(format!("Failed to open file for memory mapping: {}", e))
-        })?;
+        let file =
+            File::open(&path).map_err(|e| Error::io_error(format!("Failed to open file for memory mapping: {}", e)))?;
 
         // Get file size
         let file_size = file
@@ -211,11 +210,7 @@ impl MemoryMappedArchive {
     }
 
     /// Validate file size against security limits
-    fn validate_file_size(
-        file_size: u64,
-        config: &MemoryMapConfig,
-        security_limits: &SecurityLimits,
-    ) -> Result<()> {
+    fn validate_file_size(file_size: u64, config: &MemoryMapConfig, security_limits: &SecurityLimits) -> Result<()> {
         if file_size == 0 {
             return Err(Error::invalid_format("Cannot memory map empty file"));
         }
@@ -406,11 +401,7 @@ pub struct MemoryMapManager {
 #[cfg(feature = "mmap")]
 impl MemoryMapManager {
     /// Create a new memory mapping manager
-    pub fn new(
-        config: MemoryMapConfig,
-        security_limits: SecurityLimits,
-        session_tracker: Arc<SessionTracker>,
-    ) -> Self {
+    pub fn new(config: MemoryMapConfig, security_limits: SecurityLimits, session_tracker: Arc<SessionTracker>) -> Self {
         Self {
             config,
             security_limits,
@@ -582,8 +573,7 @@ mod tests {
         let security_limits = SecurityLimits::default();
         let session_tracker = Arc::new(crate::security::SessionTracker::new());
 
-        let mmap_archive =
-            MemoryMappedArchive::new(temp_file.path(), config, security_limits, session_tracker)?;
+        let mmap_archive = MemoryMappedArchive::new(temp_file.path(), config, security_limits, session_tracker)?;
 
         assert_eq!(mmap_archive.file_size(), test_data.len() as u64);
         assert!(mmap_archive.is_healthy());
@@ -605,8 +595,7 @@ mod tests {
         let security_limits = SecurityLimits::default();
         let session_tracker = Arc::new(crate::security::SessionTracker::new());
 
-        let mmap_archive =
-            MemoryMappedArchive::new(temp_file.path(), config, security_limits, session_tracker)?;
+        let mmap_archive = MemoryMappedArchive::new(temp_file.path(), config, security_limits, session_tracker)?;
 
         // Test reading from different positions
         let mut buf = [0u8; 5];
@@ -634,8 +623,7 @@ mod tests {
         let security_limits = SecurityLimits::default();
         let session_tracker = Arc::new(crate::security::SessionTracker::new());
 
-        let mmap_archive =
-            MemoryMappedArchive::new(temp_file.path(), config, security_limits, session_tracker)?;
+        let mmap_archive = MemoryMappedArchive::new(temp_file.path(), config, security_limits, session_tracker)?;
 
         // Test reading beyond file size
         let mut buf = [0u8; 5];
@@ -661,8 +649,7 @@ mod tests {
         let security_limits = SecurityLimits::default();
         let session_tracker = Arc::new(crate::security::SessionTracker::new());
 
-        let mmap_archive =
-            MemoryMappedArchive::new(temp_file.path(), config, security_limits, session_tracker)?;
+        let mmap_archive = MemoryMappedArchive::new(temp_file.path(), config, security_limits, session_tracker)?;
 
         // Test getting slices
         let slice = mmap_archive.get_slice(0, 6)?;
@@ -684,22 +671,16 @@ mod tests {
         let security_limits = SecurityLimits::strict(); // 1GB limit
 
         // Valid size
-        let result =
-            MemoryMappedArchive::validate_file_size(100 * 1024 * 1024, &config, &security_limits);
+        let result = MemoryMappedArchive::validate_file_size(100 * 1024 * 1024, &config, &security_limits);
         assert!(result.is_ok());
 
         // Exceeds config limit
-        let result =
-            MemoryMappedArchive::validate_file_size(300 * 1024 * 1024, &config, &security_limits);
+        let result = MemoryMappedArchive::validate_file_size(300 * 1024 * 1024, &config, &security_limits);
         assert!(result.is_err());
 
         // Exceeds security limit
         let large_config = MemoryMapConfig::permissive(); // 8GB limit
-        let result = MemoryMappedArchive::validate_file_size(
-            2 * 1024 * 1024 * 1024,
-            &large_config,
-            &security_limits,
-        );
+        let result = MemoryMappedArchive::validate_file_size(2 * 1024 * 1024 * 1024, &large_config, &security_limits);
         assert!(result.is_err());
 
         // Empty file

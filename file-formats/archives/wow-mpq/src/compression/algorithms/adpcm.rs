@@ -15,17 +15,16 @@ const INITIAL_ADPCM_STEP_INDEX: usize = 0x2C;
 
 /// Table for determining the next step index
 const NEXT_STEP_TABLE: [i8; 32] = [
-    -1, 0, -1, 4, -1, 2, -1, 6, -1, 1, -1, 5, -1, 3, -1, 7, -1, 1, -1, 5, -1, 3, -1, 7, -1, 2, -1,
-    4, -1, 6, -1, 8,
+    -1, 0, -1, 4, -1, 2, -1, 6, -1, 1, -1, 5, -1, 3, -1, 7, -1, 1, -1, 5, -1, 3, -1, 7, -1, 2, -1, 4, -1, 6, -1, 8,
 ];
 
 /// Step size table for ADPCM encoding/decoding
 const STEP_SIZE_TABLE: [i32; 89] = [
-    7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23, 25, 28, 31, 34, 37, 41, 45, 50, 55, 60, 66,
-    73, 80, 88, 97, 107, 118, 130, 143, 157, 173, 190, 209, 230, 253, 279, 307, 337, 371, 408, 449,
-    494, 544, 598, 658, 724, 796, 876, 963, 1060, 1166, 1282, 1411, 1552, 1707, 1878, 2066, 2272,
-    2499, 2749, 3024, 3327, 3660, 4026, 4428, 4871, 5358, 5894, 6484, 7132, 7845, 8630, 9493,
-    10442, 11487, 12635, 13899, 15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767,
+    7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23, 25, 28, 31, 34, 37, 41, 45, 50, 55, 60, 66, 73, 80, 88, 97, 107,
+    118, 130, 143, 157, 173, 190, 209, 230, 253, 279, 307, 337, 371, 408, 449, 494, 544, 598, 658, 724, 796, 876, 963,
+    1060, 1166, 1282, 1411, 1552, 1707, 1878, 2066, 2272, 2499, 2749, 3024, 3327, 3660, 4026, 4428, 4871, 5358, 5894,
+    6484, 7132, 7845, 8630, 9493, 10442, 11487, 12635, 13899, 15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794,
+    32767,
 ];
 
 /// Compress data using IMA ADPCM algorithm
@@ -44,9 +43,7 @@ fn compress_internal(input: &[u8], compression_level: u8, channel_count: usize) 
     if channel_count == 0 || channel_count > MAX_ADPCM_CHANNEL_COUNT {
         return Err(compression_error(
             "ADPCM",
-            format!(
-                "Invalid channel count: {channel_count}. ADPCM supports 1-{MAX_ADPCM_CHANNEL_COUNT} channels"
-            ),
+            format!("Invalid channel count: {channel_count}. ADPCM supports 1-{MAX_ADPCM_CHANNEL_COUNT} channels"),
         ));
     }
 
@@ -136,11 +133,7 @@ fn compress_internal(input: &[u8], compression_level: u8, channel_count: usize) 
             }
 
             // Encode the sample
-            let max_bit_mask = if bit_shift > 0 {
-                1 << (bit_shift - 1)
-            } else {
-                0
-            };
+            let max_bit_mask = if bit_shift > 0 { 1 << (bit_shift - 1) } else { 0 };
             let max_bit_mask = std::cmp::min(max_bit_mask, 0x20);
             let base_difference = step_size >> bit_shift as i32;
             let mut total_step_size = 0;
@@ -170,8 +163,7 @@ fn compress_internal(input: &[u8], compression_level: u8, channel_count: usize) 
             output.push(encoded_sample);
 
             // Update step index for next sample
-            step_indexes[channel_index] =
-                get_next_step_index(step_indexes[channel_index], encoded_sample);
+            step_indexes[channel_index] = get_next_step_index(step_indexes[channel_index], encoded_sample);
         }
 
         sample_index += 1;
@@ -196,9 +188,7 @@ fn decompress_internal(input: &[u8], output_size: usize, channel_count: usize) -
     if channel_count == 0 || channel_count > MAX_ADPCM_CHANNEL_COUNT {
         return Err(compression_error(
             "ADPCM",
-            format!(
-                "Invalid channel count: {channel_count}. ADPCM supports 1-{MAX_ADPCM_CHANNEL_COUNT} channels"
-            ),
+            format!("Invalid channel count: {channel_count}. ADPCM supports 1-{MAX_ADPCM_CHANNEL_COUNT} channels"),
         ));
     }
 
@@ -292,8 +282,7 @@ fn decompress_internal(input: &[u8], output_size: usize, channel_count: usize) -
             write_sample(&mut output, predicted_samples[channel_index]);
 
             // Update step index
-            step_indexes[channel_index] =
-                get_next_step_index(step_indexes[channel_index], encoded_sample);
+            step_indexes[channel_index] = get_next_step_index(step_indexes[channel_index], encoded_sample);
         }
     }
 
@@ -344,12 +333,7 @@ fn update_predicted_sample(predicted_sample: i32, encoded_sample: u8, difference
 }
 
 /// Decode a sample using the ADPCM algorithm
-fn decode_sample(
-    predicted_sample: i32,
-    encoded_sample: u8,
-    step_size: i32,
-    base_difference: i32,
-) -> i32 {
+fn decode_sample(predicted_sample: i32, encoded_sample: u8, step_size: i32, base_difference: i32) -> i32 {
     let mut difference = base_difference;
 
     if encoded_sample & 0x01 != 0 {
@@ -463,10 +447,7 @@ mod tests {
                 let diff = (original - decoded).abs();
 
                 // Allow some error due to lossy compression
-                assert!(
-                    diff < 1000,
-                    "Sample {i} differs too much: {original} vs {decoded}"
-                );
+                assert!(diff < 1000, "Sample {i} differs too much: {original} vs {decoded}");
             }
         }
     }
@@ -517,10 +498,7 @@ mod tests {
         // Check that silence is preserved (allowing small errors)
         let samples = extract_samples(&decompressed);
         for (i, sample) in samples.iter().enumerate() {
-            assert!(
-                sample.abs() <= 1,
-                "Stereo silence sample {i} too large: {sample}"
-            );
+            assert!(sample.abs() <= 1, "Stereo silence sample {i} too large: {sample}");
         }
     }
 
@@ -542,10 +520,7 @@ mod tests {
         // Left channel should be very close to constant
         for i in 0..50 {
             let left = read_sample(&decompressed, i * 2).unwrap();
-            assert!(
-                (left - 5000).abs() < 100,
-                "Left channel not constant at sample {i}"
-            );
+            assert!((left - 5000).abs() < 100, "Left channel not constant at sample {i}");
         }
 
         // Right channel should vary
@@ -556,10 +531,7 @@ mod tests {
             max_val = max_val.max(right);
             min_val = min_val.min(right);
         }
-        assert!(
-            max_val - min_val > 2000,
-            "Right channel doesn't vary enough"
-        );
+        assert!(max_val - min_val > 2000, "Right channel doesn't vary enough");
     }
 
     #[test]
@@ -590,16 +562,10 @@ mod tests {
         // Test decompression validation
         let compressed_data = vec![0u8; 10]; // Some dummy compressed data
         let result = decompress_internal(&compressed_data, 8, 0);
-        assert!(
-            result.is_err(),
-            "0 channels should be invalid for decompression"
-        );
+        assert!(result.is_err(), "0 channels should be invalid for decompression");
 
         let result = decompress_internal(&compressed_data, 8, 3);
-        assert!(
-            result.is_err(),
-            "3 channels should be invalid for decompression"
-        );
+        assert!(result.is_err(), "3 channels should be invalid for decompression");
     }
 
     #[test]
@@ -610,16 +576,10 @@ mod tests {
 
         // MAX_ADPCM_CHANNEL_COUNT is 2, so stereo should work
         let result = compress_internal(&test_data, 1, MAX_ADPCM_CHANNEL_COUNT);
-        assert!(
-            result.is_ok(),
-            "MAX_ADPCM_CHANNEL_COUNT channels should be valid"
-        );
+        assert!(result.is_ok(), "MAX_ADPCM_CHANNEL_COUNT channels should be valid");
 
         // One more than MAX should fail
         let result = compress_internal(&test_data, 1, MAX_ADPCM_CHANNEL_COUNT + 1);
-        assert!(
-            result.is_err(),
-            "More than MAX_ADPCM_CHANNEL_COUNT should be invalid"
-        );
+        assert!(result.is_err(), "More than MAX_ADPCM_CHANNEL_COUNT should be invalid");
     }
 }

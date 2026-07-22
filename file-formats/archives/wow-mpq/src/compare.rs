@@ -223,9 +223,7 @@ fn compare_metadata(source: &mut Archive, target: &mut Archive) -> Result<Metada
     let file_count = (source_info.file_count, target_info.file_count);
     let archive_size = (source_info.file_size, target_info.file_size);
 
-    let matches = format_version.0 == format_version.1
-        && block_size.0 == block_size.1
-        && file_count.0 == file_count.1;
+    let matches = format_version.0 == format_version.1 && block_size.0 == block_size.1 && file_count.0 == file_count.1;
 
     Ok(MetadataComparison {
         format_version,
@@ -253,20 +251,11 @@ fn compare_files(
     let target_set: HashSet<_> = target_files.keys().collect();
 
     // Find differences
-    let source_only: Vec<String> = source_set
-        .difference(&target_set)
-        .map(|s| s.to_string())
-        .collect();
+    let source_only: Vec<String> = source_set.difference(&target_set).map(|s| s.to_string()).collect();
 
-    let target_only: Vec<String> = target_set
-        .difference(&source_set)
-        .map(|s| s.to_string())
-        .collect();
+    let target_only: Vec<String> = target_set.difference(&source_set).map(|s| s.to_string()).collect();
 
-    let common_files: Vec<String> = source_set
-        .intersection(&target_set)
-        .map(|s| s.to_string())
-        .collect();
+    let common_files: Vec<String> = source_set.intersection(&target_set).map(|s| s.to_string()).collect();
 
     // Compare common files
     let mut size_differences = Vec::new();
@@ -278,9 +267,7 @@ fn compare_files(
         let target_entry = &target_files[filename];
 
         // Check size differences
-        if source_entry.size != target_entry.size
-            || source_entry.compressed_size != target_entry.compressed_size
-        {
+        if source_entry.size != target_entry.size || source_entry.compressed_size != target_entry.compressed_size {
             size_differences.push(FileSizeDiff {
                 name: filename.clone(),
                 source_size: source_entry.size,
@@ -327,10 +314,7 @@ fn compare_files(
 }
 
 /// Get file list from archive with optional filtering
-fn get_file_list(
-    archive: &mut Archive,
-    filter: &Option<String>,
-) -> Result<HashMap<String, crate::FileEntry>> {
+fn get_file_list(archive: &mut Archive, filter: &Option<String>) -> Result<HashMap<String, crate::FileEntry>> {
     let files = archive
         .list()
         .unwrap_or_else(|_| archive.list_all().unwrap_or_default());

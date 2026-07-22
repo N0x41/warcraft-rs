@@ -52,10 +52,7 @@ fn demo_new_animation_chunks() -> Result<()> {
     let mut chunk_reader = ChunkReader::new(cursor, header)?;
     let psbc = ParentSequenceBounds::parse(&mut chunk_reader)?;
 
-    println!(
-        "  ✅ PSBC: {} sequence bounds parsed",
-        psbc.sequence_bounds.len()
-    );
+    println!("  ✅ PSBC: {} sequence bounds parsed", psbc.sequence_bounds.len());
 
     // Demo PEDC (Parent Event Data)
     let mut pedc_data = Vec::new();
@@ -72,10 +69,7 @@ fn demo_new_animation_chunks() -> Result<()> {
     let mut chunk_reader = ChunkReader::new(cursor, header)?;
     let pedc = ParentEventData::parse(&mut chunk_reader)?;
 
-    println!(
-        "  ✅ PEDC: {} event entries parsed",
-        pedc.event_entries.len()
-    );
+    println!("  ✅ PEDC: {} event entries parsed", pedc.event_entries.len());
     println!();
 
     Ok(())

@@ -150,10 +150,7 @@ impl<R: Seek> Seek for ChunkReader<R> {
                 if pos > self.chunk_size as u64 {
                     return Err(std::io::Error::new(
                         std::io::ErrorKind::InvalidInput,
-                        format!(
-                            "Seek position {} exceeds chunk size {}",
-                            pos, self.chunk_size
-                        ),
+                        format!("Seek position {} exceeds chunk size {}", pos, self.chunk_size),
                     ));
                 }
                 let absolute_pos = self.chunk_start + pos;

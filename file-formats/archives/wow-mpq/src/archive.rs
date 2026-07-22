@@ -234,8 +234,7 @@ impl OpenOptions {
         let path = path.as_ref();
 
         // Create an empty archive with the specified version
-        let builder =
-            ArchiveBuilder::new().version(self.version.unwrap_or(crate::header::FormatVersion::V1));
+        let builder = ArchiveBuilder::new().version(self.version.unwrap_or(crate::header::FormatVersion::V1));
 
         // Build the empty archive
         builder.build(path)?;
@@ -317,10 +316,7 @@ impl Archive {
 
     /// Load hash and block tables
     pub fn load_tables(&mut self) -> Result<()> {
-        log::debug!(
-            "Loading tables for archive version {:?}",
-            self.header.format_version
-        );
+        log::debug!("Loading tables for archive version {:?}", self.header.format_version);
 
         // For v3+ archives, check for HET/BET tables first
         if self.header.format_version >= header::FormatVersion::V3 {
@@ -328,12 +324,7 @@ impl Archive {
             if let Some(het_pos) = self.header.het_table_pos
                 && het_pos != 0
             {
-                let mut het_size = self
-                    .header
-                    .v4_data
-                    .as_ref()
-                    .map(|v4| v4.het_table_size_64)
-                    .unwrap_or(0);
+                let mut het_size = self.header.v4_data.as_ref().map(|v4| v4.het_table_size_64).unwrap_or(0);
 
                 // For V3 without V4 data, we need to determine the size
                 if het_size == 0 && self.header.format_version == header::FormatVersion::V3 {
@@ -356,12 +347,7 @@ impl Archive {
                     // HET table key is based on table name
                     let key = hash_string("(hash table)", hash_type::FILE_KEY);
 
-                    match HetTable::read(
-                        &mut self.reader,
-                        self.archive_offset + het_pos,
-                        het_size,
-                        key,
-                    ) {
+                    match HetTable::read(&mut self.reader, self.archive_offset + het_pos, het_size, key) {
                         Ok(het) => {
                             let file_count = het.header.max_file_count;
                             log::info!("Loaded HET table with {file_count} max files");
@@ -378,12 +364,7 @@ impl Archive {
             if let Some(bet_pos) = self.header.bet_table_pos
                 && bet_pos != 0
             {
-                let mut bet_size = self
-                    .header
-                    .v4_data
-                    .as_ref()
-                    .map(|v4| v4.bet_table_size_64)
-                    .unwrap_or(0);
+                let mut bet_size = self.header.v4_data.as_ref().map(|v4| v4.bet_table_size_64).unwrap_or(0);
 
                 // For V3 without V4 data, we need to determine the size
                 if bet_size == 0 && self.header.format_version == header::FormatVersion::V3 {
@@ -405,32 +386,21 @@ impl Archive {
 
                     // First, check if the BET offset actually points to a HET table
                     // This is a known issue in some MoP update archives
-                    self.reader
-                        .seek(SeekFrom::Start(self.archive_offset + bet_pos))?;
+                    self.reader.seek(SeekFrom::Start(self.archive_offset + bet_pos))?;
                     let mut sig_buf = [0u8; 4];
                     self.reader.read_exact(&mut sig_buf)?;
 
                     if &sig_buf == b"HET\x1A" {
-                        log::error!(
-                            "BET offset points to HET table! This archive has swapped table offsets."
-                        );
-                        log::warn!(
-                            "Skipping BET table loading for this archive due to invalid offset."
-                        );
+                        log::error!("BET offset points to HET table! This archive has swapped table offsets.");
+                        log::warn!("Skipping BET table loading for this archive due to invalid offset.");
                     } else {
                         // Reset position and proceed with normal BET loading
-                        self.reader
-                            .seek(SeekFrom::Start(self.archive_offset + bet_pos))?;
+                        self.reader.seek(SeekFrom::Start(self.archive_offset + bet_pos))?;
 
                         // BET table key is based on table name
                         let key = hash_string("(block table)", hash_type::FILE_KEY);
 
-                        match BetTable::read(
-                            &mut self.reader,
-                            self.archive_offset + bet_pos,
-                            bet_size,
-                            key,
-                        ) {
+                        match BetTable::read(&mut self.reader, self.archive_offset + bet_pos, bet_size, key) {
                             Ok(bet) => {
                                 let file_count = bet.header.file_count;
                                 log::info!("Loaded BET table with {file_count} files");
@@ -493,10 +463,7 @@ impl Archive {
                         ) {
                             Ok(table_data) => {
                                 // Data is already decrypted — use from_bytes_decrypted
-                                match HashTable::from_bytes_decrypted(
-                                    &table_data,
-                                    self.header.hash_table_size,
-                                ) {
+                                match HashTable::from_bytes_decrypted(&table_data, self.header.hash_table_size) {
                                     Ok(hash_table) => {
                                         self.hash_table = Some(hash_table);
                                     }
@@ -540,21 +507,15 @@ impl Archive {
                     );
 
                     // Try to read as compressed
-                    match self.read_compressed_table(
-                        hash_table_offset,
-                        available_space as u64,
-                        uncompressed_size,
-                    ) {
-                        Ok(table_data) => {
-                            match HashTable::from_bytes(&table_data, self.header.hash_table_size) {
-                                Ok(hash_table) => {
-                                    self.hash_table = Some(hash_table);
-                                }
-                                Err(e) => {
-                                    log::warn!("Failed to parse hash table: {e}");
-                                }
+                    match self.read_compressed_table(hash_table_offset, available_space as u64, uncompressed_size) {
+                        Ok(table_data) => match HashTable::from_bytes(&table_data, self.header.hash_table_size) {
+                            Ok(hash_table) => {
+                                self.hash_table = Some(hash_table);
                             }
-                        }
+                            Err(e) => {
+                                log::warn!("Failed to parse hash table: {e}");
+                            }
+                        },
                         Err(e) => {
                             log::warn!("Failed to decompress hash table: {e}");
                             // Try to read as truncated uncompressed table
@@ -571,11 +532,7 @@ impl Archive {
                                     pow2_entries,
                                     self.header.hash_table_size
                                 );
-                                match HashTable::read(
-                                    &mut self.reader,
-                                    hash_table_offset,
-                                    pow2_entries,
-                                ) {
+                                match HashTable::read(&mut self.reader, hash_table_offset, pow2_entries) {
                                     Ok(hash_table) => {
                                         self.hash_table = Some(hash_table);
                                         log::info!("Successfully loaded truncated hash table");
@@ -589,11 +546,7 @@ impl Archive {
                     }
                 } else {
                     // Normal uncompressed reading
-                    match HashTable::read(
-                        &mut self.reader,
-                        hash_table_offset,
-                        self.header.hash_table_size,
-                    ) {
+                    match HashTable::read(&mut self.reader, hash_table_offset, self.header.hash_table_size) {
                         Ok(hash_table) => {
                             self.hash_table = Some(hash_table);
                         }
@@ -642,10 +595,7 @@ impl Archive {
                         ) {
                             Ok(table_data) => {
                                 // Data is already decrypted — use from_bytes_decrypted
-                                match BlockTable::from_bytes_decrypted(
-                                    &table_data,
-                                    self.header.block_table_size,
-                                ) {
+                                match BlockTable::from_bytes_decrypted(&table_data, self.header.block_table_size) {
                                     Ok(block_table) => {
                                         self.block_table = Some(block_table);
                                     }
@@ -693,22 +643,15 @@ impl Archive {
                     );
 
                     // Try to read as compressed
-                    match self.read_compressed_table(
-                        block_table_offset,
-                        available_space as u64,
-                        uncompressed_size,
-                    ) {
-                        Ok(table_data) => {
-                            match BlockTable::from_bytes(&table_data, self.header.block_table_size)
-                            {
-                                Ok(block_table) => {
-                                    self.block_table = Some(block_table);
-                                }
-                                Err(e) => {
-                                    log::warn!("Failed to parse block table: {e}");
-                                }
+                    match self.read_compressed_table(block_table_offset, available_space as u64, uncompressed_size) {
+                        Ok(table_data) => match BlockTable::from_bytes(&table_data, self.header.block_table_size) {
+                            Ok(block_table) => {
+                                self.block_table = Some(block_table);
                             }
-                        }
+                            Err(e) => {
+                                log::warn!("Failed to parse block table: {e}");
+                            }
+                        },
                         Err(e) => {
                             log::warn!("Failed to decompress block table: {e}");
                             // Try to read as truncated uncompressed table
@@ -720,11 +663,7 @@ impl Archive {
                                     entries_that_fit,
                                     self.header.block_table_size
                                 );
-                                match BlockTable::read(
-                                    &mut self.reader,
-                                    block_table_offset,
-                                    entries_that_fit as u32,
-                                ) {
+                                match BlockTable::read(&mut self.reader, block_table_offset, entries_that_fit as u32) {
                                     Ok(block_table) => {
                                         self.block_table = Some(block_table);
                                         log::info!("Successfully loaded truncated block table");
@@ -738,11 +677,7 @@ impl Archive {
                     }
                 } else {
                     // Normal uncompressed reading
-                    match BlockTable::read(
-                        &mut self.reader,
-                        block_table_offset,
-                        self.header.block_table_size,
-                    ) {
+                    match BlockTable::read(&mut self.reader, block_table_offset, self.header.block_table_size) {
                         Ok(block_table) => {
                             self.block_table = Some(block_table);
                         }
@@ -823,17 +758,13 @@ impl Archive {
         };
 
         // Helper function to calculate MD5 of raw table data
-        let mut validate_table_md5 = |expected: &[u8; 16],
-                                      offset: u64,
-                                      size: u64|
-         -> Result<bool> {
+        let mut validate_table_md5 = |expected: &[u8; 16], offset: u64, size: u64| -> Result<bool> {
             if size == 0 {
                 return Ok(true); // Empty table is valid
             }
 
             // Read raw table data
-            self.reader
-                .seek(SeekFrom::Start(self.archive_offset + offset))?;
+            self.reader.seek(SeekFrom::Start(self.archive_offset + offset))?;
             let mut table_data = vec![0u8; size as usize];
             match self.reader.read_exact(&mut table_data) {
                 Ok(_) => {
@@ -1014,11 +945,7 @@ impl Archive {
         let block_table_info = TableInfo {
             size: Some(self.header.block_table_size),
             offset: self.header.get_block_table_pos(),
-            compressed_size: self
-                .header
-                .v4_data
-                .as_ref()
-                .map(|v4| v4.block_table_size_64),
+            compressed_size: self.header.v4_data.as_ref().map(|v4| v4.block_table_size_64),
             failed_to_load: self.block_table.is_none() && self.header.block_table_size > 0,
         };
 
@@ -1031,12 +958,9 @@ impl Archive {
             let mut compressed_size = self.header.v4_data.as_ref().map(|v4| v4.het_table_size_64);
 
             // For v3 without v4 data, try to determine the size
-            if compressed_size.is_none() && self.header.format_version == header::FormatVersion::V3
-            {
+            if compressed_size.is_none() && self.header.format_version == header::FormatVersion::V3 {
                 // Make a copy of the reader to avoid interfering with the main archive
-                if let Ok(temp_reader) =
-                    std::fs::File::open(&self.path).map(std::io::BufReader::new)
-                {
+                if let Ok(temp_reader) = std::fs::File::open(&self.path).map(std::io::BufReader::new) {
                     let mut temp_archive = Self {
                         path: self.path.clone(),
                         reader: temp_reader,
@@ -1074,12 +998,9 @@ impl Archive {
             let mut compressed_size = self.header.v4_data.as_ref().map(|v4| v4.bet_table_size_64);
 
             // For v3 without v4 data, try to determine the size
-            if compressed_size.is_none() && self.header.format_version == header::FormatVersion::V3
-            {
+            if compressed_size.is_none() && self.header.format_version == header::FormatVersion::V3 {
                 // Make a copy of the reader to avoid interfering with the main archive
-                if let Ok(temp_reader) =
-                    std::fs::File::open(&self.path).map(std::io::BufReader::new)
-                {
+                if let Ok(temp_reader) = std::fs::File::open(&self.path).map(std::io::BufReader::new) {
                     let mut temp_archive = Self {
                         path: self.path.clone(),
                         reader: temp_reader,
@@ -1120,11 +1041,7 @@ impl Archive {
                     None
                 },
                 offset: pos,
-                compressed_size: self
-                    .header
-                    .v4_data
-                    .as_ref()
-                    .map(|v4| v4.hi_block_table_size_64),
+                compressed_size: self.header.v4_data.as_ref().map(|v4| v4.hi_block_table_size_64),
                 failed_to_load: self.hi_block_table.is_none(),
             })
         });
@@ -1196,8 +1113,7 @@ impl Archive {
         if let (Some(het), Some(bet)) = (&self.het_table, &self.bet_table) {
             // Check if tables have actual entries
             if het.header.max_file_count > 0 && bet.header.file_count > 0 {
-                let (_file_index_opt, collision_candidates) =
-                    het.find_file_with_collision_info(filename);
+                let (_file_index_opt, collision_candidates) = het.find_file_with_collision_info(filename);
 
                 // HET uses 8-bit hashes which naturally have many collisions.
                 // We must verify each candidate against the full BET hash to find the correct file.
@@ -1322,32 +1238,23 @@ impl Archive {
                                         compressed_size: file_info.compressed_size,
                                         flags: file_info.flags,
                                         hashes: None,
-                                        table_indices: Some((
-                                            file_info.hash_index,
-                                            Some(file_info.block_index),
-                                        )),
+                                        table_indices: Some((file_info.hash_index, Some(file_info.block_index))),
                                     });
                                 } else {
                                     // File is in listfile but not found in archive
-                                    log::warn!(
-                                        "File '{filename}' listed in (listfile) but not found in archive"
-                                    );
+                                    log::warn!("File '{filename}' listed in (listfile) but not found in archive");
                                 }
                             }
 
                             return Ok(entries);
                         }
                         Err(e) => {
-                            log::warn!(
-                                "Failed to parse (listfile): {e}. Falling back to anonymous enumeration."
-                            );
+                            log::warn!("Failed to parse (listfile): {e}. Falling back to anonymous enumeration.");
                         }
                     }
                 }
                 Err(e) => {
-                    log::warn!(
-                        "Failed to read (listfile): {e}. Falling back to anonymous enumeration."
-                    );
+                    log::warn!("Failed to read (listfile): {e}. Falling back to anonymous enumeration.");
                 }
             }
         }
@@ -1607,21 +1514,20 @@ impl Archive {
 
         // For v3+ archives with HET/BET tables, we already have all the info we need in FileInfo
         // For classic archives, we need to get additional info from the block table
-        let (file_size_for_key, actual_file_size) =
-            if self.het_table.is_some() && self.bet_table.is_some() {
-                // Using HET/BET tables - FileInfo already has all the data
-                (file_info.file_size as u32, file_info.file_size)
-            } else {
-                // Using classic tables - need block entry for accurate sizes
-                let block_table = self
-                    .block_table
-                    .as_ref()
-                    .ok_or_else(|| Error::invalid_format("Block table not loaded"))?;
-                let block_entry = block_table
-                    .get(file_info.block_index)
-                    .ok_or_else(|| Error::block_table("Invalid block index"))?;
-                (block_entry.file_size, block_entry.file_size as u64)
-            };
+        let (file_size_for_key, actual_file_size) = if self.het_table.is_some() && self.bet_table.is_some() {
+            // Using HET/BET tables - FileInfo already has all the data
+            (file_info.file_size as u32, file_info.file_size)
+        } else {
+            // Using classic tables - need block entry for accurate sizes
+            let block_table = self
+                .block_table
+                .as_ref()
+                .ok_or_else(|| Error::invalid_format("Block table not loaded"))?;
+            let block_entry = block_table
+                .get(file_info.block_index)
+                .ok_or_else(|| Error::block_table("Invalid block index"))?;
+            (block_entry.file_size, block_entry.file_size as u64)
+        };
 
         // Calculate encryption key if needed
         let key = if file_info.is_encrypted() {
@@ -1647,11 +1553,7 @@ impl Archive {
 
             // Decrypt if needed
             if file_info.is_encrypted() {
-                log::debug!(
-                    "Decrypting file data: key=0x{:08X}, size={}",
-                    key,
-                    data.len()
-                );
+                log::debug!("Decrypting file data: key=0x{:08X}, size={}", key, data.len());
                 if data.len() <= 64 {
                     log::debug!("Before decrypt: {:02X?}", &data);
                 }
@@ -1673,11 +1575,7 @@ impl Archive {
                     // We need to decompress first to check CRC
                     let compression_type = data[0];
                     let compressed_data = &data[1..];
-                    compression::decompress(
-                        compressed_data,
-                        compression_type,
-                        actual_file_size as usize,
-                    )?
+                    compression::decompress(compressed_data, compression_type, actual_file_size as usize)?
                 } else {
                     data.clone()
                 };
@@ -1738,9 +1636,7 @@ impl Archive {
                             Err(Error::compression("Empty compressed data"))
                         }
                     } else {
-                        Err(Error::compression(
-                            "Could not determine compression method from flags",
-                        ))
+                        Err(Error::compression("Could not determine compression method from flags"))
                     }
                 } else {
                     // SECTORED files: Should not reach here for single-unit code path
@@ -1775,28 +1671,25 @@ impl Archive {
 
         // Verify this is actually a patch file
         if !file_info.is_patch_file() {
-            return Err(Error::invalid_format(format!(
-                "File '{name}' is not a patch file"
-            )));
+            return Err(Error::invalid_format(format!("File '{name}' is not a patch file")));
         }
 
         // For v3+ archives with HET/BET tables, we already have all the info we need in FileInfo
         // For classic archives, we need to get additional info from the block table
-        let (file_size_for_key, _actual_file_size) =
-            if self.het_table.is_some() && self.bet_table.is_some() {
-                // Using HET/BET tables - FileInfo already has all the data
-                (file_info.file_size as u32, file_info.file_size)
-            } else {
-                // Using classic tables - need block entry for accurate sizes
-                let block_table = self
-                    .block_table
-                    .as_ref()
-                    .ok_or_else(|| Error::invalid_format("Block table not loaded"))?;
-                let block_entry = block_table
-                    .get(file_info.block_index)
-                    .ok_or_else(|| Error::block_table("Invalid block index"))?;
-                (block_entry.file_size, block_entry.file_size as u64)
-            };
+        let (file_size_for_key, _actual_file_size) = if self.het_table.is_some() && self.bet_table.is_some() {
+            // Using HET/BET tables - FileInfo already has all the data
+            (file_info.file_size as u32, file_info.file_size)
+        } else {
+            // Using classic tables - need block entry for accurate sizes
+            let block_table = self
+                .block_table
+                .as_ref()
+                .ok_or_else(|| Error::invalid_format("Block table not loaded"))?;
+            let block_entry = block_table
+                .get(file_info.block_index)
+                .ok_or_else(|| Error::block_table("Invalid block index"))?;
+            (block_entry.file_size, block_entry.file_size as u64)
+        };
 
         // Calculate encryption key if needed
         let key = if file_info.is_encrypted() {
@@ -1855,25 +1748,17 @@ impl Archive {
 
         if is_single_unit {
             log::debug!("Patch file is stored as single unit");
-            let compressed_data_size =
-                file_info.compressed_size as usize - patch_info_length as usize;
+            let compressed_data_size = file_info.compressed_size as usize - patch_info_length as usize;
 
             let mut data = vec![0u8; compressed_data_size];
             self.reader.read_exact(&mut data)?;
 
-            log::debug!(
-                "Read {} bytes of compressed patch data (single unit)",
-                data.len()
-            );
+            log::debug!("Read {} bytes of compressed patch data (single unit)", data.len());
             log::debug!("First 32 bytes: {:02X?}", &data[..32.min(data.len())]);
 
             // Decrypt if needed (though patch files are typically not encrypted)
             if file_info.is_encrypted() {
-                log::debug!(
-                    "Decrypting patch file data: key=0x{:08X}, size={}",
-                    key,
-                    data.len()
-                );
+                log::debug!("Decrypting patch file data: key=0x{:08X}, size={}", key, data.len());
                 decrypt_file_data(&mut data, key);
             }
 
@@ -1945,8 +1830,7 @@ impl Archive {
 
                 // Sector offsets are relative to the START of the offset table, NOT after it
                 // So we need to seek to: file_pos + TPatchInfo + sector_offset
-                let sector_file_pos =
-                    file_info.file_pos + patch_info_length as u64 + sector_start as u64;
+                let sector_file_pos = file_info.file_pos + patch_info_length as u64 + sector_start as u64;
 
                 self.reader.seek(SeekFrom::Start(sector_file_pos))?;
 
@@ -1970,19 +1854,14 @@ impl Archive {
                 );
 
                 // Decompress using standard MPQ decompression
-                let expected_size =
-                    sector_size.min(patch_data_size as usize - decompressed_data.len());
+                let expected_size = sector_size.min(patch_data_size as usize - decompressed_data.len());
                 let sector_decompressed = compression::decompress(
                     &sector_data[1..], // Skip compression method byte
                     compression_method,
                     expected_size,
                 )?;
 
-                log::debug!(
-                    "Sector {} decompressed to {} bytes",
-                    i,
-                    sector_decompressed.len()
-                );
+                log::debug!("Sector {} decompressed to {} bytes", i, sector_decompressed.len());
 
                 decompressed_data.extend_from_slice(&sector_decompressed);
             }
@@ -1998,11 +1877,7 @@ impl Archive {
     }
 
     /// Read a file by table indices (for files with generic names)
-    pub fn read_file_by_indices(
-        &mut self,
-        hash_index: usize,
-        block_index: Option<usize>,
-    ) -> Result<Vec<u8>> {
+    pub fn read_file_by_indices(&mut self, hash_index: usize, block_index: Option<usize>) -> Result<Vec<u8>> {
         let file_info = if let Some(block_idx) = block_index {
             // Classic hash/block table access
             let hash_table = self
@@ -2088,21 +1963,20 @@ impl Archive {
         };
 
         // Continue with normal file reading logic based on whether it's sectored
-        let (file_size_for_key, actual_file_size) =
-            if self.het_table.is_some() && self.bet_table.is_some() {
-                // Using HET/BET tables - FileInfo already has all the data
-                (file_info.file_size as u32, file_info.file_size)
-            } else {
-                // Using classic tables - need block entry for accurate sizes
-                let block_table = self
-                    .block_table
-                    .as_ref()
-                    .ok_or_else(|| Error::invalid_format("Block table not loaded"))?;
-                let block_entry = block_table
-                    .get(file_info.block_index)
-                    .ok_or_else(|| Error::block_table("Invalid block index"))?;
-                (block_entry.file_size, block_entry.file_size as u64)
-            };
+        let (file_size_for_key, actual_file_size) = if self.het_table.is_some() && self.bet_table.is_some() {
+            // Using HET/BET tables - FileInfo already has all the data
+            (file_info.file_size as u32, file_info.file_size)
+        } else {
+            // Using classic tables - need block entry for accurate sizes
+            let block_table = self
+                .block_table
+                .as_ref()
+                .ok_or_else(|| Error::invalid_format("Block table not loaded"))?;
+            let block_entry = block_table
+                .get(file_info.block_index)
+                .ok_or_else(|| Error::block_table("Invalid block index"))?;
+            (block_entry.file_size, block_entry.file_size as u64)
+        };
 
         // Adjust key for file size if needed
         let key = if file_info.is_encrypted() && file_info.has_fix_key() {
@@ -2121,11 +1995,7 @@ impl Archive {
 
             // Decrypt if needed
             if file_info.is_encrypted() {
-                log::debug!(
-                    "Decrypting file data: key=0x{:08X}, size={}",
-                    key,
-                    data.len()
-                );
+                log::debug!("Decrypting file data: key=0x{:08X}, size={}", key, data.len());
                 decrypt_file_data(&mut data, key);
             }
 
@@ -2156,11 +2026,7 @@ impl Archive {
                         &compressed_data[..compressed_data.len().min(16)]
                     );
 
-                    compression::decompress(
-                        compressed_data,
-                        compression_type,
-                        actual_file_size as usize,
-                    )
+                    compression::decompress(compressed_data, compression_type, actual_file_size as usize)
                 }
             } else {
                 Ok(data)
@@ -2300,8 +2166,7 @@ impl Archive {
             let expected_size = remaining.min(sector_size);
 
             // Seek to sector data - offsets are absolute from file position
-            self.reader
-                .seek(SeekFrom::Start(file_info.file_pos + sector_start))?;
+            self.reader.seek(SeekFrom::Start(file_info.file_pos + sector_start))?;
 
             // Ensure our buffer is large enough
             if sector_size_compressed > sector_buffer.len() {
@@ -2336,9 +2201,7 @@ impl Archive {
             }
 
             // Decompress sector
-            let decompressed_sector = if file_info.is_compressed()
-                && sector_size_compressed < expected_size
-            {
+            let decompressed_sector = if file_info.is_compressed() && sector_size_compressed < expected_size {
                 if !sector_data.is_empty() {
                     // Check if this is IMPLODE compression (no compression type prefix)
                     if file_info.is_implode() {
@@ -2346,9 +2209,7 @@ impl Archive {
                         match compression::decompress(sector_data, 0x08, expected_size) {
                             Ok(decompressed) => decompressed,
                             Err(e) => {
-                                log::warn!(
-                                    "Failed to decompress IMPLODE sector {i}: {e}. Using zeros."
-                                );
+                                log::warn!("Failed to decompress IMPLODE sector {i}: {e}. Using zeros.");
                                 vec![0u8; expected_size]
                             }
                         }
@@ -2356,11 +2217,7 @@ impl Archive {
                         // COMPRESS flag - has compression type byte prefix
                         let compression_type = sector_data[0];
                         let compressed_data = &sector_data[1..];
-                        match compression::decompress(
-                            compressed_data,
-                            compression_type,
-                            expected_size,
-                        ) {
+                        match compression::decompress(compressed_data, compression_type, expected_size) {
                             Ok(decompressed) => decompressed,
                             Err(e) => {
                                 log::warn!("Failed to decompress sector {i}: {e}. Using zeros.");
@@ -2401,9 +2258,7 @@ impl Archive {
                 } else if let Some(ref bet_table) = self.bet_table {
                     bet_table.header.file_count as usize
                 } else {
-                    return Err(Error::invalid_format(
-                        "No block/BET table available for attributes",
-                    ));
+                    return Err(Error::invalid_format("No block/BET table available for attributes"));
                 };
 
                 // Determine the actual block count by checking the attributes file structure
@@ -2432,9 +2287,7 @@ impl Archive {
 
                     if data.len() == expected_size_full {
                         // Perfect match with full file count - attributes includes itself
-                        log::debug!(
-                            "Attributes file contains entries for all {total_files} files (including itself)"
-                        );
+                        log::debug!("Attributes file contains entries for all {total_files} files (including itself)");
                         total_files
                     } else {
                         // Try with count-1 (traditional behavior)
@@ -2485,10 +2338,7 @@ impl Archive {
 
                         // Try to decompress if it looks like compression flags
                         if data[0] & 0x0F != 0 || data[0] == 0x02 {
-                            log::info!(
-                                "Attempting to decompress attributes file with method 0x{:02X}",
-                                data[0]
-                            );
+                            log::info!("Attempting to decompress attributes file with method 0x{:02X}", data[0]);
                             match compression::decompress(&data[1..], data[0], block_count * 100) {
                                 Ok(decompressed) => {
                                     log::info!("Successfully decompressed attributes file");
@@ -2519,10 +2369,7 @@ impl Archive {
     }
 
     /// Get attributes for a specific file by block index
-    pub fn get_file_attributes(
-        &self,
-        block_index: usize,
-    ) -> Option<&special_files::FileAttributes> {
+    pub fn get_file_attributes(&self, block_index: usize) -> Option<&special_files::FileAttributes> {
         self.attributes.as_ref()?.get_file_attributes(block_index)
     }
 
@@ -2616,11 +2463,7 @@ impl Archive {
                 self.reader.seek(SeekFrom::Start(self.archive_offset))?;
 
                 // Verify the weak signature using StormLib-compatible approach
-                match crate::crypto::verify_weak_signature_stormlib(
-                    &mut self.reader,
-                    &weak_sig,
-                    &sig_info,
-                ) {
+                match crate::crypto::verify_weak_signature_stormlib(&mut self.reader, &weak_sig, &sig_info) {
                     Ok(true) => Ok(SignatureStatus::WeakValid),
                     Ok(false) => Ok(SignatureStatus::WeakInvalid),
                     Err(e) => {
@@ -2743,11 +2586,7 @@ impl Archive {
             log::debug!("Decompressing table with method 0x{compression_type:02X}");
 
             // Decompress the data
-            compression::decompress(
-                compressed_content,
-                compression_type,
-                expected_uncompressed_size,
-            )
+            compression::decompress(compressed_content, compression_type, expected_uncompressed_size)
         } else {
             // Table is not compressed, return as-is
             log::debug!("Table is not compressed, using as-is");
@@ -2757,9 +2596,7 @@ impl Archive {
 
     /// Verify strong signature appended after the archive
     fn verify_strong_signature(&mut self) -> Result<SignatureStatus> {
-        use crate::crypto::{
-            STRONG_SIGNATURE_SIZE, parse_strong_signature, verify_strong_signature,
-        };
+        use crate::crypto::{STRONG_SIGNATURE_SIZE, parse_strong_signature, verify_strong_signature};
 
         // Get total file size
         let file_size = self.reader.get_ref().metadata()?.len();
@@ -2790,11 +2627,8 @@ impl Archive {
                         self.reader.seek(SeekFrom::Start(self.archive_offset))?;
 
                         // Verify the strong signature
-                        match verify_strong_signature(
-                            &mut self.reader,
-                            &strong_sig,
-                            archive_end - self.archive_offset,
-                        ) {
+                        match verify_strong_signature(&mut self.reader, &strong_sig, archive_end - self.archive_offset)
+                        {
                             Ok(true) => {
                                 log::info!("Strong signature verification successful");
                                 Ok(SignatureStatus::StrongValid)
@@ -2839,12 +2673,7 @@ pub fn decrypt_file_data(data: &mut [u8], key: u32) {
         // Copy data as u32 values (little-endian)
         for i in 0..chunks {
             let offset = i * 4;
-            let value = u32::from_le_bytes([
-                data[offset],
-                data[offset + 1],
-                data[offset + 2],
-                data[offset + 3],
-            ]);
+            let value = u32::from_le_bytes([data[offset], data[offset + 1], data[offset + 2], data[offset + 3]]);
             u32_data.push(value);
         }
 
@@ -2942,8 +2771,7 @@ impl FileInfo {
     /// Check if the file uses IMPLODE compression specifically
     pub fn is_implode(&self) -> bool {
         use crate::tables::BlockEntry;
-        (self.flags & BlockEntry::FLAG_IMPLODE) != 0
-            && (self.flags & BlockEntry::FLAG_COMPRESS) == 0
+        (self.flags & BlockEntry::FLAG_IMPLODE) != 0 && (self.flags & BlockEntry::FLAG_COMPRESS) == 0
     }
 
     /// Check if the file uses COMPRESS (multi-method compression)
@@ -3098,12 +2926,8 @@ mod tests {
                 let mut u32_data = Vec::with_capacity(chunks);
                 for i in 0..chunks {
                     let offset = i * 4;
-                    let value = u32::from_le_bytes([
-                        data[offset],
-                        data[offset + 1],
-                        data[offset + 2],
-                        data[offset + 3],
-                    ]);
+                    let value =
+                        u32::from_le_bytes([data[offset], data[offset + 1], data[offset + 2], data[offset + 3]]);
                     u32_data.push(value);
                 }
 

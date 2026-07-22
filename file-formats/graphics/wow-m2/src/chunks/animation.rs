@@ -136,8 +136,8 @@ impl<T: M2Parse> M2AnimationTrack<T> {
     /// Vanilla (≤257) and WotLK+ (≥264) omit it.
     pub fn parse<R: Read + Seek>(reader: &mut R, version: u32) -> Result<Self> {
         let interpolation_type_raw = reader.read_u16_le()?;
-        let interpolation_type = M2InterpolationType::from_u16(interpolation_type_raw)
-            .unwrap_or(M2InterpolationType::None);
+        let interpolation_type =
+            M2InterpolationType::from_u16(interpolation_type_raw).unwrap_or(M2InterpolationType::None);
 
         let global_sequence = reader.read_i16_le()?;
         let interpolation_ranges = if version >= 260 && version < 264 {

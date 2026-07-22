@@ -63,14 +63,8 @@ mod tests {
         // Test various flag combinations
         let test_cases = vec![
             (BlockEntry::FLAG_EXISTS, "File exists only"),
-            (
-                BlockEntry::FLAG_EXISTS | BlockEntry::FLAG_COMPRESS,
-                "Compressed file",
-            ),
-            (
-                BlockEntry::FLAG_EXISTS | BlockEntry::FLAG_ENCRYPTED,
-                "Encrypted file",
-            ),
+            (BlockEntry::FLAG_EXISTS | BlockEntry::FLAG_COMPRESS, "Compressed file"),
+            (BlockEntry::FLAG_EXISTS | BlockEntry::FLAG_ENCRYPTED, "Encrypted file"),
             (
                 BlockEntry::FLAG_EXISTS | BlockEntry::FLAG_COMPRESS | BlockEntry::FLAG_ENCRYPTED,
                 "Compressed and encrypted",
@@ -92,18 +86,9 @@ mod tests {
             };
 
             assert_eq!(entry.exists(), (flags & BlockEntry::FLAG_EXISTS) != 0);
-            assert_eq!(
-                entry.is_compressed(),
-                (flags & BlockEntry::FLAG_COMPRESS) != 0
-            );
-            assert_eq!(
-                entry.is_encrypted(),
-                (flags & BlockEntry::FLAG_ENCRYPTED) != 0
-            );
-            assert_eq!(
-                entry.is_single_unit(),
-                (flags & BlockEntry::FLAG_SINGLE_UNIT) != 0
-            );
+            assert_eq!(entry.is_compressed(), (flags & BlockEntry::FLAG_COMPRESS) != 0);
+            assert_eq!(entry.is_encrypted(), (flags & BlockEntry::FLAG_ENCRYPTED) != 0);
+            assert_eq!(entry.is_single_unit(), (flags & BlockEntry::FLAG_SINGLE_UNIT) != 0);
         }
     }
 

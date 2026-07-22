@@ -25,9 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(not(feature = "mmap"))]
     {
         println!("Memory mapping feature is DISABLED");
-        println!(
-            "To enable memory mapping, build with: cargo run --features mmap --example memory_mapped_performance"
-        );
+        println!("To enable memory mapping, build with: cargo run --features mmap --example memory_mapped_performance");
     }
 
     Ok(())
@@ -68,12 +66,7 @@ fn demonstrate_memory_mapping() -> Result<(), Box<dyn std::error::Error>> {
 
         // Create memory-mapped archive
         let start = Instant::now();
-        let mmap_result = MemoryMappedArchive::new(
-            temp_file.path(),
-            config.clone(),
-            security_limits,
-            session_tracker,
-        );
+        let mmap_result = MemoryMappedArchive::new(temp_file.path(), config.clone(), security_limits, session_tracker);
         let creation_time = start.elapsed();
 
         match mmap_result {
@@ -141,12 +134,7 @@ fn demonstrate_memory_mapping() -> Result<(), Box<dyn std::error::Error>> {
     let security_limits = SecurityLimits::default();
     let session_tracker = Arc::new(SessionTracker::new());
 
-    match MemoryMappedArchive::new(
-        temp_file.path(),
-        disabled_config,
-        security_limits,
-        session_tracker,
-    ) {
+    match MemoryMappedArchive::new(temp_file.path(), disabled_config, security_limits, session_tracker) {
         Ok(_) => println!("  ✗ Unexpected success with disabled config"),
         Err(e) => println!("  ✓ Expected error: {}", e),
     }
@@ -187,8 +175,7 @@ mod tests {
         let security_limits = SecurityLimits::default();
         let session_tracker = Arc::new(SessionTracker::new());
 
-        let mmap_archive =
-            MemoryMappedArchive::new(temp_file.path(), config, security_limits, session_tracker)?;
+        let mmap_archive = MemoryMappedArchive::new(temp_file.path(), config, security_limits, session_tracker)?;
 
         // Verify basic functionality
         assert_eq!(mmap_archive.file_size(), test_data.len() as u64);
@@ -246,12 +233,7 @@ mod tests {
 
         // Test disabled configuration
         let disabled_config = MemoryMapConfig::disabled();
-        let result = MemoryMappedArchive::new(
-            temp_file.path(),
-            disabled_config,
-            security_limits,
-            session_tracker,
-        );
+        let result = MemoryMappedArchive::new(temp_file.path(), disabled_config, security_limits, session_tracker);
         assert!(result.is_err());
 
         Ok(())

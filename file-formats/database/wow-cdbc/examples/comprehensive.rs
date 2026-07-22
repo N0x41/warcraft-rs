@@ -140,12 +140,7 @@ fn parse_with_lazy_loading() -> Result<(), Box<dyn std::error::Error>> {
     let record_set = parser.parse_records()?;
 
     let string_block = std::sync::Arc::new(record_set.string_block().clone());
-    let lazy_parser = LazyDbcParser::new(
-        parser.data(),
-        parser.header(),
-        parser.schema(),
-        string_block,
-    );
+    let lazy_parser = LazyDbcParser::new(parser.data(), parser.header(), parser.schema(), string_block);
 
     // Process specific records without loading all into memory
     let indices = vec![0, 100, 500, 1000];
@@ -217,11 +212,7 @@ fn parse_with_memory_mapping() -> Result<(), Box<dyn std::error::Error>> {
     let start = Instant::now();
     let mmap_file = MmapDbcFile::open(dbc_path)?;
     let file_size = mmap_file.as_slice().len();
-    println!(
-        "   Memory-mapped {} bytes in {:?}",
-        file_size,
-        start.elapsed()
-    );
+    println!("   Memory-mapped {} bytes in {:?}", file_size, start.elapsed());
 
     let parser = DbcParser::parse_bytes(mmap_file.as_slice())?;
     println!("   - Records: {}", parser.header().record_count);
@@ -409,13 +400,11 @@ fn schema_discovery_example() -> Result<(), Box<dyn std::error::Error>> {
 
     // Skip the header in the data slice
     let data_start = wow_cdbc::DbcHeader::SIZE;
-    let data_end =
-        data_start + (parser.header().record_count * parser.header().record_size) as usize;
+    let data_end = data_start + (parser.header().record_count * parser.header().record_size) as usize;
     let record_data = &file[data_start..data_end];
 
     // Discover schema
-    let discoverer =
-        wow_cdbc::SchemaDiscoverer::new(parser.header(), record_data, record_set.string_block());
+    let discoverer = wow_cdbc::SchemaDiscoverer::new(parser.header(), record_data, record_set.string_block());
 
     let discovered_schema = discoverer.discover()?;
     println!("   Discovered {} fields:", discovered_schema.fields.len());
@@ -433,10 +422,7 @@ fn schema_discovery_example() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if discovered_schema.fields.len() > 5 {
-        println!(
-            "   ... and {} more fields",
-            discovered_schema.fields.len() - 5
-        );
+        println!("   ... and {} more fields", discovered_schema.fields.len() - 5);
     }
 
     println!();

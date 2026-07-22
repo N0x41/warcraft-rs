@@ -12,30 +12,15 @@ fn test_no_compression() {
 #[test]
 fn test_compression_method_detection() {
     assert_eq!(CompressionMethod::from_flags(0), CompressionMethod::None);
-    assert_eq!(
-        CompressionMethod::from_flags(flags::ZLIB),
-        CompressionMethod::Zlib
-    );
-    assert_eq!(
-        CompressionMethod::from_flags(flags::BZIP2),
-        CompressionMethod::BZip2
-    );
-    assert_eq!(
-        CompressionMethod::from_flags(flags::LZMA),
-        CompressionMethod::Lzma
-    );
-    assert_eq!(
-        CompressionMethod::from_flags(flags::SPARSE),
-        CompressionMethod::Sparse
-    );
+    assert_eq!(CompressionMethod::from_flags(flags::ZLIB), CompressionMethod::Zlib);
+    assert_eq!(CompressionMethod::from_flags(flags::BZIP2), CompressionMethod::BZip2);
+    assert_eq!(CompressionMethod::from_flags(flags::LZMA), CompressionMethod::Lzma);
+    assert_eq!(CompressionMethod::from_flags(flags::SPARSE), CompressionMethod::Sparse);
     assert_eq!(
         CompressionMethod::from_flags(flags::HUFFMAN),
         CompressionMethod::Huffman
     );
-    assert_eq!(
-        CompressionMethod::from_flags(flags::PKWARE),
-        CompressionMethod::PKWare
-    );
+    assert_eq!(CompressionMethod::from_flags(flags::PKWARE), CompressionMethod::PKWare);
     assert_eq!(
         CompressionMethod::from_flags(flags::ADPCM_MONO),
         CompressionMethod::AdpcmMono
@@ -58,8 +43,7 @@ fn test_multiple_compression() {
     let original = b"This is test data for multiple compression. It should compress well.";
 
     // First compress with zlib
-    let zlib_compressed =
-        compress_with_method(original, flags::ZLIB).expect("Zlib compression failed");
+    let zlib_compressed = compress_with_method(original, flags::ZLIB).expect("Zlib compression failed");
 
     // For multiple compression, we need to handle the existing method byte properly
     let zlib_data = if !zlib_compressed.is_empty() && zlib_compressed[0] == flags::ZLIB {
@@ -74,8 +58,8 @@ fn test_multiple_compression() {
 
     // Decompress with multiple flag
     let multi_flag = flags::ZLIB | flags::PKWARE;
-    let decompressed = decompress(&multi_compressed, multi_flag, original.len())
-        .expect("Multiple decompression failed");
+    let decompressed =
+        decompress(&multi_compressed, multi_flag, original.len()).expect("Multiple decompression failed");
 
     assert_eq!(decompressed, original);
 }
@@ -121,10 +105,7 @@ fn test_all_compression_methods_implemented() {
 
     // Test ADPCM with valid audio data
     let audio_samples = [0i16; 100]; // 100 silence samples
-    let audio_bytes: Vec<u8> = audio_samples
-        .iter()
-        .flat_map(|&sample| sample.to_le_bytes())
-        .collect();
+    let audio_bytes: Vec<u8> = audio_samples.iter().flat_map(|&sample| sample.to_le_bytes()).collect();
 
     let result = compress_with_method(&audio_bytes, flags::ADPCM_MONO);
     assert!(

@@ -243,13 +243,7 @@ impl ProgressTracker {
     pub fn log_progress(&self) {
         if self.total > 0 {
             let percent = (self.current as f64 / self.total as f64) * 100.0;
-            log::trace!(
-                "{}: {}/{} ({:.1}%)",
-                self.name,
-                self.current,
-                self.total,
-                percent
-            );
+            log::trace!("{}: {}/{} ({:.1}%)", self.name, self.current, self.total, percent);
         }
     }
 }
@@ -351,16 +345,8 @@ mod tests {
     #[test]
     fn test_table_formatter() {
         let mut table = TableFormatter::new(vec!["ID", "Name", "Size"]);
-        table.add_row(vec![
-            "1".to_string(),
-            "test.txt".to_string(),
-            "1024".to_string(),
-        ]);
-        table.add_row(vec![
-            "2".to_string(),
-            "data.bin".to_string(),
-            "2048".to_string(),
-        ]);
+        table.add_row(vec!["1".to_string(), "test.txt".to_string(), "1024".to_string()]);
+        table.add_row(vec!["2".to_string(), "data.bin".to_string(), "2048".to_string()]);
 
         let output = table.format();
         assert!(output.contains("test.txt"));
@@ -430,11 +416,7 @@ pub fn format_block_table(entries: &[BlockEntry]) -> String {
 
     for (index, entry) in entries.iter().enumerate() {
         let compression = if entry.is_compressed() {
-            if entry.is_imploded() {
-                "PKWARE"
-            } else {
-                "Multi"
-            }
+            if entry.is_imploded() { "PKWARE" } else { "Multi" }
         } else {
             "None"
         };
@@ -567,9 +549,7 @@ impl Default for ArchiveStructureVisualizer {
 impl ArchiveStructureVisualizer {
     /// Create a new archive structure visualizer
     pub fn new() -> Self {
-        Self {
-            sections: Vec::new(),
-        }
+        Self { sections: Vec::new() }
     }
 
     /// Add a section to the visualization
@@ -663,9 +643,7 @@ pub fn visualize_archive_structure(info: &crate::ArchiveInfo) -> String {
     if let Some(size) = info.hash_table_info.size {
         viz.add_section(
             info.hash_table_info.offset,
-            info.hash_table_info
-                .compressed_size
-                .unwrap_or(size as u64 * 16),
+            info.hash_table_info.compressed_size.unwrap_or(size as u64 * 16),
             "Hash Table",
             &format!("{size} entries"),
         );
@@ -675,9 +653,7 @@ pub fn visualize_archive_structure(info: &crate::ArchiveInfo) -> String {
     if let Some(size) = info.block_table_info.size {
         viz.add_section(
             info.block_table_info.offset,
-            info.block_table_info
-                .compressed_size
-                .unwrap_or(size as u64 * 16),
+            info.block_table_info.compressed_size.unwrap_or(size as u64 * 16),
             "Block Table",
             &format!("{size} entries"),
         );
@@ -812,9 +788,7 @@ impl Default for CompressionAnalyzer {
 impl CompressionAnalyzer {
     /// Create a new compression analyzer
     pub fn new() -> Self {
-        Self {
-            results: Vec::new(),
-        }
+        Self { results: Vec::new() }
     }
 
     /// Analyze compression methods from a mask
@@ -893,18 +867,9 @@ impl CompressionAnalyzer {
         };
 
         output.push_str(&format!("Total files analyzed: {}\n", self.results.len()));
-        output.push_str(&format!(
-            "Total original size: {}\n",
-            format_size(total_original)
-        ));
-        output.push_str(&format!(
-            "Total compressed size: {}\n",
-            format_size(total_compressed)
-        ));
-        output.push_str(&format!(
-            "Overall compression ratio: {:.1}%\n\n",
-            overall_ratio * 100.0
-        ));
+        output.push_str(&format!("Total original size: {}\n", format_size(total_original)));
+        output.push_str(&format!("Total compressed size: {}\n", format_size(total_compressed)));
+        output.push_str(&format!("Overall compression ratio: {:.1}%\n\n", overall_ratio * 100.0));
 
         // Method usage statistics
         let mut method_counts = std::collections::HashMap::new();
@@ -923,14 +888,7 @@ impl CompressionAnalyzer {
         output.push_str("\nDetailed Results:\n");
         output.push_str("-----------------\n");
 
-        let mut table = TableFormatter::new(vec![
-            "File",
-            "Block",
-            "Methods",
-            "Original",
-            "Compressed",
-            "Ratio",
-        ]);
+        let mut table = TableFormatter::new(vec!["File", "Block", "Methods", "Original", "Compressed", "Ratio"]);
 
         for result in &self.results {
             table.add_row(vec![
@@ -1027,13 +985,9 @@ pub fn format_bet_table(bet: &crate::tables::BetTable) -> String {
 
     output.push_str("\nHash Information:\n");
     output.push_str(&format!("  Total Hash Size: {total_bet_hash_size} bytes\n"));
-    output.push_str(&format!(
-        "  BET Hash Size Extra: {bet_hash_size_extra} bits\n"
-    ));
+    output.push_str(&format!("  BET Hash Size Extra: {bet_hash_size_extra} bits\n"));
     output.push_str(&format!("  BET Hash Size: {bet_hash_size} bits\n"));
-    output.push_str(&format!(
-        "  BET Hash Array Size: {bet_hash_array_size} bytes\n"
-    ));
+    output.push_str(&format!("  BET Hash Array Size: {bet_hash_array_size} bytes\n"));
     output.push_str(&format!("  Flag Count: {flag_count}\n"));
 
     output

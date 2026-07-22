@@ -109,8 +109,7 @@ impl M2Converter {
                     }
                 }
 
-                self.conversion_paths
-                    .insert((from_version, to_version), path);
+                self.conversion_paths.insert((from_version, to_version), path);
             }
         }
     }
@@ -140,10 +139,7 @@ mod tests {
         let path = converter
             .get_conversion_path(M2Version::Vanilla, M2Version::Cataclysm)
             .unwrap();
-        assert_eq!(
-            path,
-            &vec![M2Version::TBC, M2Version::WotLK, M2Version::Cataclysm]
-        );
+        assert_eq!(path, &vec![M2Version::TBC, M2Version::WotLK, M2Version::Cataclysm]);
 
         // Path from Classic to MoP
         let path = converter
@@ -151,12 +147,7 @@ mod tests {
             .unwrap();
         assert_eq!(
             path,
-            &vec![
-                M2Version::TBC,
-                M2Version::WotLK,
-                M2Version::Cataclysm,
-                M2Version::MoP
-            ]
+            &vec![M2Version::TBC, M2Version::WotLK, M2Version::Cataclysm, M2Version::MoP]
         );
 
         // Path from TheWarWithin to Classic
@@ -186,11 +177,7 @@ mod tests {
                     continue;
                 }
 
-                assert!(
-                    converter
-                        .get_conversion_path(from_version, to_version)
-                        .is_some()
-                );
+                assert!(converter.get_conversion_path(from_version, to_version).is_some());
             }
         }
     }

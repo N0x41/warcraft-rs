@@ -377,8 +377,7 @@ mod tests {
         data.extend_from_slice(&0.5f32.to_le_bytes());
 
         let mut cursor = Cursor::new(data);
-        let vertex =
-            M2Vertex::parse(&mut cursor, M2Version::Cataclysm.to_header_version()).unwrap();
+        let vertex = M2Vertex::parse(&mut cursor, M2Version::Cataclysm.to_header_version()).unwrap();
 
         assert_eq!(vertex.position.x, 1.0);
         assert_eq!(vertex.position.y, 2.0);
@@ -403,11 +402,7 @@ mod tests {
     #[test]
     fn test_vertex_write() {
         let vertex = M2Vertex {
-            position: C3Vector {
-                x: 1.0,
-                y: 2.0,
-                z: 3.0,
-            },
+            position: C3Vector { x: 1.0, y: 2.0, z: 3.0 },
             bone_weights: [255, 128, 64, 0],
             bone_indices: [0, 1, 2, 3],
             normal: C3Vector {
@@ -442,11 +437,7 @@ mod tests {
     fn test_vertex_conversion() {
         // Create a Classic vertex
         let classic_vertex = M2Vertex {
-            position: C3Vector {
-                x: 1.0,
-                y: 2.0,
-                z: 3.0,
-            },
+            position: C3Vector { x: 1.0, y: 2.0, z: 3.0 },
             bone_weights: [255, 128, 64, 0],
             bone_indices: [0, 1, 2, 3],
             normal: C3Vector {
@@ -637,10 +628,7 @@ mod tests {
         // Total weight should no longer be zero
         let total_weight: u32 = vertex.bone_weights.iter().map(|&w| w as u32).sum();
         assert_eq!(total_weight, 255);
-        assert!(
-            total_weight > 0,
-            "Vertex should no longer have zero total weight"
-        );
+        assert!(total_weight > 0, "Vertex should no longer have zero total weight");
     }
 
     #[test]
@@ -827,10 +815,7 @@ mod tests {
         );
 
         // Safety: First bone should be root (0) for the weight assignment
-        assert_eq!(
-            vertex.bone_indices[0], 0,
-            "First bone should be root bone for safety"
-        );
+        assert_eq!(vertex.bone_indices[0], 0, "First bone should be root bone for safety");
 
         // Other data should be preserved
         assert_eq!(vertex.position.x, -2.5);
@@ -842,10 +827,7 @@ mod tests {
             "   Original bone indices: [51, 196, 141, 62] -> {:?}",
             vertex.bone_indices
         );
-        println!(
-            "   Original bone weights: [0, 0, 0, 0] -> {:?}",
-            vertex.bone_weights
-        );
+        println!("   Original bone weights: [0, 0, 0, 0] -> {:?}", vertex.bone_weights);
         println!("   Total weight: 0 -> {}", total_weight);
     }
 
@@ -948,10 +930,7 @@ mod tests {
         assert_eq!(vertex.bone_indices, [0, 1, 2, 3]);
 
         let total_weight: u32 = vertex.bone_weights.iter().map(|&w| w as u32).sum();
-        assert_eq!(
-            total_weight, 0,
-            "Static geometry should preserve zero weights"
-        );
+        assert_eq!(total_weight, 0, "Static geometry should preserve zero weights");
     }
 
     #[test]
@@ -1002,10 +981,7 @@ mod tests {
             vertex.bone_weights[0], 255,
             "Should fix zero weights when corruption detected"
         );
-        assert_eq!(
-            vertex.bone_indices[0], 0,
-            "Should use root bone when fixing corruption"
-        );
+        assert_eq!(vertex.bone_indices[0], 0, "Should use root bone when fixing corruption");
 
         let total_weight: u32 = vertex.bone_weights.iter().map(|&w| w as u32).sum();
         assert!(total_weight > 0, "Should fix corrupted zero weights");
@@ -1055,11 +1031,7 @@ mod tests {
         .unwrap();
 
         // None mode should preserve original data exactly as-is
-        assert_eq!(
-            vertex.bone_weights,
-            [0, 0, 0, 0],
-            "Should preserve original weights"
-        );
+        assert_eq!(vertex.bone_weights, [0, 0, 0, 0], "Should preserve original weights");
         assert_eq!(
             vertex.bone_indices,
             [200, 150, 100, 255],
@@ -1154,10 +1126,7 @@ mod tests {
         );
 
         // Strict: should fix both indices and weights
-        assert_eq!(
-            vertex_strict.bone_weights[0], 255,
-            "Strict should force weights"
-        );
+        assert_eq!(vertex_strict.bone_weights[0], 255, "Strict should force weights");
         assert_eq!(
             vertex_strict.bone_indices,
             [0, 0, 5, 0],
@@ -1176,11 +1145,7 @@ mod tests {
         );
 
         // None: should preserve everything
-        assert_eq!(
-            vertex_none.bone_weights,
-            [0, 0, 0, 0],
-            "None should preserve weights"
-        );
+        assert_eq!(vertex_none.bone_weights, [0, 0, 0, 0], "None should preserve weights");
         assert_eq!(
             vertex_none.bone_indices,
             [0, 200, 5, 150],

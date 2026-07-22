@@ -46,37 +46,29 @@ fn benchmark_parsing(c: &mut Criterion) {
         let size = data.len() as u64;
 
         group.throughput(Throughput::Bytes(size));
-        group.bench_with_input(
-            BenchmarkId::new("standard_parsing", record_count),
-            &data,
-            |b, data| {
-                b.iter(|| {
-                    let parser = DbcParser::parse_bytes(black_box(data)).unwrap();
-                    black_box(parser.parse_records()).unwrap();
-                })
-            },
-        );
+        group.bench_with_input(BenchmarkId::new("standard_parsing", record_count), &data, |b, data| {
+            b.iter(|| {
+                let parser = DbcParser::parse_bytes(black_box(data)).unwrap();
+                black_box(parser.parse_records()).unwrap();
+            })
+        });
 
         #[cfg(feature = "parallel")]
-        group.bench_with_input(
-            BenchmarkId::new("parallel_parsing", record_count),
-            &data,
-            |b, data| {
-                b.iter(|| {
-                    let parser = DbcParser::parse_bytes(black_box(data)).unwrap();
-                    let header = parser.header();
-                    let string_block = parser.parse_records().unwrap().string_block().clone();
+        group.bench_with_input(BenchmarkId::new("parallel_parsing", record_count), &data, |b, data| {
+            b.iter(|| {
+                let parser = DbcParser::parse_bytes(black_box(data)).unwrap();
+                let header = parser.header();
+                let string_block = parser.parse_records().unwrap().string_block().clone();
 
-                    black_box(wow_cdbc::parse_records_parallel(
-                        data,
-                        header,
-                        None,
-                        std::sync::Arc::new(string_block),
-                    ))
-                    .unwrap();
-                })
-            },
-        );
+                black_box(wow_cdbc::parse_records_parallel(
+                    data,
+                    header,
+                    None,
+                    std::sync::Arc::new(string_block),
+                ))
+                .unwrap();
+            })
+        });
     }
 
     group.finish();

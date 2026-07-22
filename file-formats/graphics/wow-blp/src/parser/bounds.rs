@@ -43,12 +43,7 @@ pub fn check_bounds(input: &[u8], offset: u32, size: u32, mipmap_index: usize) -
 /// Get a slice from input data after bounds checking
 ///
 /// Convenience function that checks bounds and returns the slice if valid.
-pub fn get_bounded_slice(
-    input: &[u8],
-    offset: u32,
-    size: u32,
-    mipmap_index: usize,
-) -> ParseResult<&[u8]> {
+pub fn get_bounded_slice(input: &[u8], offset: u32, size: u32, mipmap_index: usize) -> ParseResult<&[u8]> {
     check_bounds(input, offset, size, mipmap_index)?;
     Ok(&input[offset as usize..(offset + size) as usize])
 }

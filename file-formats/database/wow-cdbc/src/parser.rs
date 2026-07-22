@@ -131,11 +131,7 @@ pub struct RecordSet {
 
 impl RecordSet {
     /// Create a new record set
-    pub(crate) fn new(
-        records: Vec<Record>,
-        schema: Option<Arc<Schema>>,
-        string_block: StringBlock,
-    ) -> Self {
+    pub(crate) fn new(records: Vec<Record>, schema: Option<Arc<Schema>>, string_block: StringBlock) -> Self {
         let key_map = if let Some(schema) = &schema {
             if let Some(key_field_index) = schema.key_field_index {
                 let mut map = HashMap::with_capacity(records.len());
@@ -219,9 +215,7 @@ impl RecordSet {
     /// Create a sorted key map for efficient key lookups using binary search
     pub fn create_sorted_key_map(&mut self) -> Result<()> {
         if self.schema.is_none() || self.schema.as_ref().unwrap().key_field_index.is_none() {
-            return Err(Error::InvalidRecord(
-                "No key field defined in schema".to_string(),
-            ));
+            return Err(Error::InvalidRecord("No key field defined in schema".to_string()));
         }
 
         let key_field_index = self.schema.as_ref().unwrap().key_field_index.unwrap();
@@ -320,9 +314,7 @@ impl DbcParser {
                 (wdb5_header.to_dbc_header(), record_offset, string_offset)
             }
             _ => {
-                return Err(Error::InvalidHeader(format!(
-                    "Unsupported DBC version: {version:?}"
-                )));
+                return Err(Error::InvalidHeader(format!("Unsupported DBC version: {version:?}")));
             }
         };
 
@@ -378,21 +370,13 @@ impl DbcParser {
         }
 
         // Parse the string block (uses version-specific offset)
-        let string_block = StringBlock::parse(
-            &mut cursor,
-            self.string_block_offset,
-            self.header.string_block_size,
-        )?;
+        let string_block = StringBlock::parse(&mut cursor, self.string_block_offset, self.header.string_block_size)?;
 
         Ok(RecordSet::new(records, self.schema.clone(), string_block))
     }
 
     /// Parse a record using a schema
-    fn parse_record_with_schema(
-        &self,
-        cursor: &mut Cursor<&[u8]>,
-        schema: &Arc<Schema>,
-    ) -> Result<Record> {
+    fn parse_record_with_schema(&self, cursor: &mut Cursor<&[u8]>, schema: &Arc<Schema>) -> Result<Record> {
         let mut values = Vec::with_capacity(schema.fields.len());
 
         for field in &schema.fields {
@@ -431,11 +415,7 @@ impl DbcParser {
     }
 
     /// Parse a field value based on its type
-    fn parse_field_value(
-        &self,
-        cursor: &mut Cursor<&[u8]>,
-        field_type: FieldType,
-    ) -> Result<Value> {
+    fn parse_field_value(&self, cursor: &mut Cursor<&[u8]>, field_type: FieldType) -> Result<Value> {
         crate::field_parser::parse_field_value(cursor, field_type)
     }
 

@@ -11,8 +11,7 @@ use wow_mpq::Archive;
  */
 use wow_mpq::patch::{PatchFile, PatchType};
 
-const UPDATE_MPQ1: &str =
-    "/home/danielsreichenbach/Downloads/wow/4.3.4/4.3.4/Data/wow-update-base-15211.MPQ";
+const UPDATE_MPQ1: &str = "/home/danielsreichenbach/Downloads/wow/4.3.4/4.3.4/Data/wow-update-base-15211.MPQ";
 
 const TEST_FILE: &str = "Item/ObjectComponents/Head/Helm_Robe_RaidWarlock_F_01_WoF.M2";
 
@@ -33,10 +32,7 @@ fn test_identify_patch_file() {
     println!("Is patch file: {}", file_info.is_patch_file());
 
     // This file should have the PATCH_FILE flag in the update MPQ
-    assert!(
-        file_info.is_patch_file(),
-        "Expected file to be a patch file"
-    );
+    assert!(file_info.is_patch_file(), "Expected file to be a patch file");
 }
 
 /// Test PTCH header parsing with real patch data

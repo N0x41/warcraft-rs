@@ -364,10 +364,7 @@ impl SkinHeader {
             M2Version::MoP => 2,
             M2Version::WoD => 3,
             M2Version::Legion => 4,
-            M2Version::BfA
-            | M2Version::Shadowlands
-            | M2Version::Dragonflight
-            | M2Version::TheWarWithin => 4,
+            M2Version::BfA | M2Version::Shadowlands | M2Version::Dragonflight | M2Version::TheWarWithin => 4,
         };
 
         let center_position = if m2_version >= M2Version::BfA {
@@ -376,11 +373,7 @@ impl SkinHeader {
             None
         };
 
-        let center_bounds = if m2_version >= M2Version::BfA {
-            Some(0.0)
-        } else {
-            None
-        };
+        let center_bounds = if m2_version >= M2Version::BfA { Some(0.0) } else { None };
 
         Self {
             magic: SKIN_MAGIC,
@@ -910,14 +903,11 @@ where
 impl SkinG<SkinHeader> {
     /// Convert this skin to a different version
     pub fn convert(&self, target_version: M2Version) -> Result<Self> {
-        let source_version = self
-            .header
-            .get_m2_version()
-            .ok_or(M2Error::ConversionError {
-                from: self.header.version,
-                to: target_version.to_header_version(),
-                reason: "Unknown source version".to_string(),
-            })?;
+        let source_version = self.header.get_m2_version().ok_or(M2Error::ConversionError {
+            from: self.header.version,
+            to: target_version.to_header_version(),
+            reason: "Unknown source version".to_string(),
+        })?;
 
         if source_version == target_version {
             return Ok(self.clone());
@@ -977,12 +967,7 @@ impl SkinG<SkinHeader> {
     /// This conversion preserves all mesh data (indices, triangles, submeshes, batches).
     pub fn to_old_format(&self) -> OldSkin {
         // Calculate bone_count_max from submeshes if available, otherwise use sensible default
-        let bone_count_max = self
-            .submeshes
-            .iter()
-            .map(|s| s.bone_count as u32)
-            .max()
-            .unwrap_or(64);
+        let bone_count_max = self.submeshes.iter().map(|s| s.bone_count as u32).max().unwrap_or(64);
 
         OldSkin {
             header: OldSkinHeader {
@@ -1279,10 +1264,7 @@ mod tests {
 
         let mut cursor = Cursor::new(&data);
         let is_new = detect_skin_format(&mut cursor).unwrap();
-        assert!(
-            !is_new,
-            "Large indices count should be detected as old format"
-        );
+        assert!(!is_new, "Large indices count should be detected as old format");
 
         // Test boundary case (version = 4, still new format)
         let mut data = Vec::new();

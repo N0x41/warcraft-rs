@@ -80,10 +80,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Confidence::High => "High",
         };
 
-        println!(
-            "  Field {}: {:?} (Confidence: {})",
-            i, field.field_type, confidence_str
-        );
+        println!("  Field {}: {:?} (Confidence: {})", i, field.field_type, confidence_str);
 
         if field.is_array {
             println!("    Is array with size: {}", field.array_size.unwrap_or(0));

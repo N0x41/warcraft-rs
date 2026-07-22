@@ -141,11 +141,7 @@ pub fn create_planar(params: &EmissionParams, rng: &mut ParticleRng) -> Particle
 ///
 /// Particles spawn on a sphere surface and emit radially outward
 /// or toward a z_source point.
-pub fn create_spherical(
-    params: &EmissionParams,
-    rng: &mut ParticleRng,
-    particles_go_up: bool,
-) -> Particle {
+pub fn create_spherical(params: &EmissionParams, rng: &mut ParticleRng, particles_go_up: bool) -> Particle {
     // Random radius between area_length and area_width
     let emission_area = params.area_width - params.area_length;
     let radius = params.area_length + rng.next_f32() * emission_area;
@@ -154,11 +150,7 @@ pub fn create_spherical(
     let polar = rng.random_range(1.0) * params.vertical_range;
     let azimuth = rng.random_range(1.0) * params.horizontal_range;
 
-    let emission_dir = [
-        polar.cos() * azimuth.cos(),
-        polar.cos() * azimuth.sin(),
-        polar.sin(),
-    ];
+    let emission_dir = [polar.cos() * azimuth.cos(), polar.cos() * azimuth.sin(), polar.sin()];
 
     let position = [
         emission_dir[0] * radius,
@@ -197,11 +189,7 @@ pub fn create_spherical(
 ///
 /// Particles spawn along a bezier spline curve.
 /// Note: Spline points must be provided separately.
-pub fn create_spline(
-    params: &EmissionParams,
-    rng: &mut ParticleRng,
-    spline_point: [f32; 3],
-) -> Particle {
+pub fn create_spline(params: &EmissionParams, rng: &mut ParticleRng, spline_point: [f32; 3]) -> Particle {
     let position = spline_point;
 
     // Simple upward velocity for spline particles

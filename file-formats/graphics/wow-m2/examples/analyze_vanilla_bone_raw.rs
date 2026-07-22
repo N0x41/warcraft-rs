@@ -5,7 +5,8 @@ fn main() -> anyhow::Result<()> {
     println!("🔬 ANALYZING VANILLA BONE RAW STRUCTURE");
     println!("=======================================");
 
-    let model_path = "/home/danielsreichenbach/Repos/github.com/wowemulation-dev/blender-wow-addon/sample_data/1.12.1/m2/Rabbit.m2";
+    let model_path =
+        "/home/danielsreichenbach/Repos/github.com/wowemulation-dev/blender-wow-addon/sample_data/1.12.1/m2/Rabbit.m2";
     let data = fs::read(model_path)?;
     let mut cursor = Cursor::new(&data);
 

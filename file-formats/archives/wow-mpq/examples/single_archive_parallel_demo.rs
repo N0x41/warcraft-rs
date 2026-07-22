@@ -113,16 +113,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let parallel_results = archive.extract_files_parallel(&test_files)?;
         let parallel_time = start.elapsed();
 
-        println!(
-            "Sequential: {:?} ({} files)",
-            sequential_time,
-            sequential_results.len()
-        );
-        println!(
-            "Parallel:   {:?} ({} files)",
-            parallel_time,
-            parallel_results.len()
-        );
+        println!("Sequential: {:?} ({} files)", sequential_time, sequential_results.len());
+        println!("Parallel:   {:?} ({} files)", parallel_time, parallel_results.len());
         println!(
             "Speedup:    {:.2}x",
             sequential_time.as_secs_f64() / parallel_time.as_secs_f64()

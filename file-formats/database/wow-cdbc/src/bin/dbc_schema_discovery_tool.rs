@@ -64,11 +64,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut field = serde_yaml_ng::Mapping::new();
         field.insert(
             serde_yaml_ng::Value::String("name".to_string()),
-            serde_yaml_ng::Value::String(if i == 0 {
-                "ID".to_string()
-            } else {
-                format!("Field{i}")
-            }),
+            serde_yaml_ng::Value::String(if i == 0 { "ID".to_string() } else { format!("Field{i}") }),
         );
         field.insert(
             serde_yaml_ng::Value::String("type".to_string()),

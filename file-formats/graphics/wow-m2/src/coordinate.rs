@@ -155,10 +155,7 @@ impl CoordinateTransformer {
 
     /// Transform multiple positions efficiently
     pub fn transform_positions(&self, positions: &[C3Vector]) -> Vec<C3Vector> {
-        positions
-            .iter()
-            .map(|&pos| self.transform_position(pos))
-            .collect()
+        positions.iter().map(|&pos| self.transform_position(pos)).collect()
     }
 
     /// Transform multiple quaternions efficiently
@@ -303,11 +300,7 @@ mod tests {
         let transformer = CoordinateTransformer::new(CoordinateSystem::Blender);
 
         let positions = vec![
-            C3Vector {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-            },
+            C3Vector { x: 0.0, y: 0.0, z: 0.0 },
             C3Vector {
                 x: 100.0,
                 y: 200.0,
@@ -317,14 +310,7 @@ mod tests {
 
         let transformed = transformer.transform_positions(&positions);
 
-        assert_eq!(
-            transformed[0],
-            C3Vector {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0
-            }
-        );
+        assert_eq!(transformed[0], C3Vector { x: 0.0, y: 0.0, z: 0.0 });
         assert_eq!(
             transformed[1],
             C3Vector {
@@ -382,11 +368,7 @@ mod tests {
         // Test that cardinal directions transform correctly
 
         // North in WoW
-        let north = C3Vector {
-            x: 1.0,
-            y: 0.0,
-            z: 0.0,
-        };
+        let north = C3Vector { x: 1.0, y: 0.0, z: 0.0 };
         let blender_north = transform_position(north, CoordinateSystem::Blender);
         assert_eq!(
             blender_north,
@@ -398,35 +380,13 @@ mod tests {
         ); // Backward in Blender
 
         // West in WoW
-        let west = C3Vector {
-            x: 0.0,
-            y: 1.0,
-            z: 0.0,
-        };
+        let west = C3Vector { x: 0.0, y: 1.0, z: 0.0 };
         let blender_west = transform_position(west, CoordinateSystem::Blender);
-        assert_eq!(
-            blender_west,
-            C3Vector {
-                x: 1.0,
-                y: 0.0,
-                z: 0.0
-            }
-        ); // Right in Blender
+        assert_eq!(blender_west, C3Vector { x: 1.0, y: 0.0, z: 0.0 }); // Right in Blender
 
         // Up in WoW
-        let up = C3Vector {
-            x: 0.0,
-            y: 0.0,
-            z: 1.0,
-        };
+        let up = C3Vector { x: 0.0, y: 0.0, z: 1.0 };
         let blender_up = transform_position(up, CoordinateSystem::Blender);
-        assert_eq!(
-            blender_up,
-            C3Vector {
-                x: 0.0,
-                y: 0.0,
-                z: 1.0
-            }
-        ); // Up in Blender (unchanged)
+        assert_eq!(blender_up, C3Vector { x: 0.0, y: 0.0, z: 1.0 }); // Up in Blender (unchanged)
     }
 }

@@ -5,8 +5,7 @@
 //! upgrades and optimizations.
 
 use crate::{
-    Archive, ArchiveBuilder, Error, FormatVersion, ListfileOption, Result,
-    compression::flags as compression_flags,
+    Archive, ArchiveBuilder, Error, FormatVersion, ListfileOption, Result, compression::flags as compression_flags,
 };
 use std::path::Path;
 
@@ -121,8 +120,7 @@ pub fn rebuild_archive<P: AsRef<Path>>(
 
     // Phase 2: Extract files and metadata
     log::debug!("Phase 2: Extracting files and metadata");
-    let extracted_files =
-        extract_files_with_metadata(&mut source, &metadata, &options, &progress_callback)?;
+    let extracted_files = extract_files_with_metadata(&mut source, &metadata, &options, &progress_callback)?;
 
     let extracted_count = extracted_files.len();
     log::info!("Extracted {extracted_count} files from source archive");
@@ -140,13 +138,7 @@ pub fn rebuild_archive<P: AsRef<Path>>(
     // Phase 3: Rebuild archive
     log::debug!("Phase 3: Rebuilding archive");
     let target_format = determine_target_format(&metadata, &options);
-    rebuild_with_files(
-        target_path,
-        &metadata,
-        extracted_files,
-        target_format,
-        &options,
-    )?;
+    rebuild_with_files(target_path, &metadata, extracted_files, target_format, &options)?;
 
     log::info!("Successfully rebuilt archive: {}", target_path.display());
 
@@ -196,8 +188,7 @@ fn analyze_archive(archive: &mut Archive) -> Result<ArchiveMetadata> {
         block_size: header.block_size,
         sector_size: crate::calculate_sector_size(header.block_size),
         has_het_bet: info.het_table_info.is_some() && info.bet_table_info.is_some(),
-        has_classic_tables: info.hash_table_info.size.is_some()
-            && info.block_table_info.size.is_some(),
+        has_classic_tables: info.hash_table_info.size.is_some() && info.block_table_info.size.is_some(),
         table_compression_enabled: false, // TODO: Detect from archive
         table_compression_method: compression_flags::ZLIB,
         file_count: info.file_count,
@@ -307,13 +298,8 @@ fn rebuild_with_files(
         let compression = options.override_compression.unwrap_or(meta.compression);
 
         if meta.encrypted && meta.use_fix_key {
-            builder = builder.add_file_data_with_encryption(
-                data,
-                &meta.name,
-                compression,
-                meta.use_fix_key,
-                meta.locale,
-            );
+            builder =
+                builder.add_file_data_with_encryption(data, &meta.name, compression, meta.use_fix_key, meta.locale);
         } else if meta.encrypted {
             builder = builder.add_file_data_with_options(
                 data,
@@ -399,9 +385,9 @@ fn verify_rebuild(source_path: &Path, target_path: &Path, options: &RebuildOptio
     // Verify each file's content
     for expected_file in &expected_files {
         let source_data = source_archive.read_file(expected_file)?;
-        let target_data = target_archive.read_file(expected_file).map_err(|e| {
-            Error::invalid_format(format!("File {expected_file} missing in target: {e}"))
-        })?;
+        let target_data = target_archive
+            .read_file(expected_file)
+            .map_err(|e| Error::invalid_format(format!("File {expected_file} missing in target: {e}")))?;
 
         if source_data != target_data {
             return Err(Error::invalid_format(format!(

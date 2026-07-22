@@ -14,14 +14,9 @@ use wow_m2::{SkinFile, parse_m2};
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = std::env::args().collect();
     if args.len() < 3 {
-        eprintln!(
-            "Usage: {} <path_to_wotlk_m2_file> <path_to_skin_file>",
-            args[0]
-        );
+        eprintln!("Usage: {} <path_to_wotlk_m2_file> <path_to_skin_file>", args[0]);
         eprintln!("Example: {} HumanMale.m2 HumanMale00.skin", args[0]);
-        eprintln!(
-            "\nNote: This example requires a WotLK+ M2 file (version 264+) and its corresponding .skin file"
-        );
+        eprintln!("\nNote: This example requires a WotLK+ M2 file (version 264+) and its corresponding .skin file");
         std::process::exit(1);
     }
 
@@ -83,10 +78,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let submeshes = skin_file.submeshes();
 
     println!("\n=== Raw Skin Data ===");
-    println!(
-        "Raw indices array size: {} (vertex lookup table)",
-        raw_indices.len()
-    );
+    println!("Raw indices array size: {} (vertex lookup table)", raw_indices.len());
     println!(
         "Raw triangles array size: {} (indices into lookup table)",
         raw_triangles.len()
@@ -157,10 +149,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             for &idx in &resolved_indices[..resolved_indices.len().min(100)] {
                 unique_verts.insert(idx);
             }
-            println!(
-                "   First 100 indices reference {} unique vertices",
-                unique_verts.len()
-            );
+            println!("   First 100 indices reference {} unique vertices", unique_verts.len());
         }
     }
 
@@ -184,10 +173,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             let start = submesh.triangle_start as usize;
             let end = (start + 9).min(resolved_indices.len());
             if start < resolved_indices.len() && end > start {
-                println!(
-                    "  Sample resolved indices: {:?}",
-                    &resolved_indices[start..end]
-                );
+                println!("  Sample resolved indices: {:?}", &resolved_indices[start..end]);
             }
         }
     }

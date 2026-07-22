@@ -200,10 +200,7 @@ mod tests {
 
             // Add some test files
             builder = builder
-                .add_file_data(
-                    format!("Content from archive {i}").into_bytes(),
-                    "common.txt",
-                )
+                .add_file_data(format!("Content from archive {i}").into_bytes(), "common.txt")
                 .add_file_data(
                     format!("Unique to archive {i}").into_bytes(),
                     &format!("unique_{i}.txt"),

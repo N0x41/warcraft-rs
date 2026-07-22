@@ -137,12 +137,11 @@ impl<'a> SchemaDiscoverer<'a> {
     /// Discover the schema of the DBC file
     pub fn discover(&self) -> Result<DiscoveredSchema> {
         // Determine how many records to analyze
-        let records_to_analyze =
-            if self.max_records == 0 || self.max_records > self.header.record_count {
-                self.header.record_count
-            } else {
-                self.max_records
-            };
+        let records_to_analyze = if self.max_records == 0 || self.max_records > self.header.record_count {
+            self.header.record_count
+        } else {
+            self.max_records
+        };
 
         // Skip the header
         let mut cursor = Cursor::new(self.data);
@@ -200,10 +199,7 @@ impl<'a> SchemaDiscoverer<'a> {
         // Analyze each field
         for field_index in 0..self.header.field_count as usize {
             // Extract values for this field from all analyzed records
-            let field_values: Vec<u32> = record_data
-                .iter()
-                .map(|record| record[field_index])
-                .collect();
+            let field_values: Vec<u32> = record_data.iter().map(|record| record[field_index]).collect();
 
             // Analyze field values to determine type
             let discovered_field = self.analyze_field(field_index, &field_values)?;
@@ -294,16 +290,12 @@ impl<'a> SchemaDiscoverer<'a> {
 
         // Count non-zero values and how many look like floats
         let non_zero_values: Vec<u32> = values.iter().copied().filter(|&v| v != 0).collect();
-        let float_like_count = non_zero_values
-            .iter()
-            .filter(|&&v| is_float_like(v))
-            .count();
+        let float_like_count = non_zero_values.iter().filter(|&&v| is_float_like(v)).count();
 
         // Require majority (>= 75%) of non-zero values to look like floats
         // Also require at least one float-like value (handles edge case where
         // integer division of small counts could yield 0)
-        let could_be_float =
-            float_like_count > 0 && float_like_count >= (non_zero_values.len() * 3 / 4).max(1);
+        let could_be_float = float_like_count > 0 && float_like_count >= (non_zero_values.len() * 3 / 4).max(1);
 
         // Determine the most likely field type
         // NOTE: DBC files always store 4 bytes per field, so we only detect 4-byte types.
@@ -441,8 +433,7 @@ impl<'a> SchemaDiscoverer<'a> {
         let mut i = 0;
         while i + 8 < fields.len() {
             // Look for a String field with High confidence as the start
-            if fields[i].field_type != FieldType::String || fields[i].confidence != Confidence::High
-            {
+            if fields[i].field_type != FieldType::String || fields[i].confidence != Confidence::High {
                 i += 1;
                 continue;
             }
@@ -452,8 +443,8 @@ impl<'a> SchemaDiscoverer<'a> {
             for j in 1..8 {
                 let field = &fields[i + j];
                 let is_string = field.field_type == FieldType::String;
-                let is_empty_string_ref = field.field_type == FieldType::Bool
-                    && field.sample_values.iter().all(|&v| v == 0);
+                let is_empty_string_ref =
+                    field.field_type == FieldType::Bool && field.sample_values.iter().all(|&v| v == 0);
 
                 if !is_string && !is_empty_string_ref {
                     is_locstring_pattern = false;
@@ -505,11 +496,7 @@ impl<'a> SchemaDiscoverer<'a> {
     }
 
     /// Detect the key field
-    fn detect_key_field(
-        &self,
-        record_data: &[Vec<u32>],
-        fields: &[DiscoveredField],
-    ) -> Option<usize> {
+    fn detect_key_field(&self, record_data: &[Vec<u32>], fields: &[DiscoveredField]) -> Option<usize> {
         // Find candidates based on field analysis
         let mut candidates: Vec<usize> = fields
             .iter()
@@ -526,10 +513,7 @@ impl<'a> SchemaDiscoverer<'a> {
                 }
 
                 // Get values for this field
-                let values: Vec<u32> = record_data
-                    .iter()
-                    .map(|record| record[field_index])
-                    .collect();
+                let values: Vec<u32> = record_data.iter().map(|record| record[field_index]).collect();
 
                 // Check if values are always increasing
                 let mut is_increasing = true;
@@ -572,13 +556,7 @@ impl<'a> SchemaDiscoverer<'a> {
         let field_count = if fields.iter().any(|f| f.is_array) {
             fields
                 .iter()
-                .map(|f| {
-                    if f.is_array {
-                        f.array_size.unwrap_or(0)
-                    } else {
-                        1
-                    }
-                })
+                .map(|f| if f.is_array { f.array_size.unwrap_or(0) } else { 1 })
                 .sum::<usize>() as u32
         } else {
             fields.len() as u32

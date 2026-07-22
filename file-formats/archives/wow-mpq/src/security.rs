@@ -16,8 +16,8 @@
 
 use crate::{Error, Result};
 use std::path::{Component, Path};
-use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 
 /// Security limits for various MPQ structures
@@ -122,11 +122,7 @@ impl SessionTracker {
     }
 
     /// Check if session limits would be exceeded with additional bytes
-    pub fn check_session_limits_with_addition(
-        &self,
-        additional_bytes: u64,
-        limits: &SecurityLimits,
-    ) -> Result<()> {
+    pub fn check_session_limits_with_addition(&self, additional_bytes: u64, limits: &SecurityLimits) -> Result<()> {
         let current_total = self.total_decompressed.load(Ordering::Relaxed);
         let projected_total = current_total.saturating_add(additional_bytes);
         if projected_total > limits.max_session_decompressed {
@@ -189,8 +185,7 @@ impl DecompressionMonitor {
         }
 
         // Update current progress
-        self.bytes_decompressed
-            .store(current_output_size, Ordering::Relaxed);
+        self.bytes_decompressed.store(current_output_size, Ordering::Relaxed);
 
         Ok(())
     }
@@ -221,10 +216,7 @@ pub struct AdaptiveCompressionLimits {
 impl AdaptiveCompressionLimits {
     /// Create new adaptive limits
     pub fn new(base_limit: u32, enabled: bool) -> Self {
-        Self {
-            base_limit,
-            enabled,
-        }
+        Self { base_limit, enabled }
     }
 
     /// Calculate compression ratio limit based on file characteristics
@@ -236,11 +228,11 @@ impl AdaptiveCompressionLimits {
         // Adaptive limits based on compressed file size
         let size_based_limit = match compressed_size {
             // Very small files can have high ratios due to format overhead
-            0..=512 => self.base_limit * 10, // Up to 10000:1 for tiny files
-            513..=4096 => self.base_limit * 5, // Up to 5000:1 for small files
+            0..=512 => self.base_limit * 10,     // Up to 10000:1 for tiny files
+            513..=4096 => self.base_limit * 5,   // Up to 5000:1 for small files
             4097..=65536 => self.base_limit * 2, // Up to 2000:1 for medium files
-            65537..=1048576 => self.base_limit, // Base limit for large files
-            _ => self.base_limit / 2,        // Stricter limit for very large files
+            65537..=1048576 => self.base_limit,  // Base limit for large files
+            _ => self.base_limit / 2,            // Stricter limit for very large files
         };
 
         // Adjust based on compression method capabilities
@@ -315,9 +307,7 @@ pub fn validate_header_security(
 ) -> Result<()> {
     // Validate signature
     if signature != crate::signatures::MPQ_ARCHIVE {
-        return Err(Error::invalid_format(
-            "Invalid MPQ signature - not a valid MPQ archive",
-        ));
+        return Err(Error::invalid_format("Invalid MPQ signature - not a valid MPQ archive"));
     }
 
     // Validate header size
@@ -329,9 +319,7 @@ pub fn validate_header_security(
 
     // Validate archive size
     if archive_size == 0 || archive_size as u64 > limits.max_archive_size {
-        return Err(Error::invalid_format(
-            "Invalid archive size - too large or zero",
-        ));
+        return Err(Error::invalid_format("Invalid archive size - too large or zero"));
     }
 
     // Validate format version
@@ -348,9 +336,7 @@ pub fn validate_header_security(
 
     // Validate table offsets are within archive
     if hash_table_offset >= archive_size {
-        return Err(Error::invalid_format(
-            "Hash table offset exceeds archive size",
-        ));
+        return Err(Error::invalid_format("Hash table offset exceeds archive size"));
     }
 
     // For empty archives (especially v4), allow block table offset to equal archive size
@@ -358,9 +344,7 @@ pub fn validate_header_security(
     if block_table_size == 0 && block_table_offset == archive_size {
         // Empty archive - this is valid
     } else if block_table_offset > archive_size {
-        return Err(Error::invalid_format(
-            "Block table offset exceeds archive size",
-        ));
+        return Err(Error::invalid_format("Block table offset exceeds archive size"));
     }
 
     // Validate table sizes
@@ -389,14 +373,10 @@ pub fn validate_header_security(
     if let Some(end_pos) = hash_table_offset.checked_add(hash_table_bytes) {
         // Allow small tolerance for newly created archives
         if end_pos > archive_size.saturating_add(65536) {
-            return Err(Error::invalid_format(
-                "Hash table extends beyond archive bounds",
-            ));
+            return Err(Error::invalid_format("Hash table extends beyond archive bounds"));
         }
     } else {
-        return Err(Error::invalid_format(
-            "Hash table size calculation overflows",
-        ));
+        return Err(Error::invalid_format("Hash table size calculation overflows"));
     }
 
     // Allow some tolerance for newly created archives where the file size may not match header yet
@@ -404,21 +384,15 @@ pub fn validate_header_security(
         // For new archives, allow the table to extend slightly beyond declared archive_size
         // but not beyond reasonable limits (e.g., 64KB tolerance for headers/metadata)
         if end_pos > archive_size.saturating_add(65536) {
-            return Err(Error::invalid_format(
-                "Block table extends beyond archive bounds",
-            ));
+            return Err(Error::invalid_format("Block table extends beyond archive bounds"));
         }
     } else {
-        return Err(Error::invalid_format(
-            "Block table size calculation overflows",
-        ));
+        return Err(Error::invalid_format("Block table size calculation overflows"));
     }
 
     // Ensure hash table size is power of 2 (MPQ requirement)
     if hash_table_size == 0 || !crate::is_power_of_two(hash_table_size) {
-        return Err(Error::invalid_format(
-            "Hash table size must be a non-zero power of 2",
-        ));
+        return Err(Error::invalid_format("Hash table size must be a non-zero power of 2"));
     }
 
     Ok(())
@@ -428,9 +402,7 @@ pub fn validate_header_security(
 pub fn validate_file_path(path: &str, limits: &SecurityLimits) -> Result<()> {
     // Check path length
     if path.len() > limits.max_path_length {
-        return Err(Error::invalid_format(
-            "File path too long - potential buffer overflow",
-        ));
+        return Err(Error::invalid_format("File path too long - potential buffer overflow"));
     }
 
     // Check for empty path
@@ -458,9 +430,7 @@ pub fn validate_file_path(path: &str, limits: &SecurityLimits) -> Result<()> {
             }
             // Reject absolute paths
             Component::RootDir => {
-                return Err(Error::invalid_format(
-                    "Absolute file paths not allowed in MPQ archives",
-                ));
+                return Err(Error::invalid_format("Absolute file paths not allowed in MPQ archives"));
             }
             // Check normal path components
             Component::Normal(name) => {
@@ -468,18 +438,15 @@ pub fn validate_file_path(path: &str, limits: &SecurityLimits) -> Result<()> {
 
                 // Check for Windows reserved names
                 let reserved_names = [
-                    "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6",
-                    "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7",
-                    "LPT8", "LPT9",
+                    "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+                    "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
                 ];
 
                 let name_upper = name_str.to_uppercase();
                 // Check if name matches reserved name exactly or with extension
                 for &reserved in &reserved_names {
                     if name_upper == reserved || name_upper.starts_with(&format!("{reserved}.")) {
-                        return Err(Error::invalid_format(
-                            "File path contains Windows reserved name",
-                        ));
+                        return Err(Error::invalid_format("File path contains Windows reserved name"));
                     }
                 }
 
@@ -488,15 +455,11 @@ pub fn validate_file_path(path: &str, limits: &SecurityLimits) -> Result<()> {
                     match ch {
                         // Control characters
                         '\0'..='\x1f' | '\x7f' => {
-                            return Err(Error::invalid_format(
-                                "File path contains control characters",
-                            ));
+                            return Err(Error::invalid_format("File path contains control characters"));
                         }
                         // Dangerous characters on Windows
                         '<' | '>' | '|' | '"' | '?' | '*' => {
-                            return Err(Error::invalid_format(
-                                "File path contains dangerous characters",
-                            ));
+                            return Err(Error::invalid_format("File path contains dangerous characters"));
                         }
                         _ => {} // Character is OK
                     }
@@ -524,9 +487,7 @@ pub fn validate_file_bounds(
 
     // Validate decompressed size limit
     if file_size > limits.max_decompressed_size {
-        return Err(Error::resource_exhaustion(
-            "File size exceeds maximum allowed limit",
-        ));
+        return Err(Error::resource_exhaustion("File size exceeds maximum allowed limit"));
     }
 
     // Check file bounds within archive
@@ -535,9 +496,7 @@ pub fn validate_file_bounds(
         .ok_or_else(|| Error::invalid_format("File offset causes integer overflow"))?;
 
     if file_end > archive_size {
-        return Err(Error::invalid_format(
-            "File data extends beyond archive bounds",
-        ));
+        return Err(Error::invalid_format("File data extends beyond archive bounds"));
     }
 
     // Validate compression ratio to detect zip bombs
@@ -545,10 +504,7 @@ pub fn validate_file_bounds(
         let compression_ratio = file_size / compressed_size;
         if compression_ratio > limits.max_compression_ratio as u64 {
             let ratio = file_size / compressed_size;
-            return Err(Error::compression_bomb(
-                ratio,
-                limits.max_compression_ratio as u64,
-            ));
+            return Err(Error::compression_bomb(ratio, limits.max_compression_ratio as u64));
         }
     }
 
@@ -571,9 +527,7 @@ pub fn validate_sector_data(
 
     // Check data size consistency
     if data_size > sector_size as usize {
-        return Err(Error::invalid_format(
-            "Sector data size exceeds sector size limit",
-        ));
+        return Err(Error::invalid_format("Sector data size exceeds sector size limit"));
     }
 
     // Validate sector index for reasonable bounds
@@ -645,8 +599,7 @@ pub fn detect_compression_bomb_patterns(
     }
 
     // Calculate adaptive compression ratio limit
-    let adaptive_limits =
-        AdaptiveCompressionLimits::new(limits.max_compression_ratio, limits.enable_adaptive_limits);
+    let adaptive_limits = AdaptiveCompressionLimits::new(limits.max_compression_ratio, limits.enable_adaptive_limits);
     let max_ratio = adaptive_limits.calculate_limit(compressed_size, compression_method);
 
     // Check compression ratio with adaptive limits
@@ -747,9 +700,7 @@ pub fn validate_decompression_operation(
             "Large decompression: {} -> {} bytes ({}:1 ratio) method=0x{:02X} path={}",
             compressed_size,
             expected_decompressed_size,
-            expected_decompressed_size
-                .checked_div(compressed_size)
-                .unwrap_or(0),
+            expected_decompressed_size.checked_div(compressed_size).unwrap_or(0),
             compression_method,
             file_path.unwrap_or("<unknown>")
         );
@@ -759,11 +710,7 @@ pub fn validate_decompression_operation(
 }
 
 /// Check if decompression output size is within expected bounds
-pub fn validate_decompression_result(
-    expected_size: u64,
-    actual_size: u64,
-    tolerance_percent: u8,
-) -> Result<()> {
+pub fn validate_decompression_result(expected_size: u64, actual_size: u64, tolerance_percent: u8) -> Result<()> {
     if expected_size == 0 {
         return Ok(()); // Cannot validate if expected size is unknown
     }
@@ -837,10 +784,7 @@ mod tests {
         );
 
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("Invalid MPQ signature"));
+        assert!(result.unwrap_err().to_string().contains("Invalid MPQ signature"));
     }
 
     #[test]
@@ -861,10 +805,7 @@ mod tests {
         );
 
         assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .to_string()
-            .contains("Hash table too large"));
+        assert!(result.unwrap_err().to_string().contains("Hash table too large"));
     }
 
     #[test]
@@ -900,34 +841,40 @@ mod tests {
         let limits = SecurityLimits::default();
 
         // Valid file
-        assert!(validate_file_bounds(
-            1000,   // offset
-            2048,   // decompressed size
-            1024,   // compressed size
-            100000, // archive size
-            &limits,
-        )
-        .is_ok());
+        assert!(
+            validate_file_bounds(
+                1000,   // offset
+                2048,   // decompressed size
+                1024,   // compressed size
+                100000, // archive size
+                &limits,
+            )
+            .is_ok()
+        );
 
         // File extends beyond archive
-        assert!(validate_file_bounds(
-            99000,  // offset
-            2048,   // decompressed size
-            2000,   // compressed size (would end at 101000)
-            100000, // archive size
-            &limits,
-        )
-        .is_err());
+        assert!(
+            validate_file_bounds(
+                99000,  // offset
+                2048,   // decompressed size
+                2000,   // compressed size (would end at 101000)
+                100000, // archive size
+                &limits,
+            )
+            .is_err()
+        );
 
         // Potential zip bomb
-        assert!(validate_file_bounds(
-            1000,    // offset
-            1000000, // decompressed size (1MB)
-            100,     // compressed size (100 bytes = 10000:1 ratio)
-            100000,  // archive size
-            &limits,
-        )
-        .is_err());
+        assert!(
+            validate_file_bounds(
+                1000,    // offset
+                1000000, // decompressed size (1MB)
+                100,     // compressed size (100 bytes = 10000:1 ratio)
+                100000,  // archive size
+                &limits,
+            )
+            .is_err()
+        );
     }
 
     #[test]
@@ -947,13 +894,15 @@ mod tests {
     #[test]
     fn test_sector_validation() {
         // Valid sector
-        assert!(validate_sector_data(
-            0,    // sector index
-            4096, // sector size
-            2048, // data size
-            None, // no CRC check
-        )
-        .is_ok());
+        assert!(
+            validate_sector_data(
+                0,    // sector index
+                4096, // sector size
+                2048, // data size
+                None, // no CRC check
+            )
+            .is_ok()
+        );
 
         // Invalid sector size
         assert!(validate_sector_data(0, 0, 1024, None).is_err());
@@ -1040,44 +989,16 @@ mod tests {
         let limits = SecurityLimits::default();
 
         // Normal compression should pass
-        assert!(detect_compression_bomb_patterns(
-            1024,
-            10240,
-            0x02,
-            Some("data/file.txt"),
-            &limits
-        )
-        .is_ok());
+        assert!(detect_compression_bomb_patterns(1024, 10240, 0x02, Some("data/file.txt"), &limits).is_ok());
 
         // Extreme ratio should fail
-        assert!(detect_compression_bomb_patterns(
-            100,
-            100_000_000,
-            0x02,
-            Some("data/file.txt"),
-            &limits
-        )
-        .is_err());
+        assert!(detect_compression_bomb_patterns(100, 100_000_000, 0x02, Some("data/file.txt"), &limits).is_err());
 
         // Tiny compressed with huge output should fail
-        assert!(detect_compression_bomb_patterns(
-            50,
-            20_000_000,
-            0x02,
-            Some("data/file.txt"),
-            &limits
-        )
-        .is_err());
+        assert!(detect_compression_bomb_patterns(50, 20_000_000, 0x02, Some("data/file.txt"), &limits).is_err());
 
         // Nested archive with large size should fail
-        assert!(detect_compression_bomb_patterns(
-            1_000_000,
-            100_000_000,
-            0x02,
-            Some("nested.mpq"),
-            &limits
-        )
-        .is_err());
+        assert!(detect_compression_bomb_patterns(1_000_000, 100_000_000, 0x02, Some("nested.mpq"), &limits).is_err());
     }
 
     #[test]
@@ -1086,25 +1007,11 @@ mod tests {
         let limits = SecurityLimits::default();
 
         // Valid decompression should succeed
-        let result = validate_decompression_operation(
-            1024,
-            10240,
-            0x02,
-            Some("data/file.txt"),
-            &session,
-            &limits,
-        );
+        let result = validate_decompression_operation(1024, 10240, 0x02, Some("data/file.txt"), &session, &limits);
         assert!(result.is_ok());
 
         // Compression bomb should fail
-        let result = validate_decompression_operation(
-            100,
-            100_000_000,
-            0x02,
-            Some("bomb.txt"),
-            &session,
-            &limits,
-        );
+        let result = validate_decompression_operation(100, 100_000_000, 0x02, Some("bomb.txt"), &session, &limits);
         assert!(result.is_err());
     }
 
@@ -1133,9 +1040,7 @@ mod tests {
 
         // Verify session limits are properly set
         assert!(strict_limits.max_session_decompressed < default_limits.max_session_decompressed);
-        assert!(
-            permissive_limits.max_session_decompressed > default_limits.max_session_decompressed
-        );
+        assert!(permissive_limits.max_session_decompressed > default_limits.max_session_decompressed);
 
         // Verify time limits are properly set
         assert!(strict_limits.max_decompression_time < default_limits.max_decompression_time);

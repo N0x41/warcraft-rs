@@ -175,7 +175,7 @@ impl PatchChain {
     /// 2. Read all patches for this file in priority order
     /// 3. Apply patches sequentially to produce the final result
     fn read_patched_file(&mut self, filename: &str, _patch_idx: usize) -> Result<Vec<u8>> {
-        use crate::patch::{apply_patch, PatchFile};
+        use crate::patch::{PatchFile, apply_patch};
 
         // Step 1: Find the base file (search lower priority archives)
         let mut base_data: Option<Vec<u8>> = None;
@@ -240,9 +240,7 @@ impl PatchChain {
 
         // Step 2: Verify we have a base file
         let mut current_data = base_data.ok_or_else(|| {
-            Error::FileNotFound(format!(
-                "No base file found for patch file '{filename}' in patch chain"
-            ))
+            Error::FileNotFound(format!("No base file found for patch file '{filename}' in patch chain"))
         })?;
 
         // Step 3: Apply patches in reverse priority order (lowest to highest)
@@ -380,19 +378,13 @@ impl PatchChain {
     /// Get a reference to a specific archive by path
     pub fn get_archive<P: AsRef<Path>>(&self, path: P) -> Option<&Archive> {
         let path = path.as_ref();
-        self.archives
-            .iter()
-            .find(|e| e.path == path)
-            .map(|e| &e.archive)
+        self.archives.iter().find(|e| e.path == path).map(|e| &e.archive)
     }
 
     /// Get archive priority by path
     pub fn get_priority<P: AsRef<Path>>(&self, path: P) -> Option<i32> {
         let path = path.as_ref();
-        self.archives
-            .iter()
-            .find(|e| e.path == path)
-            .map(|e| e.priority)
+        self.archives.iter().find(|e| e.path == path).map(|e| e.priority)
     }
 
     /// Load multiple archives in parallel and build a patch chain
@@ -454,10 +446,7 @@ impl PatchChain {
     ///
     /// This method loads multiple archives concurrently and adds them to the
     /// existing chain with their specified priorities.
-    pub fn add_archives_parallel<P: AsRef<Path> + Sync>(
-        &mut self,
-        archives: Vec<(P, i32)>,
-    ) -> Result<()> {
+    pub fn add_archives_parallel<P: AsRef<Path> + Sync>(&mut self, archives: Vec<(P, i32)>) -> Result<()> {
         use rayon::prelude::*;
 
         // Load new archives in parallel
@@ -577,8 +566,7 @@ mod integration_tests {
         let base_path = create_test_archive(temp.path(), "base.mpq", &base_files);
 
         // Create patch archive that overrides file2
-        let patch_files: Vec<(&str, &[u8])> =
-            vec![("file2.txt", b"patched file2"), ("file4.txt", b"new file4")];
+        let patch_files: Vec<(&str, &[u8])> = vec![("file2.txt", b"patched file2"), ("file4.txt", b"new file4")];
         let patch_path = create_test_archive(temp.path(), "patch.mpq", &patch_files);
 
         // Build chain
@@ -599,8 +587,7 @@ mod integration_tests {
 
         // Create archives
         let base_files: Vec<(&str, &[u8])> = vec![("file1.txt", b"data1"), ("file2.txt", b"data2")];
-        let patch_files: Vec<(&str, &[u8])> =
-            vec![("file2.txt", b"patch2"), ("file3.txt", b"data3")];
+        let patch_files: Vec<(&str, &[u8])> = vec![("file2.txt", b"patch2"), ("file3.txt", b"data3")];
 
         let base_path = create_test_archive(temp.path(), "base.mpq", &base_files);
         let patch_path = create_test_archive(temp.path(), "patch.mpq", &patch_files);
@@ -614,10 +601,7 @@ mod integration_tests {
         let files = chain.list().unwrap();
 
         // Filter out the listfile
-        let files: Vec<_> = files
-            .into_iter()
-            .filter(|f| f.name != "(listfile)")
-            .collect();
+        let files: Vec<_> = files.into_iter().filter(|f| f.name != "(listfile)").collect();
 
         assert_eq!(files.len(), 3);
 
@@ -641,14 +625,8 @@ mod integration_tests {
         chain.add_archive(&base_path, 0).unwrap();
         chain.add_archive(&patch_path, 100).unwrap();
 
-        assert_eq!(
-            chain.find_file_archive("file1.txt"),
-            Some(base_path.as_path())
-        );
-        assert_eq!(
-            chain.find_file_archive("file2.txt"),
-            Some(patch_path.as_path())
-        );
+        assert_eq!(chain.find_file_archive("file1.txt"), Some(base_path.as_path()));
+        assert_eq!(chain.find_file_archive("file2.txt"), Some(patch_path.as_path()));
         assert_eq!(chain.find_file_archive("nonexistent.txt"), None);
     }
 
@@ -722,10 +700,7 @@ mod integration_tests {
         let par_duration = start.elapsed();
 
         // Verify both chains have the same content
-        assert_eq!(
-            chain_seq.list().unwrap().len(),
-            chain_par.list().unwrap().len()
-        );
+        assert_eq!(chain_seq.list().unwrap().len(), chain_par.list().unwrap().len());
 
         // Verify priority ordering (highest priority archive should win)
         let common_content = chain_par.read_file("common.txt").unwrap();
@@ -779,10 +754,7 @@ mod integration_tests {
         assert_eq!(chain.read_file("patch_3.txt").unwrap(), b"Patch 3 content");
 
         // Verify priority (patch 3 has highest priority)
-        assert_eq!(
-            chain.read_file("common.txt").unwrap(),
-            b"Common from patch 3"
-        );
+        assert_eq!(chain.read_file("common.txt").unwrap(), b"Common from patch 3");
 
         // Verify chain info
         let info = chain.get_chain_info();

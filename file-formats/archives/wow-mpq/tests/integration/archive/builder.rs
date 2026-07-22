@@ -10,9 +10,7 @@ fn test_create_empty_archive() {
     let archive_path = temp_dir.path().join("empty.mpq");
 
     // Create empty archive
-    let result = OpenOptions::new()
-        .version(FormatVersion::V1)
-        .create(&archive_path);
+    let result = OpenOptions::new().version(FormatVersion::V1).create(&archive_path);
 
     assert!(result.is_ok());
     assert!(archive_path.exists());
@@ -110,11 +108,7 @@ fn test_external_listfile() {
     let listfile_path = temp_dir.path().join("external.txt");
 
     // Create external listfile
-    fs::write(
-        &listfile_path,
-        "file1.txt\r\nfile2.txt\r\ncustom_entry.txt\r\n",
-    )
-    .unwrap();
+    fs::write(&listfile_path, "file1.txt\r\nfile2.txt\r\ncustom_entry.txt\r\n").unwrap();
 
     // Build archive with external listfile
     ArchiveBuilder::new()
@@ -238,10 +232,7 @@ fn test_hash_table_sizing() {
     // Add many files to test hash table sizing
     let mut builder = ArchiveBuilder::new();
     for i in 0..50 {
-        builder = builder.add_file_data(
-            format!("File {i}").into_bytes(),
-            &format!("file_{i:03}.txt"),
-        );
+        builder = builder.add_file_data(format!("File {i}").into_bytes(), &format!("file_{i:03}.txt"));
     }
 
     builder.build(&archive_path).unwrap();
@@ -270,20 +261,10 @@ fn test_path_normalization() {
 
     // Verify we can find it with backslashes
     let archive = Archive::open(&archive_path).unwrap();
-    assert!(
-        archive
-            .find_file("folder\\subfolder\\file.txt")
-            .unwrap()
-            .is_some()
-    );
+    assert!(archive.find_file("folder\\subfolder\\file.txt").unwrap().is_some());
 
     // And with forward slashes
-    assert!(
-        archive
-            .find_file("folder/subfolder/file.txt")
-            .unwrap()
-            .is_some()
-    );
+    assert!(archive.find_file("folder/subfolder/file.txt").unwrap().is_some());
 }
 
 #[test]

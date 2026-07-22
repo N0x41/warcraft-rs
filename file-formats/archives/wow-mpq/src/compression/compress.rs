@@ -129,9 +129,8 @@ mod tests {
 
             // Extract compressed data and decompress
             let compressed_data = &compressed[1..];
-            let decompressed =
-                super::super::decompress::decompress(compressed_data, flags::ZLIB, original.len())
-                    .expect("Decompression failed");
+            let decompressed = super::super::decompress::decompress(compressed_data, flags::ZLIB, original.len())
+                .expect("Decompression failed");
             assert_eq!(decompressed, original);
         }
     }
@@ -148,10 +147,7 @@ mod tests {
         #[cfg(debug_assertions)]
         println!("Compressed size: {}", compressed.len());
         #[cfg(debug_assertions)]
-        println!(
-            "First few bytes: {:02X?}",
-            &compressed[..10.min(compressed.len())]
-        );
+        println!("First few bytes: {:02X?}", &compressed[..10.min(compressed.len())]);
 
         // Check if compression was beneficial
         if compressed == original {
@@ -170,9 +166,8 @@ mod tests {
 
             // Extract compressed data and decompress
             let compressed_data = &compressed[1..];
-            let decompressed =
-                super::super::decompress::decompress(compressed_data, flags::LZMA, original.len())
-                    .expect("Decompression failed");
+            let decompressed = super::super::decompress::decompress(compressed_data, flags::LZMA, original.len())
+                .expect("Decompression failed");
 
             assert_eq!(decompressed, original);
         }
@@ -199,9 +194,8 @@ mod tests {
 
         // Extract compressed data and decompress
         let compressed_data = &compressed[1..];
-        let decompressed =
-            super::super::decompress::decompress(compressed_data, multi_flags, original.len())
-                .expect("Multi-decompression failed");
+        let decompressed = super::super::decompress::decompress(compressed_data, multi_flags, original.len())
+            .expect("Multi-decompression failed");
 
         // ADPCM is lossy, so we check samples are close
         assert_eq!(decompressed.len(), original.len());

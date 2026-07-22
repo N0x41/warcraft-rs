@@ -34,10 +34,7 @@ fn test_single_unit_file_crc_generation() {
     // Check file info to verify CRC flag is set
     let files = archive.list().unwrap();
     let file_info = files.iter().find(|f| f.name == "small.txt").unwrap();
-    assert!(
-        file_info.has_sector_crc(),
-        "File should have SECTOR_CRC flag set"
-    );
+    assert!(file_info.has_sector_crc(), "File should have SECTOR_CRC flag set");
 }
 
 /// Test that CRC generation works for multi-sector files
@@ -72,10 +69,7 @@ fn test_multi_sector_file_crc_generation() {
     // Check file info to verify CRC flag is set
     let files = archive.list().unwrap();
     let file_info = files.iter().find(|f| f.name == "large.bin").unwrap();
-    assert!(
-        file_info.has_sector_crc(),
-        "File should have SECTOR_CRC flag set"
-    );
+    assert!(file_info.has_sector_crc(), "File should have SECTOR_CRC flag set");
 }
 
 /// Test that archives without CRC generation work correctly
@@ -106,10 +100,7 @@ fn test_no_crc_generation() {
     // Check file info to verify CRC flag is NOT set
     let files = archive.list().unwrap();
     let file_info = files.iter().find(|f| f.name == "no_crc.txt").unwrap();
-    assert!(
-        !file_info.has_sector_crc(),
-        "File should NOT have SECTOR_CRC flag set"
-    );
+    assert!(!file_info.has_sector_crc(), "File should NOT have SECTOR_CRC flag set");
 }
 
 /// Test CRC generation with compressed files
@@ -143,10 +134,7 @@ fn test_crc_generation_with_compression() {
     // Check file info
     let files = archive.list().unwrap();
     let file_info = files.iter().find(|f| f.name == "compressible.txt").unwrap();
-    assert!(
-        file_info.has_sector_crc(),
-        "File should have SECTOR_CRC flag set"
-    );
+    assert!(file_info.has_sector_crc(), "File should have SECTOR_CRC flag set");
     assert!(file_info.is_compressed(), "File should be compressed");
 }
 
@@ -185,9 +173,6 @@ fn test_crc_generation_with_encryption() {
     // Check file info
     let files = archive.list().unwrap();
     let file_info = files.iter().find(|f| f.name == "secret.dat").unwrap();
-    assert!(
-        file_info.has_sector_crc(),
-        "File should have SECTOR_CRC flag set"
-    );
+    assert!(file_info.has_sector_crc(), "File should have SECTOR_CRC flag set");
     assert!(file_info.is_encrypted(), "File should be encrypted");
 }

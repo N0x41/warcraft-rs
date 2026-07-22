@@ -119,26 +119,10 @@ impl BlpImage {
                     .get(level)
                     .map(|img| img.indexed_rgb.len() + img.indexed_alpha.len())
                     .unwrap_or(0),
-                BlpContent::Raw3(raw) => raw
-                    .images
-                    .get(level)
-                    .map(|img| img.pixels.len() * 4)
-                    .unwrap_or(0),
-                BlpContent::Dxt1(dxt) => dxt
-                    .images
-                    .get(level)
-                    .map(|img| img.content.len())
-                    .unwrap_or(0),
-                BlpContent::Dxt3(dxt) => dxt
-                    .images
-                    .get(level)
-                    .map(|img| img.content.len())
-                    .unwrap_or(0),
-                BlpContent::Dxt5(dxt) => dxt
-                    .images
-                    .get(level)
-                    .map(|img| img.content.len())
-                    .unwrap_or(0),
+                BlpContent::Raw3(raw) => raw.images.get(level).map(|img| img.pixels.len() * 4).unwrap_or(0),
+                BlpContent::Dxt1(dxt) => dxt.images.get(level).map(|img| img.content.len()).unwrap_or(0),
+                BlpContent::Dxt3(dxt) => dxt.images.get(level).map(|img| img.content.len()).unwrap_or(0),
+                BlpContent::Dxt5(dxt) => dxt.images.get(level).map(|img| img.content.len()).unwrap_or(0),
             };
 
             info.push(MipMapInfo {
@@ -157,35 +141,17 @@ impl BlpImage {
     pub fn estimated_file_size(&self) -> usize {
         let header_size = BlpHeader::size(self.header.version);
         let content_size = match &self.content {
-            BlpContent::Jpeg(jpeg) => {
-                jpeg.header.len() + jpeg.images.iter().map(|img| img.len()).sum::<usize>()
-            }
+            BlpContent::Jpeg(jpeg) => jpeg.header.len() + jpeg.images.iter().map(|img| img.len()).sum::<usize>(),
             BlpContent::Raw1(raw) => {
                 raw.cmap.len() * 4 + // palette size
                 raw.images.iter().map(|img| {
                     img.indexed_rgb.len() + img.indexed_alpha.len()
                 }).sum::<usize>()
             }
-            BlpContent::Raw3(raw) => raw
-                .images
-                .iter()
-                .map(|img| img.pixels.len() * 4)
-                .sum::<usize>(),
-            BlpContent::Dxt1(dxt) => dxt
-                .images
-                .iter()
-                .map(|img| img.content.len())
-                .sum::<usize>(),
-            BlpContent::Dxt3(dxt) => dxt
-                .images
-                .iter()
-                .map(|img| img.content.len())
-                .sum::<usize>(),
-            BlpContent::Dxt5(dxt) => dxt
-                .images
-                .iter()
-                .map(|img| img.content.len())
-                .sum::<usize>(),
+            BlpContent::Raw3(raw) => raw.images.iter().map(|img| img.pixels.len() * 4).sum::<usize>(),
+            BlpContent::Dxt1(dxt) => dxt.images.iter().map(|img| img.content.len()).sum::<usize>(),
+            BlpContent::Dxt3(dxt) => dxt.images.iter().map(|img| img.content.len()).sum::<usize>(),
+            BlpContent::Dxt5(dxt) => dxt.images.iter().map(|img| img.content.len()).sum::<usize>(),
         };
 
         header_size + content_size

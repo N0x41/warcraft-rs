@@ -114,12 +114,7 @@
 //! ```
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![warn(
-    missing_docs,
-    missing_debug_implementations,
-    rust_2018_idioms,
-    unreachable_pub
-)]
+#![warn(missing_docs, missing_debug_implementations, rust_2018_idioms, unreachable_pub)]
 
 pub mod archive;
 pub mod buffer_pool;
@@ -153,14 +148,12 @@ pub mod debug;
 
 // Re-export commonly used types
 pub use archive::{
-    Archive, ArchiveInfo, FileEntry, FileInfo, Md5Status, OpenOptions, SignatureStatus, TableInfo,
-    UserDataInfo,
+    Archive, ArchiveInfo, FileEntry, FileInfo, Md5Status, OpenOptions, SignatureStatus, TableInfo, UserDataInfo,
 };
 pub use buffer_pool::{BufferPool, BufferSize, PoolConfig, PoolStatistics};
 pub use builder::{ArchiveBuilder, AttributesOption, ListfileOption};
 pub use compare::{
-    CompareOptions, ComparisonResult, ComparisonSummary, FileComparison, MetadataComparison,
-    compare_archives,
+    CompareOptions, ComparisonResult, ComparisonSummary, FileComparison, MetadataComparison, compare_archives,
 };
 pub use error::{Error, Result};
 pub use header::{FormatVersion, MpqHeader};
@@ -171,8 +164,8 @@ pub use tables::{BetFileInfo, BetTable, BlockEntry, BlockTable, HashEntry, HashT
 
 // Re-export crypto for CLI usage
 pub use crypto::{
-    calculate_het_hashes, calculate_mpq_hashes, decrypt_block, decrypt_dword, encrypt_block,
-    hash_string, hash_type, jenkins_hash,
+    calculate_het_hashes, calculate_mpq_hashes, decrypt_block, decrypt_dword, encrypt_block, hash_string, hash_type,
+    jenkins_hash,
 };
 
 // Re-export compression for testing
@@ -184,9 +177,7 @@ pub use archive::decrypt_file_data;
 // Re-export async types when async feature is enabled
 #[cfg(feature = "async")]
 #[cfg_attr(docsrs, doc(cfg(feature = "async")))]
-pub use io::{
-    AsyncArchiveReader, AsyncConfig, AsyncDecompressionMonitor, AsyncMetrics, AsyncOperationStats,
-};
+pub use io::{AsyncArchiveReader, AsyncConfig, AsyncDecompressionMonitor, AsyncMetrics, AsyncOperationStats};
 
 // Re-export memory mapping types when mmap feature is enabled
 #[cfg(feature = "mmap")]
@@ -347,19 +338,13 @@ mod tests {
         ];
 
         for size in &valid_sizes {
-            assert!(
-                is_power_of_two(*size),
-                "Hash table size {size} should be valid"
-            );
+            assert!(is_power_of_two(*size), "Hash table size {size} should be valid");
         }
 
         let invalid_sizes = [0, 3, 5, 7, 9, 15, 100, 1000, 1023, 1025, 4095, 4097];
 
         for size in &invalid_sizes {
-            assert!(
-                !is_power_of_two(*size),
-                "Hash table size {size} should be invalid"
-            );
+            assert!(!is_power_of_two(*size), "Hash table size {size} should be invalid");
         }
     }
 

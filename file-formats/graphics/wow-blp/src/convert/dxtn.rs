@@ -3,11 +3,7 @@ use super::mipmap::generate_mipmaps;
 use crate::types::*;
 use ::image::{DynamicImage, RgbaImage, imageops::FilterType};
 
-pub fn dxtn_to_image(
-    header: &BlpHeader,
-    image: &BlpDxtn,
-    mipmap_level: usize,
-) -> Result<DynamicImage, Error> {
+pub fn dxtn_to_image(header: &BlpHeader, image: &BlpDxtn, mipmap_level: usize) -> Result<DynamicImage, Error> {
     if mipmap_level >= image.images.len() {
         return Err(Error::MissingImage(mipmap_level));
     }
@@ -37,12 +33,7 @@ pub fn dxtn_to_image(
     };
 
     let mut output = vec![0; size];
-    decoder.decompress(
-        &compressed_data,
-        width as usize,
-        height as usize,
-        &mut output,
-    );
+    decoder.decompress(&compressed_data, width as usize, height as usize, &mut output);
     let result = RgbaImage::from_raw(width, height, output).ok_or(Error::Dxt1RawConvertFail)?;
     Ok(DynamicImage::ImageRgba8(result))
 }
@@ -85,9 +76,7 @@ pub fn image_to_dxtn(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{
-        AlphaType, BlpContentTag, BlpFlags, BlpVersion, Compression, MipmapLocator,
-    };
+    use crate::types::{AlphaType, BlpContentTag, BlpFlags, BlpVersion, Compression, MipmapLocator};
 
     fn create_test_header(width: u32, height: u32) -> BlpHeader {
         BlpHeader {
@@ -175,10 +164,7 @@ mod tests {
         };
 
         let result = dxtn_to_image(&header, &image, 0);
-        assert!(
-            result.is_ok(),
-            "Expected success for correctly sized buffer"
-        );
+        assert!(result.is_ok(), "Expected success for correctly sized buffer");
     }
 
     /// Test that completely empty buffer still works (produces blank image)
@@ -195,9 +181,6 @@ mod tests {
         };
 
         let result = dxtn_to_image(&header, &image, 0);
-        assert!(
-            result.is_ok(),
-            "Expected success with zero-padding for empty buffer"
-        );
+        assert!(result.is_ok(), "Expected success with zero-padding for empty buffer");
     }
 }

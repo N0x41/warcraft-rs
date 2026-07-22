@@ -48,19 +48,13 @@ mod tests {
         // Test vectors from the MPQ format documentation
 
         // Test 1: "(listfile)"
-        assert_eq!(
-            hash_string("(listfile)", hash_type::TABLE_OFFSET),
-            0x5F3DE859
-        );
+        assert_eq!(hash_string("(listfile)", hash_type::TABLE_OFFSET), 0x5F3DE859);
 
         // Test 2: "(hash table)"
         assert_eq!(hash_string("(hash table)", hash_type::FILE_KEY), 0xC3AF3770);
 
         // Test 3: "(block table)"
-        assert_eq!(
-            hash_string("(block table)", hash_type::FILE_KEY),
-            0xEC83B3A3
-        );
+        assert_eq!(hash_string("(block table)", hash_type::FILE_KEY), 0xEC83B3A3);
     }
 
     #[test]
@@ -75,10 +69,7 @@ mod tests {
             hash_string("path\\to\\file", hash_type::TABLE_OFFSET),
             hash_string("path/to/file", hash_type::TABLE_OFFSET)
         );
-        assert_eq!(
-            hash_string("path\\to\\file", hash_type::TABLE_OFFSET),
-            0x534CC8EE
-        );
+        assert_eq!(hash_string("path\\to\\file", hash_type::TABLE_OFFSET), 0x534CC8EE);
 
         // Test interface path
         assert_eq!(
@@ -109,10 +100,7 @@ mod tests {
             hash_string("path\\to\\FILE", hash_type::TABLE_OFFSET),
             hash_string("PATH\\TO\\file", hash_type::TABLE_OFFSET)
         );
-        assert_eq!(
-            hash_string("path\\to\\FILE", hash_type::TABLE_OFFSET),
-            0x534CC8EE
-        );
+        assert_eq!(hash_string("path\\to\\FILE", hash_type::TABLE_OFFSET), 0x534CC8EE);
     }
 
     #[test]

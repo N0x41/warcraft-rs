@@ -34,19 +34,13 @@ fn test_het_bet_table_creation() {
     );
 
     // Test reading files
-    let data = archive
-        .read_file("file1.txt")
-        .expect("Failed to read file1.txt");
+    let data = archive.read_file("file1.txt").expect("Failed to read file1.txt");
     assert_eq!(data, test_data1);
 
-    let data = archive
-        .read_file("file2.txt")
-        .expect("Failed to read file2.txt");
+    let data = archive.read_file("file2.txt").expect("Failed to read file2.txt");
     assert_eq!(data, test_data2);
 
-    let data = archive
-        .read_file("test/file3.dat")
-        .expect("Failed to read file3.dat");
+    let data = archive.read_file("test/file3.dat").expect("Failed to read file3.dat");
     assert_eq!(data, test_data3);
 }
 
@@ -89,9 +83,7 @@ fn test_het_bet_with_many_files() {
         builder = builder.add_file_data(content.into_bytes(), &filename);
     }
 
-    builder
-        .build(&archive_path)
-        .expect("Failed to create archive");
+    builder.build(&archive_path).expect("Failed to create archive");
 
     // Open the archive and verify a few files
     let mut archive = Archive::open(&archive_path).expect("Failed to open archive");

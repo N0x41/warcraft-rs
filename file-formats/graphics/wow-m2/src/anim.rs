@@ -58,9 +58,7 @@ impl AnimFormatDetector {
         match reader.read_exact(&mut magic) {
             Ok(()) => {
                 // Reset position for subsequent parsing
-                reader
-                    .seek(SeekFrom::Start(initial_pos))
-                    .map_err(M2Error::Io)?;
+                reader.seek(SeekFrom::Start(initial_pos)).map_err(M2Error::Io)?;
 
                 if magic == ANIM_MAGIC {
                     Ok(AnimFormat::Modern)
@@ -72,9 +70,7 @@ impl AnimFormatDetector {
             }
             Err(e) => {
                 // If we can't read 4 bytes, the file is too small or corrupted
-                reader
-                    .seek(SeekFrom::Start(initial_pos))
-                    .map_err(|_| M2Error::Io(e))?;
+                reader.seek(SeekFrom::Start(initial_pos)).map_err(|_| M2Error::Io(e))?;
                 Err(M2Error::AnimFormatError(
                     "File too small to determine ANIM format - need at least 4 bytes".to_string(),
                 ))
@@ -215,12 +211,7 @@ impl AnimSectionHeader {
         let start = reader.read_u32_le()?;
         let end = reader.read_u32_le()?;
 
-        Ok(Self {
-            magic,
-            id,
-            start,
-            end,
-        })
+        Ok(Self { magic, id, start, end })
     }
 
     /// Write an animation section header to a writer
@@ -346,10 +337,7 @@ impl AnimSection {
                         rotations.push(Quaternion::parse(reader)?);
                     }
 
-                    Some(AnimRotation {
-                        timestamps,
-                        rotations,
-                    })
+                    Some(AnimRotation { timestamps, rotations })
                 } else {
                     None
                 };
@@ -368,10 +356,7 @@ impl AnimSection {
                         scalings.push(C3Vector::parse(reader)?);
                     }
 
-                    Some(AnimScaling {
-                        timestamps,
-                        scalings,
-                    })
+                    Some(AnimScaling { timestamps, scalings })
                 } else {
                     None
                 };
@@ -564,12 +549,9 @@ impl MemoryUsage {
         bytes += self.bone_animations * std::mem::size_of::<AnimBoneAnimation>();
 
         // Keyframe data (timestamps + values)
-        bytes += self.translation_keyframes
-            * (std::mem::size_of::<u32>() + std::mem::size_of::<C3Vector>());
-        bytes += self.rotation_keyframes
-            * (std::mem::size_of::<u32>() + std::mem::size_of::<Quaternion>());
-        bytes +=
-            self.scaling_keyframes * (std::mem::size_of::<u32>() + std::mem::size_of::<C3Vector>());
+        bytes += self.translation_keyframes * (std::mem::size_of::<u32>() + std::mem::size_of::<C3Vector>());
+        bytes += self.rotation_keyframes * (std::mem::size_of::<u32>() + std::mem::size_of::<Quaternion>());
+        bytes += self.scaling_keyframes * (std::mem::size_of::<u32>() + std::mem::size_of::<C3Vector>());
 
         bytes
     }
@@ -606,10 +588,7 @@ impl AnimParser {
     }
 
     /// Parse with explicit format specification
-    pub fn parse_with_format<R: Read + Seek>(
-        reader: &mut R,
-        format: AnimFormat,
-    ) -> Result<AnimFile> {
+    pub fn parse_with_format<R: Read + Seek>(reader: &mut R, format: AnimFormat) -> Result<AnimFile> {
         match format {
             AnimFormat::Legacy => Self::parse_legacy(reader),
             AnimFormat::Modern => Self::parse_modern(reader),
@@ -637,12 +616,7 @@ impl AnimParser {
         reader.seek(SeekFrom::Start(0))?;
 
         // Check if this looks like raw animation data (starts with zeros or small values)
-        let _first_value = u32::from_le_bytes([
-            header_bytes[0],
-            header_bytes[1],
-            header_bytes[2],
-            header_bytes[3],
-        ]);
+        let _first_value = u32::from_le_bytes([header_bytes[0], header_bytes[1], header_bytes[2], header_bytes[3]]);
 
         // For legacy files, create a placeholder animation section
         // Real parsing would require understanding the specific M2 model this ANIM belongs to
@@ -653,11 +627,7 @@ impl AnimParser {
 
         // Create a single animation section representing this legacy ANIM file
         // In practice, legacy ANIM files contain raw data for a single animation
-        let sections = vec![Self::create_legacy_animation_section(
-            reader,
-            animation_id,
-            file_size,
-        )?];
+        let sections = vec![Self::create_legacy_animation_section(reader, animation_id, file_size)?];
 
         Ok(AnimFile {
             format: AnimFormat::Legacy,
@@ -709,10 +679,7 @@ impl AnimParser {
     }
 
     /// Analyze legacy ANIM structure to provide better metadata
-    fn analyze_legacy_structure<R: Read + Seek>(
-        reader: &mut R,
-        file_size: u32,
-    ) -> Result<LegacyStructureHints> {
+    fn analyze_legacy_structure<R: Read + Seek>(reader: &mut R, file_size: u32) -> Result<LegacyStructureHints> {
         reader.seek(SeekFrom::Start(0))?;
 
         let mut appears_valid = true;
@@ -813,12 +780,7 @@ impl AnimFile {
 
         // Format-specific validation
         match (&self.format, &self.metadata) {
-            (
-                AnimFormat::Legacy,
-                AnimMetadata::Legacy {
-                    structure_hints, ..
-                },
-            ) => {
+            (AnimFormat::Legacy, AnimMetadata::Legacy { structure_hints, .. }) => {
                 if !structure_hints.appears_valid {
                     return Err(M2Error::ValidationError(
                         "Legacy ANIM file structure appears invalid".to_string(),
@@ -1142,9 +1104,7 @@ impl AnimFile {
         for section in &mut self.sections {
             // Remove empty bone animations
             section.bone_animations.retain(|bone_anim| {
-                bone_anim.translation.is_some()
-                    || bone_anim.rotation.is_some()
-                    || bone_anim.scaling.is_some()
+                bone_anim.translation.is_some() || bone_anim.rotation.is_some() || bone_anim.scaling.is_some()
             });
 
             // Shrink capacity to fit actual data
@@ -1173,10 +1133,7 @@ mod legacy_utils {
     use super::*;
 
     /// Validate legacy ANIM file structure
-    pub fn validate_legacy_structure<R: Read + Seek>(
-        reader: &mut R,
-        animation_count: u32,
-    ) -> Result<bool> {
+    pub fn validate_legacy_structure<R: Read + Seek>(reader: &mut R, animation_count: u32) -> Result<bool> {
         if animation_count == 0 || animation_count > 10000 {
             return Ok(false);
         }
@@ -1403,8 +1360,7 @@ mod integration_tests {
 
     #[test]
     fn test_real_cataclysm_anim_file() {
-        let anim_path =
-            "/home/danielsreichenbach/analysis/anim_samples/cataclysm/OrcFemale0064-00.anim";
+        let anim_path = "/home/danielsreichenbach/analysis/anim_samples/cataclysm/OrcFemale0064-00.anim";
 
         if Path::new(anim_path).exists() {
             let result = AnimFile::load(anim_path);
@@ -1481,12 +1437,8 @@ mod integration_tests {
 
                             // Test format conversion (if applicable)
                             if anim_file.is_legacy_format() {
-                                let converted =
-                                    anim_file.convert(crate::version::M2Version::Legion);
-                                assert!(
-                                    converted.is_modern_format(),
-                                    "Conversion to modern format failed"
-                                );
+                                let converted = anim_file.convert(crate::version::M2Version::Legion);
+                                assert!(converted.is_modern_format(), "Conversion to modern format failed");
                             }
                         }
                         Err(e) => {
@@ -1585,10 +1537,7 @@ mod integration_tests {
         };
 
         let result = mismatched_anim.validate();
-        assert!(
-            result.is_err(),
-            "Format/metadata mismatch should fail validation"
-        );
+        assert!(result.is_err(), "Format/metadata mismatch should fail validation");
     }
 }
 

@@ -270,10 +270,7 @@ impl M2Model {
 
             // Build children list for parent
             if parent_index >= 0 && (parent_index as u16) < self.header.bones.count as u16 {
-                parent_map
-                    .entry(parent_index as u16)
-                    .or_default()
-                    .push(i as u16);
+                parent_map.entry(parent_index as u16).or_default().push(i as u16);
             }
 
             bone_infos.push(BoneInfo {
@@ -301,9 +298,7 @@ impl M2Model {
         }
 
         let mut cursor = Cursor::new(original_data);
-        cursor.seek(std::io::SeekFrom::Start(
-            self.header.animations.offset as u64,
-        ))?;
+        cursor.seek(std::io::SeekFrom::Start(self.header.animations.offset as u64))?;
 
         let mut animation_infos = Vec::new();
 
@@ -482,24 +477,15 @@ impl M2Model {
         println!("Textures: {}", enhanced_data.stats.texture_count);
         println!("Materials: {}", enhanced_data.stats.material_count);
         if enhanced_data.stats.embedded_skin_count > 0 {
-            println!(
-                "Embedded skins: {}",
-                enhanced_data.stats.embedded_skin_count
-            );
+            println!("Embedded skins: {}", enhanced_data.stats.embedded_skin_count);
         }
         println!();
 
         // Bounding box
         println!("=== Bounding Box ===");
         let bbox = &enhanced_data.stats.bounding_box;
-        println!(
-            "Min: ({:.2}, {:.2}, {:.2})",
-            bbox.min_x, bbox.min_y, bbox.min_z
-        );
-        println!(
-            "Max: ({:.2}, {:.2}, {:.2})",
-            bbox.max_x, bbox.max_y, bbox.max_z
-        );
+        println!("Min: ({:.2}, {:.2}, {:.2})", bbox.min_x, bbox.min_y, bbox.min_z);
+        println!("Max: ({:.2}, {:.2}, {:.2})", bbox.max_x, bbox.max_y, bbox.max_z);
         let (cx, cy, cz) = bbox.center();
         println!("Center: ({:.2}, {:.2}, {:.2})", cx, cy, cz);
         let (sx, sy, sz) = bbox.size();
@@ -549,16 +535,8 @@ impl M2Model {
             for (i, mat_info) in enhanced_data.materials.iter().enumerate() {
                 let flags = format!(
                     "{}{}",
-                    if mat_info.is_transparent {
-                        "TRANSPARENT "
-                    } else {
-                        ""
-                    },
-                    if mat_info.is_two_sided {
-                        "TWO_SIDED"
-                    } else {
-                        ""
-                    }
+                    if mat_info.is_transparent { "TRANSPARENT " } else { "" },
+                    if mat_info.is_two_sided { "TWO_SIDED" } else { "" }
                 );
                 println!("  {}: {} {}", i, mat_info.blend_mode, flags);
             }

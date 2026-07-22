@@ -49,11 +49,7 @@ fn test_parallel_multi_archive_consistency() {
 
     // Create 10 test archives
     for i in 0..10 {
-        archives.push(create_test_archive(
-            &temp_dir,
-            &format!("archive_{i}.mpq"),
-            20,
-        ));
+        archives.push(create_test_archive(&temp_dir, &format!("archive_{i}.mpq"), 20));
     }
 
     // Extract the same file from all archives in parallel
@@ -110,10 +106,7 @@ fn test_parallel_search_correctness() {
         let expected_pattern = format!("unique\\archive_{i}\\");
 
         // Filter to just the unique files for this archive
-        let unique_files: Vec<_> = matches
-            .iter()
-            .filter(|name| name.contains(&expected_pattern))
-            .collect();
+        let unique_files: Vec<_> = matches.iter().filter(|name| name.contains(&expected_pattern)).collect();
 
         assert_eq!(
             unique_files.len(),
@@ -154,8 +147,7 @@ fn test_parallel_extraction_data_integrity() {
 
     // Extract files in parallel
     let files_to_extract = vec!["test1.bin", "test2.bin", "test3.bin"];
-    let results =
-        parallel::extract_multiple_from_multiple_archives(&archives, &files_to_extract).unwrap();
+    let results = parallel::extract_multiple_from_multiple_archives(&archives, &files_to_extract).unwrap();
 
     // Verify data integrity
     assert_eq!(results.len(), 4);
@@ -165,10 +157,7 @@ fn test_parallel_extraction_data_integrity() {
         for (file_name, data) in file_results {
             let key = (i, file_name.clone());
             let expected = expected_data.get(&key).unwrap();
-            assert_eq!(
-                data, expected,
-                "Data mismatch for archive {i} file {file_name}"
-            );
+            assert_eq!(data, expected, "Data mismatch for archive {i} file {file_name}");
         }
     }
 }
@@ -204,13 +193,9 @@ fn test_rayon_thread_pool_sizes() {
 
     // Test with different thread pool sizes
     for num_threads in [1, 2, 4, 8] {
-        let pool = ThreadPoolBuilder::new()
-            .num_threads(num_threads)
-            .build()
-            .unwrap();
+        let pool = ThreadPoolBuilder::new().num_threads(num_threads).build().unwrap();
 
-        let results =
-            pool.install(|| parallel::extract_from_multiple_archives(&archives, "file_002.txt"));
+        let results = pool.install(|| parallel::extract_from_multiple_archives(&archives, "file_002.txt"));
 
         assert!(results.is_ok());
         let results = results.unwrap();

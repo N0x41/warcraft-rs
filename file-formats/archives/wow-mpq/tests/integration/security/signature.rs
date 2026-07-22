@@ -193,8 +193,5 @@ fn test_stormlib_digest_unit_size() {
         DIGEST_UNIT_SIZE, 0x10000,
         "Digest unit size should match StormLib (64KB)"
     );
-    assert_eq!(
-        DIGEST_UNIT_SIZE, 65536,
-        "Digest unit size should be 65536 bytes"
-    );
+    assert_eq!(DIGEST_UNIT_SIZE, 65536, "Digest unit size should be 65536 bytes");
 }

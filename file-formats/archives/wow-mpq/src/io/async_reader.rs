@@ -87,8 +87,7 @@ impl AsyncMetrics {
     pub fn record_operation_complete(&self, bytes_read: u64) {
         self.completed_operations.fetch_add(1, Ordering::Relaxed);
         self.active_operations.fetch_sub(1, Ordering::Relaxed);
-        self.total_bytes_read
-            .fetch_add(bytes_read, Ordering::Relaxed);
+        self.total_bytes_read.fetch_add(bytes_read, Ordering::Relaxed);
     }
 
     /// Record operation cancellation
@@ -177,11 +176,7 @@ impl<R: AsyncRead + AsyncSeek + Unpin + Send + 'static> AsyncArchiveReader<R> {
     }
 
     /// Create a new async archive reader with custom configuration
-    pub fn with_config(
-        reader: R,
-        config: AsyncConfig,
-        session_tracker: Arc<SessionTracker>,
-    ) -> Self {
+    pub fn with_config(reader: R, config: AsyncConfig, session_tracker: Arc<SessionTracker>) -> Self {
         let active_operations = Arc::new(Semaphore::new(config.max_concurrent_ops));
         let extraction_semaphore = Arc::new(Semaphore::new(config.max_concurrent_extractions));
         let metrics = if config.collect_metrics {
@@ -268,9 +263,7 @@ impl<R: AsyncRead + AsyncSeek + Unpin + Send + 'static> AsyncArchiveReader<R> {
         let mut current_offset = offset;
 
         while total_read < buffer.len() {
-            let bytes_read = self
-                .read_at(current_offset, &mut buffer[total_read..])
-                .await?;
+            let bytes_read = self.read_at(current_offset, &mut buffer[total_read..]).await?;
 
             if bytes_read == 0 {
                 return Err(Error::invalid_format(
@@ -318,9 +311,10 @@ impl<R: AsyncRead + AsyncSeek + Unpin + Send + 'static> AsyncArchiveReader<R> {
             let config = self.config.clone();
 
             let handle = tokio::spawn(async move {
-                let _permit = extraction_permit.acquire().await.map_err(|_| {
-                    Error::resource_exhaustion("Failed to acquire extraction permit")
-                })?;
+                let _permit = extraction_permit
+                    .acquire()
+                    .await
+                    .map_err(|_| Error::resource_exhaustion("Failed to acquire extraction permit"))?;
 
                 metrics.record_operation_start();
 
@@ -475,8 +469,7 @@ impl AsyncDecompressionMonitor {
         }
 
         // Update current progress
-        self.bytes_decompressed
-            .store(current_output_size, Ordering::Relaxed);
+        self.bytes_decompressed.store(current_output_size, Ordering::Relaxed);
 
         // Yield control to allow other tasks to run
         tokio::task::yield_now().await;
@@ -588,12 +581,7 @@ mod tests {
         let mut buffer = [0u8; 5]; // Exceeds limit
         let result = reader.read_at(0, &mut buffer).await;
         assert!(result.is_err());
-        assert!(
-            result
-                .unwrap_err()
-                .to_string()
-                .contains("exceeds maximum allowed size")
-        );
+        assert!(result.unwrap_err().to_string().contains("exceeds maximum allowed size"));
     }
 
     #[tokio::test]
@@ -630,18 +618,11 @@ mod tests {
         let reader = AsyncArchiveReader::with_config(cursor, config, session);
 
         // Request more than max_concurrent_extractions * 2
-        let requests = (0..6)
-            .map(|i| (format!("file{}.txt", i), i * 100, 50))
-            .collect();
+        let requests = (0..6).map(|i| (format!("file{}.txt", i), i * 100, 50)).collect();
 
         let result = reader.extract_files_concurrent(requests).await;
         assert!(result.is_err());
-        assert!(
-            result
-                .unwrap_err()
-                .to_string()
-                .contains("Too many concurrent")
-        );
+        assert!(result.unwrap_err().to_string().contains("Too many concurrent"));
     }
 
     #[tokio::test]
@@ -654,12 +635,7 @@ mod tests {
         // Exceeding size limit should fail
         let result = monitor.check_progress(2048).await;
         assert!(result.is_err());
-        assert!(
-            result
-                .unwrap_err()
-                .to_string()
-                .contains("size limit exceeded")
-        );
+        assert!(result.unwrap_err().to_string().contains("size limit exceeded"));
     }
 
     #[tokio::test]

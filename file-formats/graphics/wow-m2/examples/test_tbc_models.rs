@@ -37,10 +37,7 @@ fn test_model(path: &Path) -> anyhow::Result<()> {
     if model.header.version >= 260 && model.header.version <= 263 {
         println!("  ✓ Version {} is valid TBC version", model.header.version);
     } else {
-        println!(
-            "  ⚠ Version {} is not a typical TBC version",
-            model.header.version
-        );
+        println!("  ⚠ Version {} is not a typical TBC version", model.header.version);
     }
 
     // Check for embedded skins (TBC still has them)
@@ -80,12 +77,7 @@ fn test_model(path: &Path) -> anyhow::Result<()> {
         for (i, vertex) in enhanced_data.vertices.iter().take(3).enumerate() {
             println!(
                 "    Vertex {}: pos=({:.2}, {:.2}, {:.2}), uv=({:.2}, {:.2})",
-                i,
-                vertex.position.x,
-                vertex.position.y,
-                vertex.position.z,
-                vertex.tex_coords.x,
-                vertex.tex_coords.y
+                i, vertex.position.x, vertex.position.y, vertex.position.z, vertex.tex_coords.x, vertex.tex_coords.y
             );
         }
     }
@@ -94,20 +86,13 @@ fn test_model(path: &Path) -> anyhow::Result<()> {
     if !enhanced_data.bones.is_empty() {
         println!("\n  ✓ Bones parsed: {}", enhanced_data.bones.len());
 
-        let root_bones = enhanced_data
-            .bones
-            .iter()
-            .filter(|b| b.bone.parent_bone == -1)
-            .count();
+        let root_bones = enhanced_data.bones.iter().filter(|b| b.bone.parent_bone == -1).count();
         println!("  ✓ Root bones: {}", root_bones);
     }
 
     // Check animations
     if !enhanced_data.animations.is_empty() {
-        println!(
-            "\n  ✓ Animations parsed: {}",
-            enhanced_data.animations.len()
-        );
+        println!("\n  ✓ Animations parsed: {}", enhanced_data.animations.len());
 
         // Show first few animations
         println!("  Sample animations (first 5):");

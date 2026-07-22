@@ -2,9 +2,7 @@ use super::error::Error;
 use ::image::RgbaImage;
 
 /// Create image and palette for rgb image
-pub fn quantize_rgba(
-    mut img: RgbaImage,
-) -> Result<(Vec<u8>, Vec<u32>, color_quant::NeuQuant), Error> {
+pub fn quantize_rgba(mut img: RgbaImage) -> Result<(Vec<u8>, Vec<u32>, color_quant::NeuQuant), Error> {
     let palette_size = 256;
     let sample_fact = 10; // speed-quality factor. 1 is best quality, 30 is best perf
 
@@ -30,10 +28,7 @@ pub fn quantize_rgba(
     Ok((quantized, palette, nq))
 }
 
-pub fn quantize_rgba_known(
-    mut img: RgbaImage,
-    nq: &color_quant::NeuQuant,
-) -> Result<Vec<u8>, Error> {
+pub fn quantize_rgba_known(mut img: RgbaImage, nq: &color_quant::NeuQuant) -> Result<Vec<u8>, Error> {
     // zero alpha values
     for pix in img.pixels_mut() {
         pix[3] = 0;

@@ -165,10 +165,7 @@ impl Default for ListfileResolver {
 
 impl FileResolver for ListfileResolver {
     fn resolve_file_data_id(&self, id: u32) -> Result<String> {
-        self.id_to_path
-            .get(&id)
-            .cloned()
-            .ok_or(M2Error::UnknownFileDataId(id))
+        self.id_to_path.get(&id).cloned().ok_or(M2Error::UnknownFileDataId(id))
     }
 
     fn load_file_by_id(&self, id: u32) -> Result<Vec<u8>> {
@@ -204,13 +201,8 @@ impl PathResolver {
     /// Load a file by relative path
     pub fn load_file<P: AsRef<Path>>(&self, path: P) -> Result<Vec<u8>> {
         let full_path = self.base_path.join(path.as_ref());
-        fs::read(&full_path).map_err(|e| {
-            M2Error::ExternalFileError(format!(
-                "Failed to load file {}: {}",
-                full_path.display(),
-                e
-            ))
-        })
+        fs::read(&full_path)
+            .map_err(|e| M2Error::ExternalFileError(format!("Failed to load file {}: {}", full_path.display(), e)))
     }
 }
 
@@ -289,10 +281,7 @@ mod tests {
         resolver.add_mapping(67890, "another/file.blp");
 
         assert_eq!(resolver.len(), 2);
-        assert_eq!(
-            resolver.resolve_file_data_id(12345).unwrap(),
-            "test/file.m2"
-        );
+        assert_eq!(resolver.resolve_file_data_id(12345).unwrap(), "test/file.m2");
 
         let removed = resolver.remove_mapping(12345);
         assert_eq!(removed, Some("test/file.m2".to_string()));

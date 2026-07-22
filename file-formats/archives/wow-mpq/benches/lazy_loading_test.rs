@@ -33,11 +33,9 @@ fn benchmark_archive_open_lazy(c: &mut Criterion) {
 
     c.bench_function("archive_open_lazy", |b| {
         b.iter(|| {
-            let archive = Archive::open_with_options(
-                std::hint::black_box(&mpq_path),
-                OpenOptions::new().load_tables(false),
-            )
-            .expect("Failed to open archive");
+            let archive =
+                Archive::open_with_options(std::hint::black_box(&mpq_path), OpenOptions::new().load_tables(false))
+                    .expect("Failed to open archive");
             std::hint::black_box(archive);
         })
     });
@@ -54,11 +52,9 @@ fn benchmark_archive_open_eager(c: &mut Criterion) {
 
     c.bench_function("archive_open_eager", |b| {
         b.iter(|| {
-            let archive = Archive::open_with_options(
-                std::hint::black_box(&mpq_path),
-                OpenOptions::new().load_tables(true),
-            )
-            .expect("Failed to open archive");
+            let archive =
+                Archive::open_with_options(std::hint::black_box(&mpq_path), OpenOptions::new().load_tables(true))
+                    .expect("Failed to open archive");
             std::hint::black_box(archive);
         })
     });
@@ -81,8 +77,8 @@ fn benchmark_single_file_access(c: &mut Criterion) {
         "sound\\music\\zones\\tavern_01.mp3",
     ];
 
-    let archive = Archive::open_with_options(&mpq_path, OpenOptions::new().load_tables(false))
-        .expect("Failed to open archive");
+    let archive =
+        Archive::open_with_options(&mpq_path, OpenOptions::new().load_tables(false)).expect("Failed to open archive");
 
     c.bench_function("single_file_access_lazy", |b| {
         b.iter(|| {

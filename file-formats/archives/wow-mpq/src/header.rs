@@ -141,10 +141,7 @@ impl MpqHeader {
     }
 
     /// Read an MPQ header with custom security limits
-    pub fn read_with_limits<R: Read + Seek>(
-        reader: &mut R,
-        limits: &SecurityLimits,
-    ) -> Result<Self> {
+    pub fn read_with_limits<R: Read + Seek>(reader: &mut R, limits: &SecurityLimits) -> Result<Self> {
         // Read the signature
         let signature = reader.read_u32::<LittleEndian>()?;
         if signature != MPQ_HEADER_SIGNATURE {
@@ -164,8 +161,8 @@ impl MpqHeader {
         let hash_table_size = reader.read_u32::<LittleEndian>()?;
         let block_table_size = reader.read_u32::<LittleEndian>()?;
 
-        let format_version = FormatVersion::from_raw(format_version_raw)
-            .ok_or(Error::UnsupportedVersion(format_version_raw))?;
+        let format_version =
+            FormatVersion::from_raw(format_version_raw).ok_or(Error::UnsupportedVersion(format_version_raw))?;
 
         // Security validation - validate header before proceeding
         validate_header_security(
@@ -294,9 +291,7 @@ impl MpqHeader {
 }
 
 /// Find the MPQ header in a file
-pub fn find_header<R: Read + Seek>(
-    reader: &mut R,
-) -> Result<(u64, Option<UserDataHeader>, MpqHeader)> {
+pub fn find_header<R: Read + Seek>(reader: &mut R) -> Result<(u64, Option<UserDataHeader>, MpqHeader)> {
     find_header_with_limits(reader, &SecurityLimits::default())
 }
 
@@ -411,10 +406,7 @@ impl MpqHeader {
 
         if let Some(size64) = self.archive_size_64 {
             output.push_str("\nVersion 3+ fields:\n");
-            output.push_str(&format!(
-                "  Archive Size (64-bit): {}\n",
-                format_size(size64)
-            ));
+            output.push_str(&format!("  Archive Size (64-bit): {}\n", format_size(size64)));
             output.push_str(&format!(
                 "  BET Table: offset=0x{:016X}\n",
                 self.bet_table_pos.unwrap_or(0)
@@ -427,10 +419,7 @@ impl MpqHeader {
 
         if let Some(ref v4) = self.v4_data {
             output.push_str("\nVersion 4 fields:\n");
-            output.push_str(&format!(
-                "  Hash Table Size: {}\n",
-                format_size(v4.hash_table_size_64)
-            ));
+            output.push_str(&format!("  Hash Table Size: {}\n", format_size(v4.hash_table_size_64)));
             output.push_str(&format!(
                 "  Block Table Size: {}\n",
                 format_size(v4.block_table_size_64)
@@ -439,43 +428,22 @@ impl MpqHeader {
                 "  Hi-Block Table Size: {}\n",
                 format_size(v4.hi_block_table_size_64)
             ));
-            output.push_str(&format!(
-                "  HET Table Size: {}\n",
-                format_size(v4.het_table_size_64)
-            ));
-            output.push_str(&format!(
-                "  BET Table Size: {}\n",
-                format_size(v4.bet_table_size_64)
-            ));
+            output.push_str(&format!("  HET Table Size: {}\n", format_size(v4.het_table_size_64)));
+            output.push_str(&format!("  BET Table Size: {}\n", format_size(v4.bet_table_size_64)));
             output.push_str(&format!(
                 "  Raw Chunk Size: {}\n",
                 format_size(v4.raw_chunk_size as u64)
             ));
             output.push_str("  MD5 Hashes:\n");
-            output.push_str(&format!(
-                "    Block Table: {}\n",
-                hex_string(&v4.md5_block_table, 16)
-            ));
-            output.push_str(&format!(
-                "    Hash Table: {}\n",
-                hex_string(&v4.md5_hash_table, 16)
-            ));
+            output.push_str(&format!("    Block Table: {}\n", hex_string(&v4.md5_block_table, 16)));
+            output.push_str(&format!("    Hash Table: {}\n", hex_string(&v4.md5_hash_table, 16)));
             output.push_str(&format!(
                 "    Hi-Block Table: {}\n",
                 hex_string(&v4.md5_hi_block_table, 16)
             ));
-            output.push_str(&format!(
-                "    BET Table: {}\n",
-                hex_string(&v4.md5_bet_table, 16)
-            ));
-            output.push_str(&format!(
-                "    HET Table: {}\n",
-                hex_string(&v4.md5_het_table, 16)
-            ));
-            output.push_str(&format!(
-                "    MPQ Header: {}\n",
-                hex_string(&v4.md5_mpq_header, 16)
-            ));
+            output.push_str(&format!("    BET Table: {}\n", hex_string(&v4.md5_bet_table, 16)));
+            output.push_str(&format!("    HET Table: {}\n", hex_string(&v4.md5_het_table, 16)));
+            output.push_str(&format!("    MPQ Header: {}\n", hex_string(&v4.md5_mpq_header, 16)));
         }
 
         output
@@ -493,10 +461,7 @@ impl UserDataHeader {
             format_size(self.user_data_size as u64)
         ));
         output.push_str(&format!("Header Offset: 0x{:08X}\n", self.header_offset));
-        output.push_str(&format!(
-            "User Data Header Size: {}\n",
-            self.user_data_header_size
-        ));
+        output.push_str(&format!("User Data Header Size: {}\n", self.user_data_header_size));
         output
     }
 }

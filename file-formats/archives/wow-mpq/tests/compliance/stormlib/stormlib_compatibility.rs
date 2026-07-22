@@ -100,10 +100,7 @@ fn test_uncompressed_small_data() {
 
     // Verify the file is stored uncompressed (compression not beneficial)
     let file_info = archive.find_file("small.txt").unwrap().unwrap();
-    assert!(
-        !file_info.is_compressed(),
-        "Small file should not be compressed"
-    );
+    assert!(!file_info.is_compressed(), "Small file should not be compressed");
 
     // Clean up
     drop(archive);

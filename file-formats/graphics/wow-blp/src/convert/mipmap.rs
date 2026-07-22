@@ -1,10 +1,7 @@
 use super::error::Error;
 use ::image::{DynamicImage, imageops::FilterType};
 
-pub fn generate_mipmaps(
-    image: DynamicImage,
-    filter: FilterType,
-) -> Result<Vec<DynamicImage>, Error> {
+pub fn generate_mipmaps(image: DynamicImage, filter: FilterType) -> Result<Vec<DynamicImage>, Error> {
     let mut mipmaps = vec![image.clone()];
     let mut current_image = image;
     loop {
