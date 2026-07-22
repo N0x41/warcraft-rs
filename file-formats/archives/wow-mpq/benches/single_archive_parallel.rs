@@ -136,7 +136,7 @@ fn bench_file_size_impact(c: &mut Criterion) {
 
         // Sequential
         group.bench_with_input(
-            BenchmarkId::new("sequential", format!("{total_mb:.1}MB")),
+            BenchmarkId::new("sequential", format!("{count}x{size_kb}KB")),
             &files,
             |b, files| {
                 b.iter(|| {
@@ -153,7 +153,7 @@ fn bench_file_size_impact(c: &mut Criterion) {
 
         // Parallel
         group.bench_with_input(
-            BenchmarkId::new("parallel", format!("{total_mb:.1}MB")),
+            BenchmarkId::new("parallel", format!("{count}x{size_kb}KB")),
             &files,
             |b, files| {
                 let archive = ParallelArchive::open(&archive_path).unwrap();
