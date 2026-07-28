@@ -131,7 +131,6 @@ fn bench_file_size_impact(c: &mut Criterion) {
             .map(|i| Box::leak(format!("data/file_{i:04}.dat").into_boxed_str()) as &str)
             .collect();
 
-        let total_mb = (count * size_kb) as f64 / 1024.0;
         group.throughput(Throughput::Bytes((count * size_kb * 1024) as u64));
 
         // Sequential
